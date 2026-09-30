@@ -18,11 +18,11 @@ export function AuthShell({ eyebrow, title, description, children, footer }: Aut
           VouchNet
         </Link>
         <div className="auth-story-copy">
-          <p className="eyebrow">Professional signal, not noise</p>
-          <h1>Put the work behind your next opportunity.</h1>
+          <p className="eyebrow">A better professional starting point</p>
+          <h1>Bring your work into focus.</h1>
           <p>
-            VouchNet is built for credible profiles, deliberate introductions, and useful
-            professional context.
+            A focused space for your professional context, your trusted network, and your next
+            opportunity.
           </p>
         </div>
         <div className="auth-proof" aria-label="VouchNet principles">

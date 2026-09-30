@@ -18,24 +18,24 @@ export default function HomePage() {
       </header>
       <section className="landing-hero">
         <div className="landing-copy">
-          <p className="eyebrow">A calmer professional network</p>
-          <h1>Make your next move with evidence behind it.</h1>
+          <p className="eyebrow">The professional network for real work</p>
+          <h1>Show what you can do. Not just where you have been.</h1>
           <p>
-            Build a credible professional presence, discover meaningful work, and make relationships
-            through context—not professional noise.
+            A higher-signal place to build a profile, earn trusted Vouches, and take your work into
+            the opportunities that actually fit.
           </p>
           <div className="actions">
             <Link className="primary" href="/signup">
               Build your profile
             </Link>
             <Link className="secondary" href="/login">
-              Explore VouchNet
+              See how it works
             </Link>
           </div>
           <div className="landing-proof-points">
-            <span>Deliberate connections</span>
-            <span>Useful work, first</span>
-            <span>Humans stay in control</span>
+            <span>Proof over performance</span>
+            <span>Vouched by peers</span>
+            <span>Privacy by default</span>
           </div>
         </div>
         <div className="landing-product-preview" aria-label="Example VouchNet profile workspace">
@@ -81,6 +81,34 @@ export default function HomePage() {
               <i />
             </div>
           </div>
+          <div className="preview-trust-row">
+            <span>
+              <b>12</b> people vouched
+            </span>
+            <span>
+              <b>4</b> projects
+            </span>
+            <span className="preview-live">● Open to work</span>
+          </div>
+        </div>
+      </section>
+      <section className="landing-outcomes" aria-label="What VouchNet makes easier">
+        <div>
+          <span>01</span>
+          <strong>Build a living profile</strong>
+          <p>Bring projects, experience, skills, and evidence together in one credible place.</p>
+        </div>
+        <div>
+          <span>02</span>
+          <strong>Carry your application</strong>
+          <p>Use Apply with VouchNet to share only the data you approve with a hiring site.</p>
+        </div>
+        <div>
+          <span>03</span>
+          <strong>Keep control</strong>
+          <p>
+            Every consequential action stays attributable to a person, never an automated account.
+          </p>
         </div>
       </section>
       <section className="landing-principles" aria-label="VouchNet principles">
