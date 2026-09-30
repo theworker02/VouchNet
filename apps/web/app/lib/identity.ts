@@ -14,6 +14,21 @@ import { NextRequest, NextResponse } from 'next/server';
 const sessionName = 'nexus_session';
 const sessionDays = 30;
 
+export class IdentityError extends Error {
+  constructor(readonly code: 'ACCOUNT_ALREADY_ACTIVE' | 'VERIFICATION_RECENTLY_SENT') {
+    super(code);
+  }
+}
+
+function isUniqueViolation(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    'code' in error &&
+    (error as { code?: unknown }).code === '23505'
+  );
+}
+
 function databaseUrl(): string {
   const value = process.env.DATABASE_URL;
   if (value === undefined) throw new Error('DATABASE_UNAVAILABLE');
@@ -44,6 +59,36 @@ export async function registerHuman(input: {
   const slug = `${baseSlug(input.firstName, input.lastName)}-${crypto.randomUUID().slice(0, 6)}`;
   try {
     const user = await sql.begin(async (transaction) => {
+      const existingRows = await transaction<{ id: string; status: string }[]>`
+        SELECT u.id,u.status
+        FROM users u
+        JOIN user_emails e ON e.user_id=u.id
+        WHERE e.email_normalized=${email} AND e.is_primary=true
+        FOR UPDATE
+      `;
+      const existing = existingRows[0];
+      if (existing !== undefined) {
+        if (existing.status !== 'PENDING_VERIFICATION')
+          throw new IdentityError('ACCOUNT_ALREADY_ACTIVE');
+        const latestVerification = await transaction<{ created_at: Date }[]>`
+          SELECT created_at
+          FROM email_verifications
+          WHERE user_id=${existing.id} AND used_at IS NULL
+          ORDER BY created_at DESC
+          LIMIT 1
+          FOR UPDATE
+        `;
+        const latestCreatedAt = latestVerification[0]?.created_at;
+        if (latestCreatedAt !== undefined && Date.now() - latestCreatedAt.getTime() < 60 * 1000) {
+          throw new IdentityError('VERIFICATION_RECENTLY_SENT');
+        }
+        // A provider outage or expired link must not trap a legitimate person in a pending account.
+        // Replacing the unused token invalidates any prior email before a fresh one is sent. The
+        // one-minute cooldown prevents this retry path from becoming an email-sending primitive.
+        await transaction`UPDATE email_verifications SET used_at=now() WHERE user_id=${existing.id} AND used_at IS NULL`;
+        await transaction`INSERT INTO email_verifications (user_id,token_hash,expires_at) VALUES (${existing.id},${verification.tokenHash},${verification.expiresAt})`;
+        return existing;
+      }
       const rows = await transaction<
         { id: string }[]
       >`INSERT INTO users (password_hash) VALUES (${passwordHash}) RETURNING id`;
@@ -57,6 +102,12 @@ export async function registerHuman(input: {
       return created;
     });
     return { userId: user.id, verificationToken: verification.token };
+  } catch (error) {
+    if (error instanceof IdentityError) throw error;
+    // The email column is uniquely constrained. A concurrent registration must not surface a raw
+    // database error or disclose additional account details to the requester.
+    if (isUniqueViolation(error)) throw new IdentityError('ACCOUNT_ALREADY_ACTIVE');
+    throw error;
   } finally {
     await sql.end({ timeout: 1 });
   }

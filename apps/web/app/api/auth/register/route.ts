@@ -1,7 +1,18 @@
 import { registrationSchema } from '@nexus/auth';
 import { NextRequest, NextResponse } from 'next/server';
-import { registerHuman } from '../../../lib/identity';
+import { ZodError } from 'zod';
+import { IdentityError, registerHuman } from '../../../lib/identity';
 import { sendVerificationEmail } from '../../../lib/email';
+
+type RegistrationError =
+  'ACCOUNT_EXISTS' | 'INVALID_INPUT' | 'VERIFICATION_RECENTLY_SENT' | 'SERVICE_UNAVAILABLE';
+
+function failureResponse(request: NextRequest, error: RegistrationError): NextResponse {
+  const status = error === 'SERVICE_UNAVAILABLE' ? 503 : 400;
+  if (request.headers.get('accept')?.includes('application/json'))
+    return NextResponse.json({ error }, { status });
+  return NextResponse.redirect(new URL(`/signup?error=${error}`, request.url), 303);
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,15 +42,15 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.redirect(new URL('/verify', request.url), 303);
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'REGISTRATION_FAILED';
-    return NextResponse.json(
-      {
-        error:
-          message === 'DATABASE_UNAVAILABLE' || message.startsWith('EMAIL_')
-            ? 'SERVICE_UNAVAILABLE'
-            : 'REGISTRATION_FAILED',
-      },
-      { status: message === 'DATABASE_UNAVAILABLE' || message.startsWith('EMAIL_') ? 503 : 400 },
-    );
+    if (error instanceof ZodError) return failureResponse(request, 'INVALID_INPUT');
+    if (error instanceof IdentityError) {
+      if (error.code === 'ACCOUNT_ALREADY_ACTIVE')
+        return failureResponse(request, 'ACCOUNT_EXISTS');
+      if (error.code === 'VERIFICATION_RECENTLY_SENT')
+        return failureResponse(request, 'VERIFICATION_RECENTLY_SENT');
+    }
+    // Do not expose database or provider details to the browser. Unknown failures are operational
+    // until proved otherwise and should direct the person to retry, not blame their input.
+    return failureResponse(request, 'SERVICE_UNAVAILABLE');
   }
 }

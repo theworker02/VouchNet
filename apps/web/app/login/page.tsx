@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { AuthForm } from '../components/auth-form';
+
 export default function Login() {
   return (
     <main className="auth">
@@ -6,7 +8,7 @@ export default function Login() {
         VouchNet
       </Link>
       <h1>Welcome back</h1>
-      <form action="/api/auth/login" method="post">
+      <AuthForm action="/api/auth/login">
         <label>
           Email
           <input name="email" type="email" autoComplete="email" required />
@@ -16,7 +18,7 @@ export default function Login() {
           <input name="password" type="password" autoComplete="current-password" required />
         </label>
         <button>Sign in</button>
-      </form>
+      </AuthForm>
       <p>
         <Link href="/signup">Create an account</Link> ·{' '}
         <Link href="/forgot-password">Forgot password?</Link>
