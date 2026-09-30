@@ -223,6 +223,8 @@ where applicable, and audit handling without exposing secrets or unnecessary per
 - [Threat model](docs/THREAT_MODEL.md)
 - [Roadmap](docs/ROADMAP.md)
 - [Launch playbook](docs/LAUNCH.md)
+- [OAuth configuration](docs/OAUTH.md)
+- [Analytics](docs/ANALYTICS.md)
 - [Release notes](CHANGELOG.md)
 
 ## Status

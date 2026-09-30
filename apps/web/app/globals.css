@@ -3890,3 +3890,57 @@ button {
   color: var(--muted);
   line-height: 1.7;
 }
+
+.policy-page {
+  min-height: 100vh;
+  background: var(--canvas);
+}
+
+.policy-content {
+  width: min(760px, calc(100% - 40px));
+  margin: 72px auto 112px;
+  color: var(--ink);
+}
+
+.policy-content h1 {
+  max-width: 680px;
+  margin: 14px 0 10px;
+  font-size: clamp(3rem, 7vw, 5.4rem);
+  letter-spacing: -0.075em;
+  line-height: 0.92;
+}
+
+.policy-updated {
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+}
+
+.policy-lead {
+  margin: 38px 0 48px;
+  color: var(--muted);
+  font-size: 1.15rem;
+  line-height: 1.7;
+}
+
+.policy-content section {
+  border-top: 1px solid var(--line);
+  padding: 28px 0;
+}
+
+.policy-content h2 {
+  margin: 0 0 12px;
+  font-size: 1.28rem;
+  letter-spacing: -0.025em;
+}
+
+.policy-content section p {
+  color: var(--muted);
+  line-height: 1.72;
+}
+
+.policy-content a {
+  color: var(--accent);
+  font-weight: 700;
+}

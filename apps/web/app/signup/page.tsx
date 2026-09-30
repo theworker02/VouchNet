@@ -1,5 +1,6 @@
 import { AuthForm } from '../components/auth-form';
 import { AuthShell } from '../components/auth-shell';
+import Link from 'next/link';
 
 const signupErrors = {
   ACCOUNT_EXISTS: 'If an account already exists for this email, sign in or reset its password.',
@@ -63,10 +64,18 @@ export default async function Signup({
         </label>
         <div className="auth-agreements">
           <label className="check">
-            <input name="acceptsTerms" type="checkbox" required /> I accept the Terms of Service.
+            <input name="acceptsTerms" type="checkbox" required /> I accept the{' '}
+            <Link href="/terms" target="_blank">
+              Terms of Service
+            </Link>
+            .
           </label>
           <label className="check">
-            <input name="acceptsPrivacy" type="checkbox" required /> I accept the Privacy Policy.
+            <input name="acceptsPrivacy" type="checkbox" required /> I accept the{' '}
+            <Link href="/privacy" target="_blank">
+              Privacy Policy
+            </Link>
+            .
           </label>
         </div>
         <button className="auth-submit">Create account</button>

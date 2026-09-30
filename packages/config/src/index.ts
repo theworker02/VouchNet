@@ -8,6 +8,14 @@ const environmentSchema = z.object({
   RESEND_API_KEY: z.string().startsWith('re_').optional(),
   EMAIL_FROM: z.string().min(3).max(320).optional(),
   APP_URL: z.url().optional(),
+  GOOGLE_OAUTH_CLIENT_ID: z.string().min(1).optional(),
+  GOOGLE_OAUTH_CLIENT_SECRET: z.string().min(1).optional(),
+  GITHUB_OAUTH_CLIENT_ID: z.string().min(1).optional(),
+  GITHUB_OAUTH_CLIENT_SECRET: z.string().min(1).optional(),
+  LINKEDIN_OAUTH_CLIENT_ID: z.string().min(1).optional(),
+  LINKEDIN_OAUTH_CLIENT_SECRET: z.string().min(1).optional(),
+  VOUCHNET_OAUTH_ISSUER: z.url().optional(),
+  VOUCHNET_OAUTH_SIGNING_KEY: z.string().min(32).optional(),
 });
 
 export type NexusEnvironment = z.infer<typeof environmentSchema>;
