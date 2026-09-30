@@ -9,3 +9,6 @@ coverage
 !.env.example
 *.log
 *.tsbuildinfo
+
+# Local Netlify folder
+.netlify
