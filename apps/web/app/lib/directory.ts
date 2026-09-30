@@ -43,6 +43,14 @@ export type DailyChallengeRecord = {
   durationMinutes: number;
 };
 
+export type HiringOrganizationRecord = {
+  slug: string;
+  name: string;
+  tagline: string | null;
+  technologies: string[];
+  openRoleCount: number;
+};
+
 function sql() {
   const url = process.env.DATABASE_URL;
   if (url === undefined) throw new Error('DATABASE_UNAVAILABLE');
@@ -85,6 +93,32 @@ export async function listPublicJobs(query?: string): Promise<JobRecord[]> {
         AND (j.title ILIKE ${pattern} OR o.name ILIKE ${pattern} OR j.location ILIKE ${pattern}
           OR EXISTS (SELECT 1 FROM unnest(j.skill_tags) tag WHERE tag ILIKE ${pattern}))
       ORDER BY (j.salary_min IS NULL) ASC,j.source_checked_at DESC,j.created_at DESC LIMIT 30
+    `;
+  } finally {
+    await client.end({ timeout: 1 });
+  }
+}
+
+/**
+ * The home rail only uses organizations with a live source-linked role. This keeps the
+ * discovery surface useful without inventing company activity or administrative ownership.
+ */
+export async function listHiringOrganizations(limit = 3): Promise<HiringOrganizationRecord[]> {
+  const client = sql();
+  try {
+    return await client<HiringOrganizationRecord[]>`
+      SELECT o.slug,o.name,o.tagline,
+        COALESCE(array_agg(DISTINCT ot.name) FILTER (WHERE ot.name IS NOT NULL), '{}') AS technologies,
+        COUNT(DISTINCT j.id)::integer AS "openRoleCount"
+      FROM organizations o
+      JOIN jobs j ON j.organization_id=o.id
+        AND j.deleted_at IS NULL
+        AND j.source_status IN ('SOURCE_REVIEWED','SOURCE_LIVE')
+      LEFT JOIN organization_technologies ot ON ot.organization_id=o.id
+      WHERE o.deleted_at IS NULL
+      GROUP BY o.id,o.slug,o.name,o.tagline
+      ORDER BY COUNT(DISTINCT j.id) DESC,o.name
+      LIMIT ${limit}
     `;
   } finally {
     await client.end({ timeout: 1 });

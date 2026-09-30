@@ -133,7 +133,7 @@ export function WorkMenu() {
           <strong>Find people</strong>
           <span>Discover relevant collaborators</span>
         </Link>
-        <Link href="/settings/developers" role="menuitem">
+        <Link href="/developers" role="menuitem">
           <strong>Developer portal</strong>
           <span>Apply with VouchNet integrations</span>
         </Link>

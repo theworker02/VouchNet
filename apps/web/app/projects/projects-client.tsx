@@ -17,32 +17,39 @@ export function ProjectsClient({ initialProjects }: { initialProjects: ProjectRe
     setSubmitting(true);
     setStatus(null);
     const form = new FormData(event.currentTarget);
-    const response = await fetch('/api/projects', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        name: form.get('name'),
-        summary: form.get('summary'),
-        description: form.get('description'),
-        status: form.get('status'),
-        projectUrl: optionalValue(form.get('projectUrl')),
-        repositoryUrl: optionalValue(form.get('repositoryUrl')),
-        documentationUrl: optionalValue(form.get('documentationUrl')),
-        demoUrl: optionalValue(form.get('demoUrl')),
-        tags: String(form.get('tags') ?? '')
-          .split(',')
-          .map((tag) => tag.trim())
-          .filter(Boolean),
-      }),
-    });
-    setSubmitting(false);
-    if (!response.ok) {
-      setStatus('Your project could not be published. Check the required fields and links.');
-      return;
+    try {
+      const response = await fetch('/api/projects', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          name: form.get('name'),
+          summary: form.get('summary'),
+          description: form.get('description'),
+          status: form.get('status'),
+          projectUrl: optionalValue(form.get('projectUrl')),
+          repositoryUrl: optionalValue(form.get('repositoryUrl')),
+          documentationUrl: optionalValue(form.get('documentationUrl')),
+          demoUrl: optionalValue(form.get('demoUrl')),
+          tags: String(form.get('tags') ?? '')
+            .split(',')
+            .map((tag) => tag.trim())
+            .filter(Boolean),
+        }),
+      });
+      if (!response.ok) {
+        setStatus('Your project could not be published. Check the required fields and links.');
+        return;
+      }
+      const body = (await response.json()) as { project: { slug: string } };
+      setOpen(false);
+      router.push(`/projects/${body.project.slug}`);
+    } catch {
+      setStatus(
+        'Your project could not be published because the network is unavailable. Try again.',
+      );
+    } finally {
+      setSubmitting(false);
     }
-    const body = (await response.json()) as { project: { slug: string } };
-    setOpen(false);
-    router.push(`/projects/${body.project.slug}`);
   }
 
   return (

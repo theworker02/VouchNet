@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, KeyboardEvent, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 type Dashboard = {
@@ -52,47 +52,72 @@ export function JobPostingClient({ initialDashboard }: { initialDashboard: Dashb
   const [mode, setMode] = useState<Mode>('MANUAL');
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const manualTabRef = useRef<HTMLButtonElement>(null);
+  const sourceTabRef = useRef<HTMLButtonElement>(null);
+
+  function activatePostingMode(nextMode: Mode) {
+    setMode(nextMode);
+    requestAnimationFrame(() => {
+      (nextMode === 'MANUAL' ? manualTabRef : sourceTabRef).current?.focus();
+    });
+  }
+
+  function selectPostingModeFromKeyboard(event: KeyboardEvent<HTMLButtonElement>) {
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown' || event.key === 'End') {
+      event.preventDefault();
+      activatePostingMode('SOURCE');
+    }
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowUp' || event.key === 'Home') {
+      event.preventDefault();
+      activatePostingMode('MANUAL');
+    }
+  }
 
   async function submitManualJob(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setSubmitting(true);
     setMessage(null);
     const form = new FormData(event.currentTarget);
-    const response = await fetch('/api/jobs/submissions', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        applicationUrl: form.get('applicationUrl'),
-        description: form.get('description'),
-        employmentType: form.get('employmentType'),
-        location: form.get('location'),
-        organizationName: form.get('organizationName'),
-        organizationWebsite: form.get('organizationWebsite'),
-        salaryCurrency: form.get('salaryCurrency'),
-        salaryMax: optionalNumber(form.get('salaryMax')),
-        salaryMin: optionalNumber(form.get('salaryMin')),
-        skillTags: String(form.get('skillTags') ?? '')
-          .split(',')
-          .map((tag) => tag.trim())
-          .filter(Boolean),
-        summary: form.get('summary'),
-        title: form.get('title'),
-        workplaceType: form.get('workplaceType'),
-      }),
-    });
-    setSubmitting(false);
-    if (!response.ok) {
-      const body = (await response.json().catch(() => ({ error: 'JOB_SUBMISSION_FAILED' }))) as {
-        error?: string;
-      };
-      setMessage(
-        feedbackByError[body.error ?? ''] ?? 'The role could not be submitted. Try again.',
-      );
-      return;
+    try {
+      const response = await fetch('/api/jobs/submissions', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          applicationUrl: form.get('applicationUrl'),
+          description: form.get('description'),
+          employmentType: form.get('employmentType'),
+          location: form.get('location'),
+          organizationName: form.get('organizationName'),
+          organizationWebsite: form.get('organizationWebsite'),
+          salaryCurrency: form.get('salaryCurrency'),
+          salaryMax: optionalNumber(form.get('salaryMax')),
+          salaryMin: optionalNumber(form.get('salaryMin')),
+          skillTags: String(form.get('skillTags') ?? '')
+            .split(',')
+            .map((tag) => tag.trim())
+            .filter(Boolean),
+          summary: form.get('summary'),
+          title: form.get('title'),
+          workplaceType: form.get('workplaceType'),
+        }),
+      });
+      if (!response.ok) {
+        const body = (await response.json().catch(() => ({ error: 'JOB_SUBMISSION_FAILED' }))) as {
+          error?: string;
+        };
+        setMessage(
+          feedbackByError[body.error ?? ''] ?? 'The role could not be submitted. Try again.',
+        );
+        return;
+      }
+      setMessage('Role received. It is pending employer verification and VouchNet review.');
+      event.currentTarget.reset();
+      router.refresh();
+    } catch {
+      setMessage('The role could not be submitted because the network is unavailable. Try again.');
+    } finally {
+      setSubmitting(false);
     }
-    setMessage('Role received. It is pending employer verification and VouchNet review.');
-    event.currentTarget.reset();
-    router.refresh();
   }
 
   async function submitSource(event: FormEvent<HTMLFormElement>) {
@@ -100,31 +125,40 @@ export function JobPostingClient({ initialDashboard }: { initialDashboard: Dashb
     setSubmitting(true);
     setMessage(null);
     const form = new FormData(event.currentTarget);
-    const response = await fetch('/api/jobs/sources', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        boardToken: form.get('boardToken'),
-        organizationName: form.get('organizationName'),
-        organizationWebsite: form.get('organizationWebsite'),
-        provider: form.get('provider'),
-      }),
-    });
-    setSubmitting(false);
-    if (!response.ok) {
-      const body = (await response.json().catch(() => ({ error: 'JOB_SOURCE_CREATE_FAILED' }))) as {
-        error?: string;
-      };
+    try {
+      const response = await fetch('/api/jobs/sources', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          boardToken: form.get('boardToken'),
+          organizationName: form.get('organizationName'),
+          organizationWebsite: form.get('organizationWebsite'),
+          provider: form.get('provider'),
+        }),
+      });
+      if (!response.ok) {
+        const body = (await response
+          .json()
+          .catch(() => ({ error: 'JOB_SOURCE_CREATE_FAILED' }))) as {
+          error?: string;
+        };
+        setMessage(
+          feedbackByError[body.error ?? ''] ?? 'The source could not be registered. Try again.',
+        );
+        return;
+      }
       setMessage(
-        feedbackByError[body.error ?? ''] ?? 'The source could not be registered. Try again.',
+        'Public board received. We will validate ownership and activate an approved source.',
       );
-      return;
+      event.currentTarget.reset();
+      router.refresh();
+    } catch {
+      setMessage(
+        'The source could not be registered because the network is unavailable. Try again.',
+      );
+    } finally {
+      setSubmitting(false);
     }
-    setMessage(
-      'Public board received. We will validate ownership and activate an approved source.',
-    );
-    event.currentTarget.reset();
-    router.refresh();
   }
 
   return (
@@ -149,27 +183,41 @@ export function JobPostingClient({ initialDashboard }: { initialDashboard: Dashb
 
       <div className="employer-mode-switch" role="tablist" aria-label="Posting method">
         <button
+          aria-controls="manual-job-panel"
           aria-selected={mode === 'MANUAL'}
           className={mode === 'MANUAL' ? 'is-active' : undefined}
+          id="manual-job-tab"
+          ref={manualTabRef}
           role="tab"
           type="button"
-          onClick={() => setMode('MANUAL')}
+          onKeyDown={selectPostingModeFromKeyboard}
+          onClick={() => activatePostingMode('MANUAL')}
         >
           Post one role
         </button>
         <button
+          aria-controls="provider-source-panel"
           aria-selected={mode === 'SOURCE'}
           className={mode === 'SOURCE' ? 'is-active' : undefined}
+          id="provider-source-tab"
+          ref={sourceTabRef}
           role="tab"
           type="button"
-          onClick={() => setMode('SOURCE')}
+          onKeyDown={selectPostingModeFromKeyboard}
+          onClick={() => activatePostingMode('SOURCE')}
         >
           Connect a job board
         </button>
       </div>
 
       {mode === 'MANUAL' ? (
-        <form className="employer-form" onSubmit={(event) => void submitManualJob(event)}>
+        <form
+          aria-labelledby="manual-job-tab"
+          className="employer-form"
+          id="manual-job-panel"
+          role="tabpanel"
+          onSubmit={(event) => void submitManualJob(event)}
+        >
           <div className="employer-form-section">
             <span>01</span>
             <div>
@@ -274,7 +322,10 @@ export function JobPostingClient({ initialDashboard }: { initialDashboard: Dashb
         </form>
       ) : (
         <form
+          aria-labelledby="provider-source-tab"
           className="employer-form employer-source-form"
+          id="provider-source-panel"
+          role="tabpanel"
           onSubmit={(event) => void submitSource(event)}
         >
           <div className="employer-form-section">

@@ -8,17 +8,25 @@ export function RelationshipActions({ userId }: { userId: string }) {
   );
   async function requestConnection() {
     setStatus('working');
-    const response = await fetch('/api/network/connections', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ targetUserId: userId }),
-    });
-    setStatus(response.ok ? 'connected' : 'error');
+    try {
+      const response = await fetch('/api/network/connections', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ targetUserId: userId }),
+      });
+      setStatus(response.ok ? 'connected' : 'error');
+    } catch {
+      setStatus('error');
+    }
   }
   async function follow() {
     setStatus('working');
-    const response = await fetch(`/api/network/follow/${userId}`, { method: 'POST' });
-    setStatus(response.ok ? 'following' : 'error');
+    try {
+      const response = await fetch(`/api/network/follow/${userId}`, { method: 'POST' });
+      setStatus(response.ok ? 'following' : 'error');
+    } catch {
+      setStatus('error');
+    }
   }
   if (status === 'connected') return <p className="action-feedback">Connection request sent.</p>;
   if (status === 'following')
@@ -53,12 +61,16 @@ export function InvitationActions({ connectionId }: { connectionId: string }) {
   const [status, setStatus] = useState<'idle' | 'working' | 'done' | 'error'>('idle');
   async function respond(action: 'accept' | 'decline') {
     setStatus('working');
-    const response = await fetch('/api/network/connections', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ connectionId, action }),
-    });
-    setStatus(response.ok ? 'done' : 'error');
+    try {
+      const response = await fetch('/api/network/connections', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ connectionId, action }),
+      });
+      setStatus(response.ok ? 'done' : 'error');
+    } catch {
+      setStatus('error');
+    }
   }
   if (status === 'done')
     return (

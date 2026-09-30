@@ -12,6 +12,14 @@ An email address with a pending verification can restart registration to receive
 
 Verification emails provide a six-digit code rather than a bearer link. The code is hashed at rest, expires after 24 hours, is limited to five attempts for the pending email address, and successful verification issues a new HttpOnly browser session before redirecting to onboarding. Legacy token links remain valid only until they expire.
 
+## Password recovery
+
+`/forgot-password` submits a JSON request to the server and always returns a non-enumerating
+confirmation message. When an eligible account exists, Resend delivers a one-hour reset link to
+`/reset-password?token=…`. The browser sends the token and replacement password only to the
+server-side reset endpoint; invalid, expired, or previously used tokens return a generic recovery
+error and never disclose account information.
+
 ## Provider sign-in
 
 Google, GitHub, and LinkedIn use server-side authorization-code callbacks with state validation and
@@ -19,3 +27,11 @@ PKCE. Provider secrets and authorization codes never enter client JavaScript, an
 tokens are used only to retrieve the identity callback response. A provider must return a verified
 email address. New provider identities remain pending until the person visibly accepts VouchNet's
 Terms and Privacy Policy; existing email/password accounts are never auto-linked by matching email.
+
+# Email verification links
+
+Authenticated members can request a new primary-email verification link from **Settings → Account**.
+The request is same-origin protected and rate limited to one active request per minute. The server
+stores only the SHA-256 token hash in `email_verifications`; the raw 24-hour token exists only in the
+outbound email. Visiting `/auth/verify-email?token=…` consumes the token once, verifies the primary
+email, and redirects back to `/settings/account?verified=true`.

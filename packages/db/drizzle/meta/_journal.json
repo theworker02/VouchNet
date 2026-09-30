@@ -92,6 +92,20 @@
       "when": 1781208000000,
       "tag": "0012_job_sourcing_and_employer_launch",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1781294400000,
+      "tag": "0013_vouchnet_plus_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1781380800000,
+      "tag": "0014_profile_view_analytics",
+      "breakpoints": true
     }
   ]
 }

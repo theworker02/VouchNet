@@ -15,17 +15,21 @@ export function OnboardingForm({ headline, location, about, onboardingStep }: On
     event.preventDefault();
     setStatus('saving');
     const form = new FormData(event.currentTarget);
-    const response = await fetch('/api/profile/me', {
-      method: 'PATCH',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        headline: String(form.get('headline') ?? ''),
-        location: String(form.get('location') ?? ''),
-        about: String(form.get('about') ?? ''),
-        onboardingStep: 10,
-      }),
-    });
-    setStatus(response.ok ? 'saved' : 'error');
+    try {
+      const response = await fetch('/api/profile/me', {
+        method: 'PATCH',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          headline: String(form.get('headline') ?? ''),
+          location: String(form.get('location') ?? ''),
+          about: String(form.get('about') ?? ''),
+          onboardingStep: 10,
+        }),
+      });
+      setStatus(response.ok ? 'saved' : 'error');
+    } catch {
+      setStatus('error');
+    }
   }
   return (
     <form className="onboarding-form" onSubmit={(event) => void save(event)}>

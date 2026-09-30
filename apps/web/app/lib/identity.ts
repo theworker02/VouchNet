@@ -180,6 +180,66 @@ export async function verifyEmailCode(
   }
 }
 
+/**
+ * Creates a fresh, single-use verification artifact for the authenticated member. The raw token
+ * is returned only to the caller that sends the transactional email; PostgreSQL retains its hash.
+ */
+export async function beginEmailVerificationLink(userId: string): Promise<{
+  email: string;
+  firstName: string;
+  token: string;
+}> {
+  const sql = client();
+  const verification = createSecretToken(24 * 60 * 60 * 1000);
+  try {
+    return await sql.begin(async (transaction) => {
+      const rows = await transaction<{ email_normalized: string; first_name: string }[]>`
+        SELECT e.email_normalized,p.first_name
+        FROM user_emails e JOIN profiles p ON p.user_id=e.user_id
+        WHERE e.user_id=${userId} AND e.is_primary=true AND e.verified_at IS NULL
+        FOR UPDATE
+      `;
+      const member = rows[0];
+      if (member === undefined) throw new IdentityError('ACCOUNT_ALREADY_ACTIVE');
+      const latest = await transaction<{ created_at: Date }[]>`
+        SELECT created_at FROM email_verifications
+        WHERE user_id=${userId} AND used_at IS NULL
+        ORDER BY created_at DESC LIMIT 1 FOR UPDATE
+      `;
+      if (latest[0] !== undefined && Date.now() - latest[0].created_at.getTime() < 60 * 1000)
+        throw new IdentityError('VERIFICATION_RECENTLY_SENT');
+      await transaction`UPDATE email_verifications SET used_at=now() WHERE user_id=${userId} AND used_at IS NULL`;
+      await transaction`INSERT INTO email_verifications (user_id,token_hash,expires_at) VALUES (${userId},${verification.tokenHash},${verification.expiresAt})`;
+      return {
+        email: member.email_normalized,
+        firstName: member.first_name,
+        token: verification.token,
+      };
+    });
+  } finally {
+    await sql.end({ timeout: 1 });
+  }
+}
+
+export async function getPrimaryEmailStatus(userId: string): Promise<{
+  email: string;
+  verifiedAt: Date | null;
+} | null> {
+  const sql = client();
+  try {
+    const rows = await sql<{ email_normalized: string; verified_at: Date | null }[]>`
+      SELECT email_normalized,verified_at FROM user_emails
+      WHERE user_id=${userId} AND is_primary=true
+    `;
+    const email = rows[0];
+    return email === undefined
+      ? null
+      : { email: email.email_normalized, verifiedAt: email.verified_at };
+  } finally {
+    await sql.end({ timeout: 1 });
+  }
+}
+
 export async function createUserSession(userId: string): Promise<{ token: string }> {
   const sql = client();
   const token = createSecretToken(sessionDays * 24 * 60 * 60 * 1000);
@@ -294,6 +354,7 @@ export async function getProfileSummary(userId: string): Promise<{
   slug: string;
   location: string | null;
   about: string | null;
+  avatarKey: string | null;
   onboardingStep: number;
 } | null> {
   const sql = client();
@@ -306,10 +367,11 @@ export async function getProfileSummary(userId: string): Promise<{
         slug: string;
         location: string | null;
         about: string | null;
+        avatar_key: string | null;
         onboarding_step: number;
       }[]
     >`
-      SELECT first_name,last_name,headline,slug,location,about,onboarding_step
+      SELECT first_name,last_name,headline,slug,location,about,avatar_key,onboarding_step
       FROM profiles
       WHERE user_id=${userId}
     `;
@@ -321,6 +383,7 @@ export async function getProfileSummary(userId: string): Promise<{
       slug: profile.slug,
       location: profile.location,
       about: profile.about,
+      avatarKey: profile.avatar_key,
       onboardingStep: profile.onboarding_step,
     };
   } finally {

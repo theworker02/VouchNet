@@ -76,6 +76,14 @@ export default function HomePage() {
             </div>
             <VerifiedWorkBadge compact />
           </div>
+          <div className="workspace-badge-lens" aria-hidden="true">
+            <svg fill="none" viewBox="0 0 24 24">
+              <circle cx="10.5" cy="10.5" r="5.5" />
+              <path d="m15 15 4.5 4.5" />
+              <path d="m8.2 10.5 1.5 1.5 3.1-3.1" />
+            </svg>
+            <span>Verified work</span>
+          </div>
           <div className="workspace-grid">
             <article className="workspace-featured-work">
               <span className="workspace-kicker">FEATURED WORK</span>

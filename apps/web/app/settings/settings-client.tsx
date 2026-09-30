@@ -56,6 +56,14 @@ const channelLabels = {
 export function SettingsClient({ section }: { section: SettingSection }) {
   const [settings, setSettings] = useState<UserSettings | null>(null);
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [emailStatus, setEmailStatus] = useState<{
+    email: string;
+    verifiedAt: string | null;
+  } | null>(null);
+  const [verificationStatus, setVerificationStatus] = useState<
+    'idle' | 'sending' | 'sent' | 'error'
+  >('idle');
+  const [cooldown, setCooldown] = useState(0);
   useEffect(() => {
     void fetch('/api/settings')
       .then(async (response) =>
@@ -64,15 +72,53 @@ export function SettingsClient({ section }: { section: SettingSection }) {
       .then((body) => setSettings(body.settings))
       .catch(() => setStatus('error'));
   }, []);
+  useEffect(() => {
+    if (section !== 'account') return;
+    void fetch('/api/auth/email-status')
+      .then(async (response) =>
+        response.ok
+          ? (response.json() as Promise<{ email: string; verifiedAt: string | null }>)
+          : Promise.reject(),
+      )
+      .then(setEmailStatus)
+      .catch(() => setEmailStatus(null));
+  }, [section]);
+  useEffect(() => {
+    if (cooldown === 0) return;
+    const timer = window.setInterval(
+      () => setCooldown((seconds) => Math.max(0, seconds - 1)),
+      1000,
+    );
+    return () => window.clearInterval(timer);
+  }, [cooldown]);
   async function save() {
     if (settings === null) return;
     setStatus('saving');
-    const response = await fetch('/api/settings', {
-      method: 'PUT',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(settings),
-    });
-    setStatus(response.ok ? 'saved' : 'error');
+    try {
+      const response = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(settings),
+      });
+      setStatus(response.ok ? 'saved' : 'error');
+    } catch {
+      setStatus('error');
+    }
+  }
+  async function resendVerification() {
+    setVerificationStatus('sending');
+    try {
+      const response = await fetch('/api/auth/send-verification-email', { method: 'POST' });
+      if (!response.ok) {
+        setVerificationStatus('error');
+        return;
+      }
+      const body = (await response.json()) as { cooldownSeconds: number };
+      setCooldown(body.cooldownSeconds);
+      setVerificationStatus('sent');
+    } catch {
+      setVerificationStatus('error');
+    }
   }
   if (settings === null)
     return status === 'error' ? (
@@ -123,6 +169,46 @@ export function SettingsClient({ section }: { section: SettingSection }) {
         <h1>{labels[section]}</h1>
         {section === 'account' ? (
           <>
+            <h2>Email verification</h2>
+            {emailStatus === null ? (
+              <p className="muted-copy">Email status is temporarily unavailable.</p>
+            ) : (
+              <section className="email-verification-card">
+                <div>
+                  <strong>{emailStatus.email}</strong>
+                  <span
+                    className={
+                      emailStatus.verifiedAt === null ? 'email-unverified' : 'email-verified'
+                    }
+                  >
+                    {emailStatus.verifiedAt === null ? 'Unverified' : 'Verified'}
+                  </span>
+                </div>
+                {emailStatus.verifiedAt === null ? (
+                  <button
+                    disabled={verificationStatus === 'sending' || cooldown > 0}
+                    type="button"
+                    onClick={() => void resendVerification()}
+                  >
+                    {cooldown > 0
+                      ? `Resend available in ${cooldown}s`
+                      : verificationStatus === 'sending'
+                        ? 'Sending…'
+                        : 'Resend verification email'}
+                  </button>
+                ) : null}
+                {verificationStatus === 'sent' ? (
+                  <p className="action-feedback">
+                    Verification email sent. It expires in 24 hours.
+                  </p>
+                ) : null}
+                {verificationStatus === 'error' ? (
+                  <p className="form-error">
+                    We could not send a verification email. Try again shortly.
+                  </p>
+                ) : null}
+              </section>
+            )}
             <h2>Site display</h2>
             <label>
               Theme

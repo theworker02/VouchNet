@@ -56,6 +56,22 @@ export async function sendVerificationEmail(input: {
   });
 }
 
+export async function sendVerificationLinkEmail(input: {
+  email: string;
+  firstName: string;
+  token: string;
+}): Promise<void> {
+  const verificationUrl = new URL('/auth/verify-email', appUrl());
+  verificationUrl.searchParams.set('token', input.token);
+  const name = htmlEscape(input.firstName);
+  await sendEmail({
+    to: input.email,
+    subject: 'Confirm your VouchNet email address',
+    text: `Confirm your VouchNet email address: ${verificationUrl.toString()}\n\nThis link expires in 24 hours. If you did not request it, you can ignore this email.`,
+    html: `<!doctype html><html><body style="margin:0;background:#f2f5f9;color:#172033;font-family:Inter,Arial,sans-serif"><main style="max-width:600px;margin:0 auto;padding:36px 16px"><section style="overflow:hidden;border:1px solid #d9e1ee;border-radius:20px;background:#ffffff;box-shadow:0 12px 36px rgba(15,35,70,.10)"><header style="padding:28px 32px;background:linear-gradient(135deg,#103372,#2463d4);color:#ffffff"><strong style="font-size:19px">VouchNet</strong></header><div style="padding:34px 32px"><p style="margin:0 0 14px;color:#2463d4;font-size:12px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase">Email confirmation</p><h1 style="margin:0 0 14px;font-size:30px;line-height:1.18">Confirm your email, ${name}.</h1><p style="margin:0;color:#526174;font-size:16px;line-height:1.65">Use this secure, one-time link to confirm that you control this address.</p><a href="${verificationUrl.toString()}" style="display:inline-block;margin-top:26px;padding:13px 18px;border-radius:9px;background:#2463d4;color:#ffffff;font-size:15px;font-weight:700;text-decoration:none">Confirm email address</a><p style="margin:24px 0 0;color:#778397;font-size:13px;line-height:1.5">The link expires in 24 hours and can only be used once. If you did not request it, you can safely ignore this email.</p></div></section></main></body></html>`,
+  });
+}
+
 export async function sendPasswordResetEmail(input: {
   email: string;
   token: string;

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const vouchOptions = [
   {
@@ -46,31 +46,50 @@ export function ProfileVouch({
   const [savedKind, setSavedKind] = useState<VouchKind | null>(initialVouch);
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (isOpen) dialogRef.current?.focus();
+  }, [isOpen]);
+
+  function closeDialog() {
+    setIsOpen(false);
+    window.setTimeout(() => triggerRef.current?.focus(), 0);
+  }
 
   async function save(kind: VouchKind) {
     setStatus('saving');
     setError(null);
-    const response = await fetch(`/api/profiles/${recipientId}/vouches`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ kind }),
-    });
-    if (!response.ok) {
-      const body = (await response.json().catch(() => ({ error: 'VOUCH_FAILED' }))) as {
-        error?: string;
-      };
-      setError(errorCopy[body.error ?? ''] ?? 'Your vouch could not be saved. Please try again.');
+    try {
+      const response = await fetch(`/api/profiles/${recipientId}/vouches`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ kind }),
+      });
+      if (!response.ok) {
+        const body = (await response.json().catch(() => ({ error: 'VOUCH_FAILED' }))) as {
+          error?: string;
+        };
+        setError(errorCopy[body.error ?? ''] ?? 'Your vouch could not be saved. Please try again.');
+        setStatus('error');
+        return;
+      }
+      setSavedKind(kind);
+      setStatus('saved');
+    } catch {
+      setError(
+        'Your vouch could not be saved because the network is unavailable. Please try again.',
+      );
       setStatus('error');
-      return;
     }
-    setSavedKind(kind);
-    setStatus('saved');
   }
 
   return (
     <div className="profile-vouch-control">
       <button
         className="vouch-trigger"
+        ref={triggerRef}
         type="button"
         onClick={() => {
           setError(null);
@@ -82,16 +101,17 @@ export function ProfileVouch({
         {savedKind === null ? 'Vouch' : 'Update vouch'}
       </button>
       {isOpen ? (
-        <div className="vouch-backdrop" role="presentation" onMouseDown={() => setIsOpen(false)}>
+        <div className="vouch-backdrop" role="presentation" onMouseDown={closeDialog}>
           <section
             aria-describedby="vouch-description"
             aria-labelledby="vouch-title"
             aria-modal="true"
             className="vouch-dialog"
             onKeyDown={(event) => {
-              if (event.key === 'Escape') setIsOpen(false);
+              if (event.key === 'Escape') closeDialog();
             }}
             onMouseDown={(event) => event.stopPropagation()}
+            ref={dialogRef}
             role="dialog"
             tabIndex={-1}
           >
@@ -99,7 +119,7 @@ export function ProfileVouch({
               aria-label="Close vouch dialog"
               className="vouch-close"
               type="button"
-              onClick={() => setIsOpen(false)}
+              onClick={closeDialog}
             >
               ×
             </button>

@@ -16,6 +16,7 @@ interface Recommendation {
 export function DiscoverClient() {
   const [items, setItems] = useState<Recommendation[] | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [dismissingId, setDismissingId] = useState<string | null>(null);
   useEffect(() => {
     fetch('/api/network/discover')
       .then(async (response) => {
@@ -30,15 +31,23 @@ export function DiscoverClient() {
       );
   }, []);
   async function dismiss(candidateId: string) {
-    const response = await fetch('/api/network/discover', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ candidateId, feedback: 'DISMISSED' }),
-    });
-    if (response.ok) {
-      setItems((current) => current?.filter((item) => item.user_id !== candidateId) ?? null);
-    } else {
+    setDismissingId(candidateId);
+    setError(null);
+    try {
+      const response = await fetch('/api/network/discover', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ candidateId, feedback: 'DISMISSED' }),
+      });
+      if (response.ok) {
+        setItems((current) => current?.filter((item) => item.user_id !== candidateId) ?? null);
+      } else {
+        setError('The suggestion could not be removed. Please try again.');
+      }
+    } catch {
       setError('The suggestion could not be removed. Please try again.');
+    } finally {
+      setDismissingId(null);
     }
   }
   return (
@@ -78,8 +87,12 @@ export function DiscoverClient() {
               <p>
                 <Link href={`/vouch/${item.slug}`}>View profile</Link>
               </p>
-              <button type="button" onClick={() => void dismiss(item.user_id)}>
-                Remove suggestion
+              <button
+                disabled={dismissingId === item.user_id}
+                type="button"
+                onClick={() => void dismiss(item.user_id)}
+              >
+                {dismissingId === item.user_id ? 'Removing…' : 'Remove suggestion'}
               </button>
             </article>
           ))}

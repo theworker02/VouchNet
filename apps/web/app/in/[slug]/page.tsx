@@ -8,6 +8,7 @@ import { RelationshipActions } from '../../components/relationship-actions';
 import { ProfileVouch } from '../../components/profile-vouch';
 import { ProfileVouchRoster } from '../../components/profile-vouch-roster';
 import { getProfileVouches } from '../../lib/vouches';
+import { recordProfileView } from '../../lib/profile-analytics';
 
 export async function generateMetadata({
   params,
@@ -38,6 +39,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
   const actor = await getCurrentActor();
   const profile = await getVisibleProfile(actor?.userId ?? null, (await params).slug);
   if (profile === null) notFound();
+  await recordProfileView(profile.userId, actor?.userId ?? null).catch(() => undefined);
   const vouchData = await getProfileVouches(actor?.userId ?? null, profile.userId);
   if (actor === null) return <PublicProfile profile={profile} vouchData={vouchData} />;
   return (
@@ -78,23 +80,28 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
         </div>
       </section>
       {profile.userId === actor.userId ? (
-        <section className="profile-metrics">
-          <article>
-            <strong>—</strong>
-            <span>Profile views</span>
-            <small>Last 30 days</small>
-          </article>
-          <article>
-            <strong>—</strong>
-            <span>Post impressions</span>
-            <small>Available after publishing</small>
-          </article>
-          <article>
-            <strong>—</strong>
-            <span>Search appearances</span>
-            <small>Privacy-respecting analytics</small>
-          </article>
-        </section>
+        <>
+          <section className="profile-metrics">
+            <article>
+              <strong>—</strong>
+              <span>Profile views</span>
+              <small>Last 30 days</small>
+            </article>
+            <article>
+              <strong>—</strong>
+              <span>Post impressions</span>
+              <small>Available after publishing</small>
+            </article>
+            <article>
+              <strong>—</strong>
+              <span>Search appearances</span>
+              <small>Privacy-respecting analytics</small>
+            </article>
+          </section>
+          <Link className="secondary profile-analytics-link" href={`/in/${profile.slug}/analytics`}>
+            Open profile analytics
+          </Link>
+        </>
       ) : null}
       <section className="profile-section profile-featured">
         <h2>Featured work</h2>

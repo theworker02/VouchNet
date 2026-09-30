@@ -27,45 +27,56 @@ export function DeveloperClients() {
     setStatus('saving');
     setCreated(null);
     const data = new FormData(form);
-    const response = await fetch('/api/developer/clients', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        name: data.get('name'),
-        redirectUris: String(data.get('redirectUri') ?? '')
-          .split(/\r?\n/)
-          .map((uri) => uri.trim())
-          .filter(Boolean),
-        scopes: [
-          'profile:read',
-          ...(data.get('profileEmail') === 'on' ? ['profile:email'] : []),
-          ...(data.get('skills') === 'on' ? ['skills:verify'] : []),
-          ...(data.get('resume') === 'on' ? ['resume:read'] : []),
-        ],
-      }),
-    });
-    if (!response.ok) {
+    try {
+      const response = await fetch('/api/developer/clients', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          name: data.get('name'),
+          redirectUris: String(data.get('redirectUri') ?? '')
+            .split(/\r?\n/)
+            .map((uri) => uri.trim())
+            .filter(Boolean),
+          scopes: [
+            'profile:read',
+            ...(data.get('profileEmail') === 'on' ? ['profile:email'] : []),
+            ...(data.get('skills') === 'on' ? ['skills:verify'] : []),
+            ...(data.get('resume') === 'on' ? ['resume:read'] : []),
+          ],
+        }),
+      });
+      if (!response.ok) {
+        setStatus('error');
+        return;
+      }
+      const body = (await response.json()) as {
+        client: { clientId: string; clientSecret: string };
+      };
+      setCreated(body.client);
+      form.reset();
+      const reloaded = await fetch('/api/developer/clients');
+      if (reloaded.ok) setClients(((await reloaded.json()) as { clients: Client[] }).clients);
+      setStatus('idle');
+    } catch {
       setStatus('error');
-      return;
     }
-    const body = (await response.json()) as { client: { clientId: string; clientSecret: string } };
-    setCreated(body.client);
-    form.reset();
-    const reloaded = await fetch('/api/developer/clients');
-    if (reloaded.ok) setClients(((await reloaded.json()) as { clients: Client[] }).clients);
-    setStatus('idle');
   }
   async function revoke(id: string) {
-    const response = await fetch(`/api/developer/clients/${id}`, { method: 'DELETE' });
-    if (!response.ok) {
+    setStatus('idle');
+    try {
+      const response = await fetch(`/api/developer/clients/${id}`, { method: 'DELETE' });
+      if (!response.ok) {
+        setStatus('error');
+        return;
+      }
+      setClients((items) =>
+        items.map((client) =>
+          client.id === id ? { ...client, revoked_at: new Date().toISOString() } : client,
+        ),
+      );
+    } catch {
       setStatus('error');
-      return;
     }
-    setClients((items) =>
-      items.map((client) =>
-        client.id === id ? { ...client, revoked_at: new Date().toISOString() } : client,
-      ),
-    );
   }
   return (
     <div className="developer-clients">
@@ -107,7 +118,8 @@ export function DeveloperClients() {
       ) : null}
       {status === 'error' ? (
         <p className="form-error">
-          The client could not be saved. Check its exact callback URLs and try again.
+          The integration request could not be completed. Check the callback URLs and connection,
+          then try again.
         </p>
       ) : null}
       <section className="developer-client-list">

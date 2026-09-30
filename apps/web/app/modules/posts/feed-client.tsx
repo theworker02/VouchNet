@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FocusEvent, FormEvent, KeyboardEvent, useEffect, useId, useMemo, useState } from 'react';
 import type { FeedPost, PostCategory, PostVisibility, ReactionType } from './service';
 
 const categories: readonly PostCategory[] = ['TECHNICAL', 'PROJECT', 'HIRING', 'STATUS', 'OPINION'];
@@ -93,6 +93,47 @@ function PostCard({
   );
 }
 
+function SuggestedSignalStream() {
+  const signals = [
+    {
+      topic: 'Systems note',
+      title: 'How to make a migration plan that survives production reality',
+      detail:
+        'A practical starting point for schema changes, rollback boundaries, and operational ownership.',
+      href: '/search?q=postgres%20migration',
+    },
+    {
+      topic: 'Architecture discussion',
+      title: 'Where compute-shader pipelines earn their complexity',
+      detail:
+        'Explore public profiles and project context around graphics, systems, and performance work.',
+      href: '/search?q=compute%20shaders',
+    },
+    {
+      topic: 'Career signal',
+      title: 'Transparent technical roles with compensation context',
+      detail: 'Browse currently sourced roles without leaving an empty feed behind.',
+      href: '/jobs',
+    },
+  ] as const;
+  return (
+    <section className="suggested-signal-stream" aria-label="Suggested signals">
+      <div className="suggested-signal-heading">
+        <span>Suggested signal</span>
+        <p>Platform-curated starting points while you build your network.</p>
+      </div>
+      {signals.map((signal) => (
+        <article key={signal.title}>
+          <p>{signal.topic}</p>
+          <h2>{signal.title}</h2>
+          <span>{signal.detail}</span>
+          <Link href={signal.href}>Explore this signal</Link>
+        </article>
+      ))}
+    </section>
+  );
+}
+
 export function FeedClient() {
   const [posts, setPosts] = useState<FeedPost[] | null>(null);
   const [mode, setMode] = useState<'CHRONOLOGICAL' | 'PEER_VERIFIED'>('CHRONOLOGICAL');
@@ -102,6 +143,8 @@ export function FeedClient() {
   const [category, setCategory] = useState<PostCategory>('TECHNICAL');
   const [visibility, setVisibility] = useState<PostVisibility>('PUBLIC');
   const [picker, setPicker] = useState<'category' | 'visibility' | null>(null);
+  const categoryPickerId = useId();
+  const visibilityPickerId = useId();
   async function load() {
     try {
       const data = await requestFeed(mode, hidden);
@@ -134,37 +177,46 @@ export function FeedClient() {
     setIsSubmitting(true);
     setStatus(null);
     const form = new FormData(event.currentTarget);
-    const response = await fetch('/api/posts', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        bodyMarkdown: String(form.get('bodyMarkdown') ?? ''),
-        category: String(form.get('category') ?? 'TECHNICAL'),
-        visibility: String(form.get('visibility') ?? 'PUBLIC'),
-        codeSnippets: [],
-        mediaUrls: [],
-        mentionedUserIds: [],
-      }),
-    });
-    setIsSubmitting(false);
-    if (!response.ok) {
-      setStatus('Your post could not be published.');
-      return;
+    try {
+      const response = await fetch('/api/posts', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          bodyMarkdown: String(form.get('bodyMarkdown') ?? ''),
+          category: String(form.get('category') ?? 'TECHNICAL'),
+          visibility: String(form.get('visibility') ?? 'PUBLIC'),
+          codeSnippets: [],
+          mediaUrls: [],
+          mentionedUserIds: [],
+        }),
+      });
+      if (!response.ok) {
+        setStatus('Your post could not be published.');
+        return;
+      }
+      event.currentTarget.reset();
+      await load();
+    } catch {
+      setStatus('Your post could not be published because the network is unavailable. Try again.');
+    } finally {
+      setIsSubmitting(false);
     }
-    event.currentTarget.reset();
-    await load();
   }
   async function react(postId: string, reactionType: ReactionType) {
-    const response = await fetch(`/api/posts/${postId}/reactions`, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ reactionType }),
-    });
-    if (!response.ok) {
+    try {
+      const response = await fetch(`/api/posts/${postId}/reactions`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ reactionType }),
+      });
+      if (!response.ok) {
+        setStatus('That reaction could not be saved.');
+        return;
+      }
+      await load();
+    } catch {
       setStatus('That reaction could not be saved.');
-      return;
     }
-    await load();
   }
   function toggleCategory(category: PostCategory) {
     setHidden((current) =>
@@ -172,6 +224,16 @@ export function FeedClient() {
         ? current.filter((item) => item !== category)
         : [...current, category],
     );
+  }
+  function closePickerWhenFocusLeaves(event: FocusEvent<HTMLDivElement>) {
+    if (event.relatedTarget instanceof Node && event.currentTarget.contains(event.relatedTarget))
+      return;
+    setPicker(null);
+  }
+  function handlePickerKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== 'Escape') return;
+    event.preventDefault();
+    setPicker(null);
   }
   return (
     <section className="feed-experience">
@@ -195,8 +257,15 @@ export function FeedClient() {
         <div className="composer-controls">
           <input name="category" type="hidden" value={category} />
           <input name="visibility" type="hidden" value={visibility} />
-          <div className="composer-picker">
+          <div
+            className="composer-picker"
+            onBlur={closePickerWhenFocusLeaves}
+            onKeyDown={handlePickerKeyDown}
+          >
             <button
+              aria-controls={categoryPickerId}
+              aria-expanded={picker === 'category'}
+              aria-haspopup="dialog"
               type="button"
               className="composer-picker-trigger"
               onClick={() => setPicker(picker === 'category' ? null : 'category')}
@@ -205,9 +274,16 @@ export function FeedClient() {
               {category.slice(1).toLowerCase()} <span>⌄</span>
             </button>
             {picker === 'category' ? (
-              <div className="composer-picker-menu">
+              <div
+                aria-label="Choose a post category"
+                className="composer-picker-menu"
+                id={categoryPickerId}
+                role="menu"
+              >
                 {categories.map((item) => (
                   <button
+                    aria-checked={category === item}
+                    role="menuitemradio"
                     type="button"
                     key={item}
                     onClick={() => {
@@ -235,8 +311,15 @@ export function FeedClient() {
               </div>
             ) : null}
           </div>
-          <div className="composer-picker">
+          <div
+            className="composer-picker"
+            onBlur={closePickerWhenFocusLeaves}
+            onKeyDown={handlePickerKeyDown}
+          >
             <button
+              aria-controls={visibilityPickerId}
+              aria-expanded={picker === 'visibility'}
+              aria-haspopup="dialog"
               type="button"
               className="composer-picker-trigger"
               onClick={() => setPicker(picker === 'visibility' ? null : 'visibility')}
@@ -250,9 +333,16 @@ export function FeedClient() {
               <span>⌄</span>
             </button>
             {picker === 'visibility' ? (
-              <div className="composer-picker-menu visibility-menu">
+              <div
+                aria-label="Choose post visibility"
+                className="composer-picker-menu visibility-menu"
+                id={visibilityPickerId}
+                role="menu"
+              >
                 {(['PUBLIC', 'FOLLOWERS', 'CONTACTS'] as PostVisibility[]).map((item) => (
                   <button
+                    aria-checked={visibility === item}
+                    role="menuitemradio"
                     type="button"
                     key={item}
                     onClick={() => {
@@ -325,21 +415,23 @@ export function FeedClient() {
           <p>Loading your eligible feed…</p>
         </section>
       ) : posts.length === 0 ? (
-        <section className="feed-empty">
-          <h2>No eligible posts yet</h2>
-          <p>
-            Start your feed with a useful post, or discover people and organizations worth
-            following.
-          </p>
-          <div className="actions">
-            <Link className="primary" href="/network/discover">
-              Discover people
-            </Link>
-            <Link className="secondary" href="/jobs">
-              Browse jobs
-            </Link>
-          </div>
-        </section>
+        <>
+          <section className="feed-empty">
+            <h2>Your feed will get more personal as you follow people.</h2>
+            <p>
+              Start with a useful post, then use these curated signals to find relevant context.
+            </p>
+            <div className="actions">
+              <Link className="primary" href="/network/discover">
+                Discover people
+              </Link>
+              <Link className="secondary" href="/jobs">
+                Browse jobs
+              </Link>
+            </div>
+          </section>
+          <SuggestedSignalStream />
+        </>
       ) : (
         <div className="post-list">
           {posts.map((post) => (
