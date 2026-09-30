@@ -1,13 +1,21 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getPublicProject } from '../../lib/projects';
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
   const project = await getPublicProject((await params).slug);
   if (project === null) return { title: 'Project not found · VouchNet' };
+  const description = project.summary ?? `A project by ${project.ownerName} on VouchNet.`;
   return {
     title: `${project.name} · VouchNet`,
-    description: project.summary ?? `A project by ${project.ownerName} on VouchNet.`,
+    description,
+    alternates: { canonical: `/projects/${project.slug}` },
+    openGraph: { type: 'article', title: `${project.name} · VouchNet`, description },
   };
 }
 

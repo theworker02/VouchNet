@@ -1,13 +1,24 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getOrganization, listPublicJobs } from '../../lib/directory';
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
   const organization = await getOrganization((await params).slug);
   if (organization === null) return { title: 'Organization not found · VouchNet' };
   return {
     title: `${organization.name} · VouchNet`,
     description: organization.tagline ?? organization.description,
+    alternates: { canonical: `/company/${organization.slug}` },
+    openGraph: {
+      type: 'website',
+      title: `${organization.name} · VouchNet`,
+      description: organization.tagline ?? organization.description,
+    },
   };
 }
 
