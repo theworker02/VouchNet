@@ -118,7 +118,10 @@ export function FeedClient() {
           if (active) setPosts(data.posts);
         })
         .catch(() => {
-          if (active) setStatus('The feed is unavailable right now.');
+          if (active) {
+            setPosts([]);
+            setStatus('The feed could not be refreshed. You can still publish a post or retry.');
+          }
         });
     }, 0);
     return () => {
@@ -325,9 +328,17 @@ export function FeedClient() {
         <section className="feed-empty">
           <h2>No eligible posts yet</h2>
           <p>
-            VouchNet does not fabricate activity. Publish a useful update or build your network to
-            change this.
+            Start your feed with a useful post, or discover people and organizations worth
+            following.
           </p>
+          <div className="actions">
+            <Link className="primary" href="/network/discover">
+              Discover people
+            </Link>
+            <Link className="secondary" href="/jobs">
+              Browse jobs
+            </Link>
+          </div>
         </section>
       ) : (
         <div className="post-list">

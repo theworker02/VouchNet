@@ -48,8 +48,9 @@ export async function Shell({ children }: { children: React.ReactNode }) {
         <details className="work-menu">
           <summary>Work</summary>
           <div>
-            <Link href="/jobs">Post a job</Link>
-            <Link href="/jobs">Company tools</Link>
+            <Link href="/jobs">Browse transparent jobs</Link>
+            <Link href="/projects">Project showcase</Link>
+            <Link href="/network/discover">Find collaborators</Link>
             <Link href="/settings/developers">Developer portal</Link>
           </div>
         </details>

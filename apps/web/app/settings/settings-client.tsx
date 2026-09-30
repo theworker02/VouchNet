@@ -74,7 +74,21 @@ export function SettingsClient({ section }: { section: SettingSection }) {
     });
     setStatus(response.ok ? 'saved' : 'error');
   }
-  if (settings === null) return <p className="empty">Loading your settings…</p>;
+  if (settings === null)
+    return status === 'error' ? (
+      <section className="empty">
+        <h1>Settings are temporarily unavailable</h1>
+        <p>
+          Your preferences were not changed. Refresh to retry, or return to your profile while we
+          reconnect.
+        </p>
+        <Link className="secondary" href="/home">
+          Return home
+        </Link>
+      </section>
+    ) : (
+      <p className="empty">Loading your settings…</p>
+    );
   const privacyToggle = (key: keyof UserSettings['privacy'], text: string) => (
     <label className="setting-toggle">
       <input
