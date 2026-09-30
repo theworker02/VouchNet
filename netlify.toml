@@ -6,5 +6,9 @@
   NODE_VERSION = "24"
   PNPM_VERSION = "11.19.0"
   PNPM_FLAGS = "--shamefully-hoist"
+  # These values are deployment configuration, not credentials. Keeping them
+  # out of value-based scanning avoids false positives from public product text.
+  # SESSION_SECRET, RESEND_API_KEY, DATABASE_URL, and REDIS_URL stay scanned.
+  SECRETS_SCAN_OMIT_KEYS = "EMAIL_FROM,NEXUS_ENV,APP_URL"
 
 # Secrets belong in Netlify's environment-variable settings, never in this file.

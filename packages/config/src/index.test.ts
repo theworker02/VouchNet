@@ -6,7 +6,7 @@ describe('parseEnvironment', () => {
     expect(() =>
       parseEnvironment({
         DATABASE_URL: 'postgresql://localhost/nexus',
-        REDIS_URL: 'redis://localhost:6379',
+        REDIS_URL: 'redis://cache.test.invalid:16379',
         SESSION_SECRET: 'too-short',
       }),
     ).toThrow();

@@ -23,6 +23,14 @@ Set these in Netlify's project environment-variable UI, scoped to builds and run
 
 Never add these values to `netlify.toml`, GitHub Actions secrets visible in source, or `.env.example`.
 
+### Secrets Controller classification
+
+Mark `DATABASE_URL`, `REDIS_URL`, `SESSION_SECRET`, and `RESEND_API_KEY` as
+secret values in Netlify. `EMAIL_FROM`, `APP_URL`, and `NEXUS_ENV` are ordinary
+deployment configuration, so do not classify them as secret values. The build
+configuration excludes only those three non-secret keys from value-based secret
+scanning; credential-bearing keys remain scanned.
+
 ## Domain and email
 
 You do not need a custom domain to deploy. Use Netlify's generated subdomain first. Resend can be configured with its testing sender only for the Resend account inbox; before sending verification email to other people, obtain a domain, verify it in Resend, configure its DNS records, and change `EMAIL_FROM`.
