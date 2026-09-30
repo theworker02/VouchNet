@@ -1,0 +1,13 @@
+packages:
+  - apps/*
+  - packages/*
+
+# Required by Next.js/Vitest tooling; kept explicit so dependency lifecycle scripts are reviewed.
+onlyBuiltDependencies:
+  - argon2
+  - esbuild
+  - unrs-resolver
+allowBuilds:
+  argon2: true
+  esbuild: true
+  unrs-resolver: true

@@ -1,0 +1,32 @@
+{
+  "name": "@nexus/web",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint . --max-warnings=0",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "@nexus/auth": "workspace:*",
+    "@nexus/config": "workspace:*",
+    "@nexus/db": "workspace:*",
+    "@nexus/observability": "workspace:*",
+    "@nexus/permissions": "workspace:*",
+    "@nexus/profiles": "workspace:*",
+    "@nexus/recommendations": "workspace:*",
+    "@nexus/social": "workspace:*",
+    "@nexus/ui": "workspace:*",
+    "next": "^16.0.1",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "tailwindcss": "^4.1.16",
+    "zod": "^4.1.12"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2"
+  }
+}

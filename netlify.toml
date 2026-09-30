@@ -1,0 +1,10 @@
+[build]
+  command = "pnpm build"
+  publish = "apps/web/.next"
+
+[build.environment]
+  NODE_VERSION = "24"
+  PNPM_VERSION = "11.19.0"
+  PNPM_FLAGS = "--shamefully-hoist"
+
+# Secrets belong in Netlify's environment-variable settings, never in this file.

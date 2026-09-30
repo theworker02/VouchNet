@@ -1,0 +1,292 @@
+import {
+  createSecretToken,
+  hashPassword,
+  hashOpaqueToken,
+  normalizeEmail,
+  sessionCookie,
+  verifyPassword,
+} from '@nexus/auth';
+import { createSqlClient } from '@nexus/db';
+import { cache } from 'react';
+import { cookies } from 'next/headers';
+import { NextRequest, NextResponse } from 'next/server';
+
+const sessionName = 'nexus_session';
+const sessionDays = 30;
+
+function databaseUrl(): string {
+  const value = process.env.DATABASE_URL;
+  if (value === undefined) throw new Error('DATABASE_UNAVAILABLE');
+  return value;
+}
+
+function client() {
+  return createSqlClient(databaseUrl());
+}
+function baseSlug(firstName: string, lastName: string): string {
+  return `${firstName}-${lastName}`
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .slice(0, 32);
+}
+
+export async function registerHuman(input: {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+}) {
+  const sql = client();
+  const email = normalizeEmail(input.email);
+  const passwordHash = await hashPassword(input.password);
+  const verification = createSecretToken(24 * 60 * 60 * 1000);
+  const slug = `${baseSlug(input.firstName, input.lastName)}-${crypto.randomUUID().slice(0, 6)}`;
+  try {
+    const user = await sql.begin(async (transaction) => {
+      const rows = await transaction<
+        { id: string }[]
+      >`INSERT INTO users (password_hash) VALUES (${passwordHash}) RETURNING id`;
+      const created = rows[0];
+      if (created === undefined) throw new Error('USER_CREATION_FAILED');
+      await transaction`INSERT INTO user_emails (user_id,email_normalized) VALUES (${created.id},${email})`;
+      await transaction`INSERT INTO profiles (user_id,slug,first_name,last_name) VALUES (${created.id},${slug},${input.firstName.trim()},${input.lastName.trim()})`;
+      await transaction`INSERT INTO privacy_settings (user_id) VALUES (${created.id})`;
+      await transaction`INSERT INTO terms_acceptances (user_id,document_type,document_version) VALUES (${created.id},'TERMS','2026-09'),(${created.id},'PRIVACY','2026-09')`;
+      await transaction`INSERT INTO email_verifications (user_id,token_hash,expires_at) VALUES (${created.id},${verification.tokenHash},${verification.expiresAt})`;
+      return created;
+    });
+    return { userId: user.id, verificationToken: verification.token };
+  } finally {
+    await sql.end({ timeout: 1 });
+  }
+}
+
+export async function verifyEmail(token: string) {
+  const sql = client();
+  try {
+    return await sql.begin(async (transaction) => {
+      const rows = await transaction<
+        { user_id: string }[]
+      >`UPDATE email_verifications SET used_at = now() WHERE token_hash=${hashOpaqueToken(token)} AND used_at IS NULL AND expires_at > now() RETURNING user_id`;
+      const verification = rows[0];
+      if (verification === undefined) return false;
+      await transaction`UPDATE user_emails SET verified_at=now() WHERE user_id=${verification.user_id} AND is_primary=true`;
+      await transaction`UPDATE users SET status='ACTIVE',updated_at=now() WHERE id=${verification.user_id} AND status='PENDING_VERIFICATION'`;
+      return true;
+    });
+  } finally {
+    await sql.end({ timeout: 1 });
+  }
+}
+
+export async function login(emailInput: string, password: string) {
+  const sql = client();
+  try {
+    const rows = await sql<
+      { id: string; password_hash: string; status: string }[]
+    >`SELECT u.id,u.password_hash,u.status FROM users u JOIN user_emails e ON e.user_id=u.id WHERE e.email_normalized=${normalizeEmail(emailInput)} AND e.is_primary=true`;
+    const user = rows[0];
+    if (
+      user === undefined ||
+      user.status !== 'ACTIVE' ||
+      !(await verifyPassword(user.password_hash, password))
+    )
+      return null;
+    const token = createSecretToken(sessionDays * 24 * 60 * 60 * 1000);
+    await sql`INSERT INTO sessions (user_id,token_hash,expires_at) VALUES (${user.id},${token.tokenHash},${token.expiresAt})`;
+    return { userId: user.id, token: token.token };
+  } finally {
+    await sql.end({ timeout: 1 });
+  }
+}
+
+export async function beginPasswordReset(emailInput: string) {
+  const sql = client();
+  try {
+    const rows = await sql<
+      { id: string }[]
+    >`SELECT u.id FROM users u JOIN user_emails e ON e.user_id=u.id WHERE e.email_normalized=${normalizeEmail(emailInput)} AND e.is_primary=true AND u.status='ACTIVE'`;
+    const user = rows[0];
+    if (user === undefined) return null;
+    const reset = createSecretToken(60 * 60 * 1000);
+    await sql.begin(async (transaction) => {
+      await transaction`UPDATE password_resets SET used_at=now() WHERE user_id=${user.id} AND used_at IS NULL`;
+      await transaction`INSERT INTO password_resets (user_id,token_hash,expires_at) VALUES (${user.id},${reset.tokenHash},${reset.expiresAt})`;
+      await transaction`INSERT INTO security_events (user_id,event_type) VALUES (${user.id},'AUTH_PASSWORD_RESET_REQUESTED')`;
+    });
+    return reset.token;
+  } finally {
+    await sql.end({ timeout: 1 });
+  }
+}
+
+export async function resetPassword(token: string, password: string) {
+  const sql = client();
+  try {
+    const passwordHash = await hashPassword(password);
+    return await sql.begin(async (transaction) => {
+      const rows = await transaction<
+        { user_id: string }[]
+      >`UPDATE password_resets SET used_at=now() WHERE token_hash=${hashOpaqueToken(token)} AND used_at IS NULL AND expires_at>now() RETURNING user_id`;
+      const reset = rows[0];
+      if (reset === undefined) return false;
+      await transaction`UPDATE users SET password_hash=${passwordHash},updated_at=now() WHERE id=${reset.user_id}`;
+      await transaction`UPDATE sessions SET revoked_at=now() WHERE user_id=${reset.user_id} AND revoked_at IS NULL`;
+      await transaction`INSERT INTO security_events (user_id,event_type) VALUES (${reset.user_id},'AUTH_PASSWORD_RESET_COMPLETED')`;
+      return true;
+    });
+  } finally {
+    await sql.end({ timeout: 1 });
+  }
+}
+
+export async function actorFromRequest(
+  request: NextRequest,
+): Promise<{ userId: string; sessionId: string } | null> {
+  const token = request.cookies.get(sessionName)?.value;
+  return actorFromSessionToken(token);
+}
+
+/**
+ * Session validation is shared by route handlers and server-rendered pages.
+ * A cookie's presence is never treated as authentication without this lookup.
+ */
+export async function actorFromSessionToken(
+  token: string | undefined,
+): Promise<{ userId: string; sessionId: string } | null> {
+  if (token === undefined) return null;
+  const sql = client();
+  try {
+    const rows = await sql<
+      { user_id: string; id: string }[]
+    >`SELECT user_id,id FROM sessions WHERE token_hash=${hashOpaqueToken(token)} AND revoked_at IS NULL AND expires_at > now()`;
+    const session = rows[0];
+    if (session === undefined) return null;
+    await sql`UPDATE sessions SET last_active_at=now() WHERE id=${session.id}`;
+    return { userId: session.user_id, sessionId: session.id };
+  } finally {
+    await sql.end({ timeout: 1 });
+  }
+}
+
+/** The only current-user lookup used by server-rendered product routes. React request caching
+ * ensures a page tree does not independently validate the same session several times. */
+export const getCurrentActor = cache(async () => {
+  const cookieStore = await cookies();
+  return actorFromSessionToken(cookieStore.get(sessionName)?.value);
+});
+
+export async function getProfileSummary(userId: string): Promise<{
+  fullName: string;
+  headline: string | null;
+  slug: string;
+  location: string | null;
+  about: string | null;
+  onboardingStep: number;
+} | null> {
+  const sql = client();
+  try {
+    const rows = await sql<
+      {
+        first_name: string;
+        last_name: string;
+        headline: string | null;
+        slug: string;
+        location: string | null;
+        about: string | null;
+        onboarding_step: number;
+      }[]
+    >`
+      SELECT first_name,last_name,headline,slug,location,about,onboarding_step
+      FROM profiles
+      WHERE user_id=${userId}
+    `;
+    const profile = rows[0];
+    if (profile === undefined) return null;
+    return {
+      fullName: `${profile.first_name} ${profile.last_name}`,
+      headline: profile.headline,
+      slug: profile.slug,
+      location: profile.location,
+      about: profile.about,
+      onboardingStep: profile.onboarding_step,
+    };
+  } finally {
+    await sql.end({ timeout: 1 });
+  }
+}
+
+export async function updateOwnProfile(
+  userId: string,
+  input: {
+    headline: string | null;
+    location: string | null;
+    about: string | null;
+    onboardingStep: number;
+  },
+) {
+  const sql = client();
+  try {
+    await sql`
+      UPDATE profiles
+      SET headline=${input.headline},location=${input.location},about=${input.about},
+          onboarding_step=${input.onboardingStep},updated_at=now()
+      WHERE user_id=${userId}
+    `;
+  } finally {
+    await sql.end({ timeout: 1 });
+  }
+}
+
+export async function logout(request: NextRequest) {
+  const token = request.cookies.get(sessionName)?.value;
+  if (token !== undefined) {
+    const sql = client();
+    try {
+      await sql`UPDATE sessions SET revoked_at=now() WHERE token_hash=${hashOpaqueToken(token)} AND revoked_at IS NULL`;
+    } finally {
+      await sql.end({ timeout: 1 });
+    }
+  }
+}
+export async function listSessions(userId: string) {
+  const sql = client();
+  try {
+    return await sql<
+      { id: string; created_at: Date; last_active_at: Date; user_agent: string | null }[]
+    >`SELECT id,created_at,last_active_at,user_agent FROM sessions WHERE user_id=${userId} AND revoked_at IS NULL AND expires_at>now() ORDER BY last_active_at DESC`;
+  } finally {
+    await sql.end({ timeout: 1 });
+  }
+}
+export async function revokeSession(userId: string, sessionId: string) {
+  const sql = client();
+  try {
+    const rows = await sql<
+      { id: string }[]
+    >`UPDATE sessions SET revoked_at=now() WHERE id=${sessionId} AND user_id=${userId} AND revoked_at IS NULL RETURNING id`;
+    return rows.length === 1;
+  } finally {
+    await sql.end({ timeout: 1 });
+  }
+}
+export async function revokeOtherSessions(userId: string, currentSessionId: string) {
+  const sql = client();
+  try {
+    await sql`UPDATE sessions SET revoked_at=now() WHERE user_id=${userId} AND id<>${currentSessionId} AND revoked_at IS NULL`;
+  } finally {
+    await sql.end({ timeout: 1 });
+  }
+}
+export function attachSession(response: NextResponse, token: string) {
+  response.headers.set(
+    'set-cookie',
+    sessionCookie(sessionName, token, process.env.NEXUS_ENV === 'production'),
+  );
+  return response;
+}
+export function clearSession(response: NextResponse) {
+  response.headers.set('set-cookie', `${sessionName}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`);
+  return response;
+}

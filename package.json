@@ -1,0 +1,27 @@
+{
+  "name": "nexus",
+  "private": true,
+  "packageManager": "pnpm@11.19.0",
+  "scripts": {
+    "dev": "pnpm --filter @nexus/web dev",
+    "build": "pnpm --filter @nexus/web build",
+    "typecheck": "pnpm -r typecheck",
+    "lint": "pnpm -r lint",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "test": "pnpm -r test",
+    "db:generate": "pnpm --filter @nexus/db generate",
+    "db:migrate": "pnpm --filter @nexus/db migrate"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.1",
+    "eslint": "^9.39.1",
+    "eslint-config-next": "^16.0.1",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.8"
+  },
+  "dependencies": {
+    "argon2": "^0.44.0"
+  }
+}
