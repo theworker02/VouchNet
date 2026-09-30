@@ -3,6 +3,66 @@
 All notable changes to VouchNet are documented here. This project follows
 [Semantic Versioning](https://semver.org/).
 
+## [0.8.0] - 2026-09-30
+
+### Highlights
+
+- A polished, responsive VouchNet application surface now connects public discovery with an
+  authenticated professional workspace.
+- Public portfolio pages, project showcases, source-reviewed organizations, transparent jobs,
+  dynamic badges, and a daily platform challenge give the network useful entry points before a
+  large member graph exists.
+- Account verification is now a complete, resilient email-code flow with a branded transactional
+  email and automatic session establishment after valid confirmation.
+
+### Added
+
+- Public `/in/[username]` profile pages and `/projects/[slug]` project pages with canonical and
+  Open Graph metadata that respect profile visibility.
+- Authenticated project publishing with repository and live links, project tags, owner-only API
+  authorization, and copyable profile/project SVG badges for external READMEs and websites.
+- Public organization pages with technology signals and clear **Source reviewed** status; these
+  records do not imply organizational ownership or official verification.
+- A public job directory with 15 source-linked technical listings, visible numerical compensation
+  ranges, stack tags, source status, and external application links.
+- A platform-owned daily technical challenge that is explicitly attributed to the `SYSTEM` actor
+  rather than a fabricated member.
+- A launch playbook for a consent-based first cohort, concierge onboarding, and atomic-network
+  strategy.
+- Branded authentication shells, keyboard-friendly sign-in/sign-up flow, email confirmation code
+  entry, responsive navigation, refreshed home/network/feed surfaces, and dark/light-ready UI
+  primitives.
+
+### Changed
+
+- The public README now documents the actual product surface, local setup, deployment
+  expectations, architecture, security commitments, and current capability boundaries.
+- Profile and public directory pages now use request-time rendering where their content is backed
+  by database state, avoiding stale build-time data.
+- Documentation and implementation status were synchronized across architecture, database,
+  authentication, roadmap, and release material.
+
+### Database migrations
+
+- `0006_email_verification_codes` adds short-lived one-time verification codes.
+- `0007_public_directory_jobs_projects` adds public organization, technology, job, and project-tag
+  persistence plus reviewed directory seeds.
+- `0008_daily_platform_challenges` adds attributable daily editorial challenges.
+
+### Security and integrity
+
+- No fake users, synthetic relationship graph, fabricated reactions, or impersonated founder posts
+  were added. Founder posts must be authored by a real, verified human account.
+- Public visibility and blocking checks remain server-side; badge routes only expose selected public
+  profile/project information.
+
+### Known limitations
+
+- Organization ownership verification, internal applications, messaging, realtime notifications,
+  moderation workflows, and the MCP gateway are not included in this release.
+- Job listings are source-linked snapshots; availability must be confirmed at the source.
+- Daily challenge publication currently requires an editorial seed/workflow for the next date.
+
 ## [0.1.0] - 2026-09-30
 
 ### Added
@@ -36,3 +96,4 @@ All notable changes to VouchNet are documented here. This project follows
   operations. See `docs/IMPLEMENTATION_MATRIX.md`.
 
 [0.1.0]: https://github.com/theworker02/VouchNet/releases/tag/v0.1.0
+[0.8.0]: https://github.com/theworker02/VouchNet/releases/tag/v0.8.0

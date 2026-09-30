@@ -43,6 +43,27 @@
       "when": 1780603200000,
       "tag": "0005_surface_settings_media",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1780689600000,
+      "tag": "0006_email_verification_codes",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1780776000000,
+      "tag": "0007_public_directory_jobs_projects",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1780862400000,
+      "tag": "0008_daily_platform_challenges",
+      "breakpoints": true
     }
   ]
 }

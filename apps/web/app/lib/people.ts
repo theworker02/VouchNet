@@ -45,7 +45,7 @@ export async function searchPeople(viewerId: string, query: string): Promise<Per
 }
 
 export async function getVisibleProfile(
-  viewerId: string,
+  viewerId: string | null,
   slug: string,
 ): Promise<
   | (PersonCard & {
@@ -61,12 +61,12 @@ export async function getVisibleProfile(
              p.headline,p.location,p.about,p.visibility
       FROM profiles p
       WHERE p.slug=${slug}
-        AND (p.visibility IN ('PUBLIC','MEMBERS') OR p.user_id=${viewerId})
-        AND NOT EXISTS (
+        AND (p.visibility='PUBLIC' OR p.user_id=${viewerId})
+        AND (${viewerId}::uuid IS NULL OR NOT EXISTS (
           SELECT 1 FROM blocks b
           WHERE (b.blocker_id=${viewerId} AND b.blocked_id=p.user_id)
              OR (b.blocker_id=p.user_id AND b.blocked_id=${viewerId})
-        )
+        ))
     `;
     return rows[0] ?? null;
   } finally {

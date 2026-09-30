@@ -1,15 +1,41 @@
 import Link from 'next/link';
+import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Shell } from '../../components/shell';
 import { getCurrentActor } from '../../lib/identity';
 import { getVisibleProfile } from '../../lib/people';
 import { RelationshipActions } from '../../components/relationship-actions';
 
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const profile = await getVisibleProfile(null, (await params).slug);
+
+  if (profile === null) {
+    return {
+      title: 'Profile unavailable | VouchNet',
+      robots: { index: false, follow: false },
+    };
+  }
+
+  const name = `${profile.firstName} ${profile.lastName}`;
+  const description = profile.headline ?? `Professional profile for ${name} on VouchNet.`;
+
+  return {
+    title: `${name} | VouchNet`,
+    description,
+    alternates: { canonical: `/in/${profile.slug}` },
+    openGraph: { title: `${name} | VouchNet`, description, type: 'profile' },
+  };
+}
+
 export default async function ProfilePage({ params }: { params: Promise<{ slug: string }> }) {
   const actor = await getCurrentActor();
-  if (actor === null) return null;
-  const profile = await getVisibleProfile(actor.userId, (await params).slug);
+  const profile = await getVisibleProfile(actor?.userId ?? null, (await params).slug);
   if (profile === null) notFound();
+  if (actor === null) return <PublicProfile profile={profile} />;
   return (
     <Shell>
       <section className="profile-surface">
@@ -97,5 +123,62 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
         </p>
       </section>
     </Shell>
+  );
+}
+
+function PublicProfile({
+  profile,
+}: {
+  profile: NonNullable<Awaited<ReturnType<typeof getVisibleProfile>>>;
+}) {
+  return (
+    <main className="public-profile">
+      <header className="public-nav">
+        <Link className="brand" href="/">
+          VouchNet
+        </Link>
+        <div>
+          <Link className="quiet-link" href="/login">
+            Sign in
+          </Link>
+          <Link className="primary" href="/signup">
+            Build your profile
+          </Link>
+        </div>
+      </header>
+      <section className="public-profile-hero">
+        <div className="profile-cover" />
+        <div className="public-profile-identity">
+          <span className="profile-avatar">
+            {profile.firstName[0]}
+            {profile.lastName[0]}
+          </span>
+          <div>
+            <p className="eyebrow">Professional profile</p>
+            <h1>
+              {profile.firstName} {profile.lastName}
+            </h1>
+            <p>{profile.headline ?? 'VouchNet member'}</p>
+            <span>{profile.location ?? 'Location not listed'}</span>
+          </div>
+        </div>
+      </section>
+      <section className="public-profile-content">
+        <article>
+          <h2>About</h2>
+          <p>{profile.about ?? 'This member has not added an about section yet.'}</p>
+        </article>
+        <aside>
+          <h2>Credible professional context</h2>
+          <p>
+            VouchNet profiles are designed for real work, deliberate relationships, and public
+            evidence.
+          </p>
+          <Link className="primary" href="/signup">
+            Create your profile
+          </Link>
+        </aside>
+      </section>
+    </main>
   );
 }

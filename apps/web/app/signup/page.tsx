@@ -1,5 +1,5 @@
-import Link from 'next/link';
 import { AuthForm } from '../components/auth-form';
+import { AuthShell } from '../components/auth-shell';
 
 const signupErrors = {
   ACCOUNT_EXISTS: 'If an account already exists for this email, sign in or reset its password.',
@@ -21,11 +21,16 @@ export default async function Signup({
       ? signupErrors[error as keyof typeof signupErrors]
       : null;
   return (
-    <main className="auth">
-      <Link className="brand" href="/">
-        VouchNet
-      </Link>
-      <h1>Create your professional identity</h1>
+    <AuthShell
+      eyebrow="Create your profile"
+      title="Start with the work you want to be known for"
+      description="Set up your account in a few minutes, then add the professional context that matters."
+      footer={
+        <>
+          Already have an account? <a href="/login">Sign in</a>
+        </>
+      }
+    >
       {message !== null ? (
         <p className="form-error" role="alert">
           {message}
@@ -47,7 +52,7 @@ export default async function Signup({
           <input name="email" type="email" required autoComplete="email" />
         </label>
         <label>
-          Password
+          Password <small>12 characters minimum</small>
           <input
             name="password"
             type="password"
@@ -56,17 +61,16 @@ export default async function Signup({
             autoComplete="new-password"
           />
         </label>
-        <label className="check">
-          <input name="acceptsTerms" type="checkbox" required /> I accept the Terms of Service.
-        </label>
-        <label className="check">
-          <input name="acceptsPrivacy" type="checkbox" required /> I accept the Privacy Policy.
-        </label>
-        <button>Create account</button>
+        <div className="auth-agreements">
+          <label className="check">
+            <input name="acceptsTerms" type="checkbox" required /> I accept the Terms of Service.
+          </label>
+          <label className="check">
+            <input name="acceptsPrivacy" type="checkbox" required /> I accept the Privacy Policy.
+          </label>
+        </div>
+        <button className="auth-submit">Create account</button>
       </AuthForm>
-      <p>
-        Already a member? <Link href="/login">Sign in</Link>
-      </p>
-    </main>
+    </AuthShell>
   );
 }

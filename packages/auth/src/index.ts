@@ -1,4 +1,4 @@
-import { createHash, randomBytes } from 'node:crypto';
+import { createHash, randomBytes, randomInt } from 'node:crypto';
 import argon2 from 'argon2';
 import { z } from 'zod';
 
@@ -43,6 +43,17 @@ export function createSecretToken(ttlMilliseconds: number, now = new Date()): Se
 }
 export function hashOpaqueToken(token: string): string {
   return createHash('sha256').update(token).digest('hex');
+}
+
+export interface VerificationCode {
+  code: string;
+  codeHash: string;
+}
+
+/** A short-lived convenience code for a person who already controls their email inbox. */
+export function createVerificationCode(): VerificationCode {
+  const code = randomInt(100_000, 1_000_000).toString();
+  return { code, codeHash: hashOpaqueToken(code) };
 }
 export function sessionCookie(name: string, token: string, secure: boolean): string {
   return `${name}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000${secure ? '; Secure' : ''}`;

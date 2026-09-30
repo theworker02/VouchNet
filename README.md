@@ -27,6 +27,40 @@ Human sessions, integrations, MCP clients, system workers, and moderators are di
 principals. Protected social actions are designed to require server-verifiable human approval;
 client-side assertions never establish permission.
 
+## Why VouchNet
+
+Professional networks are useful when they preserve context: what someone built, why it matters,
+and who can credibly speak to the work. VouchNet is being built for that signal. It favors public
+proof, deliberate relationships, transparent opportunities, and human decision-making over
+engagement loops or automated participation.
+
+The platform is deliberately original. It does not use LinkedIn code, branding, assets, or APIs,
+and it does not attempt to make software agents appear to be ordinary members.
+
+### Product principles
+
+| Principle | What it means in the product |
+| --- | --- |
+| Human participation | A profile represents a person. Integrations and background systems use their own attributable actor types. |
+| Proof before promotion | Projects, public links, technical work, and verified context are first-class profile material. |
+| Transparent opportunity | Source-linked job listings show a numeric compensation range before an applicant leaves the platform. |
+| Privacy by design | Visibility and block rules are enforced by server-side queries across public and authenticated routes. |
+| Honest early-stage density | Curated organizations, jobs, and system-owned challenges are labelled as such; VouchNet never pads the network with fake people or engagement. |
+
+## Public surfaces
+
+Visitors can explore useful professional context without creating an account:
+
+- **Profiles** — `/in/[username]` respects visibility settings and emits canonical/Open Graph metadata.
+- **Projects** — `/projects/[slug]` presents a member-owned project with technology tags, repository,
+  live-site links, and a shareable badge.
+- **Organizations** — `/company/[slug]` presents source-reviewed directory records with clear status
+  disclosure and public technology references.
+- **Jobs** — `/jobs` provides source-linked technical roles with numerical salary ranges and explicit
+  external application links.
+- **Daily challenge** — `/games` is a short platform-owned technical self-check, never a simulated
+  member post.
+
 ## Current product surface
 
 VouchNet is an active early-stage product. The current vertical slices include:
@@ -36,12 +70,27 @@ VouchNet is an active early-stage product. The current vertical slices include:
 - People discovery, search, follows, Contact requests, blocks, and network management
 - Early high-signal post/feed and functional-reaction foundations
 - Account settings, session controls, and production Resend/Netlify configuration paths
+- A responsive Signal Desk application shell with a unified home, network, feed, and credential flow
+- Public, SEO-ready profile and project pages; project publishing; copyable, dynamic SVG profile badges
+- A source-reviewed organization directory and transparent external-job directory with salary ranges
+- A platform-owned daily technical challenge, published by an explicit system actor rather than a fake member
 - PostgreSQL migrations, Docker-based local PostgreSQL + Redis, and typed API boundaries
 
 Incomplete routes intentionally show unavailable states rather than pretend the feature works.
-Messaging, organizations, jobs, full notifications, moderation, and the MCP gateway remain in
-development. See the [implementation matrix](docs/IMPLEMENTATION_MATRIX.md) for authoritative
-feature-by-feature status.
+Messaging, internal job applications, organization administration, full notifications, moderation,
+and the MCP gateway remain in development. Public directory records are expressly not official
+organization pages unless a future domain-verification workflow confirms ownership. See the
+[implementation matrix](docs/IMPLEMENTATION_MATRIX.md) for authoritative feature-by-feature status.
+
+## A note on early content
+
+VouchNet seeds public structural data, not fabricated participation. The directory contains public
+source-reviewed organization records and source-linked roles, each displayed with its actual
+status. A platform challenge is explicitly attributed to the system actor. Social posts, comments,
+contacts, endorsements, and founder activity must come from real, accountable human accounts.
+
+The first recommended cohort is a focused group of open-source CLI builders. The rationale,
+consent-based invite approach, and launch checks are in the [launch playbook](docs/LAUNCH.md).
 
 ## Architecture
 
@@ -138,6 +187,30 @@ Before treating a deployment as ready, verify:
 2. A test sign-up sends a confirmation message through Resend.
 3. The confirmation link returns to `https://vouchnet.dev`.
 
+### Required production migration step
+
+Deploy application code only after the database has received the matching migrations. This release
+includes migrations `0006` through `0008`; run `pnpm db:migrate` with the production
+`DATABASE_URL` available to the migration process. Never place the connection string in Git or a
+client-side environment variable.
+
+## Development workflow
+
+Use the scripts below before proposing a change. The repository is intentionally strict about
+types, linting, formatting, and build failures:
+
+```bash
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm format:check
+pnpm build
+```
+
+When adding a user-facing feature, include real loading, empty, success, and error states. When
+adding a state-changing route, enforce schema validation, session authorization, rate/trust policy
+where applicable, and audit handling without exposing secrets or unnecessary personal content.
+
 ## Documentation
 
 - [Architecture](docs/ARCHITECTURE.md)
@@ -149,10 +222,11 @@ Before treating a deployment as ready, verify:
 - [MCP architecture](docs/MCP.md)
 - [Threat model](docs/THREAT_MODEL.md)
 - [Roadmap](docs/ROADMAP.md)
+- [Launch playbook](docs/LAUNCH.md)
 - [Release notes](CHANGELOG.md)
 
 ## Status
 
-The public baseline is tagged [v0.1.0](https://github.com/theworker02/VouchNet/releases/tag/v0.1.0).
+The current release is [v0.8.0](https://github.com/theworker02/VouchNet/releases/tag/v0.8.0).
 VouchNet is not yet a production-complete social network; the implementation matrix is the source
 of truth for capability readiness and deliberate scope boundaries.

@@ -1,5 +1,6 @@
 import {
   createSecretToken,
+  createVerificationCode,
   hashPassword,
   hashOpaqueToken,
   normalizeEmail,
@@ -56,6 +57,7 @@ export async function registerHuman(input: {
   const email = normalizeEmail(input.email);
   const passwordHash = await hashPassword(input.password);
   const verification = createSecretToken(24 * 60 * 60 * 1000);
+  const verificationCode = createVerificationCode();
   const slug = `${baseSlug(input.firstName, input.lastName)}-${crypto.randomUUID().slice(0, 6)}`;
   try {
     const user = await sql.begin(async (transaction) => {
@@ -86,7 +88,7 @@ export async function registerHuman(input: {
         // Replacing the unused token invalidates any prior email before a fresh one is sent. The
         // one-minute cooldown prevents this retry path from becoming an email-sending primitive.
         await transaction`UPDATE email_verifications SET used_at=now() WHERE user_id=${existing.id} AND used_at IS NULL`;
-        await transaction`INSERT INTO email_verifications (user_id,token_hash,expires_at) VALUES (${existing.id},${verification.tokenHash},${verification.expiresAt})`;
+        await transaction`INSERT INTO email_verifications (user_id,token_hash,code_hash,expires_at) VALUES (${existing.id},${verification.tokenHash},${verificationCode.codeHash},${verification.expiresAt})`;
         return existing;
       }
       const rows = await transaction<
@@ -98,10 +100,14 @@ export async function registerHuman(input: {
       await transaction`INSERT INTO profiles (user_id,slug,first_name,last_name) VALUES (${created.id},${slug},${input.firstName.trim()},${input.lastName.trim()})`;
       await transaction`INSERT INTO privacy_settings (user_id) VALUES (${created.id})`;
       await transaction`INSERT INTO terms_acceptances (user_id,document_type,document_version) VALUES (${created.id},'TERMS','2026-09'),(${created.id},'PRIVACY','2026-09')`;
-      await transaction`INSERT INTO email_verifications (user_id,token_hash,expires_at) VALUES (${created.id},${verification.tokenHash},${verification.expiresAt})`;
+      await transaction`INSERT INTO email_verifications (user_id,token_hash,code_hash,expires_at) VALUES (${created.id},${verification.tokenHash},${verificationCode.codeHash},${verification.expiresAt})`;
       return created;
     });
-    return { userId: user.id, verificationToken: verification.token };
+    return {
+      userId: user.id,
+      verificationCode: verificationCode.code,
+      verificationToken: verification.token,
+    };
   } catch (error) {
     if (error instanceof IdentityError) throw error;
     // The email column is uniquely constrained. A concurrent registration must not surface a raw
@@ -113,7 +119,7 @@ export async function registerHuman(input: {
   }
 }
 
-export async function verifyEmail(token: string) {
+export async function verifyEmail(token: string): Promise<{ userId: string } | null> {
   const sql = client();
   try {
     return await sql.begin(async (transaction) => {
@@ -121,11 +127,65 @@ export async function verifyEmail(token: string) {
         { user_id: string }[]
       >`UPDATE email_verifications SET used_at = now() WHERE token_hash=${hashOpaqueToken(token)} AND used_at IS NULL AND expires_at > now() RETURNING user_id`;
       const verification = rows[0];
-      if (verification === undefined) return false;
+      if (verification === undefined) return null;
       await transaction`UPDATE user_emails SET verified_at=now() WHERE user_id=${verification.user_id} AND is_primary=true`;
       await transaction`UPDATE users SET status='ACTIVE',updated_at=now() WHERE id=${verification.user_id} AND status='PENDING_VERIFICATION'`;
-      return true;
+      return { userId: verification.user_id };
     });
+  } finally {
+    await sql.end({ timeout: 1 });
+  }
+}
+
+export async function verifyEmailCode(
+  emailInput: string,
+  code: string,
+): Promise<{ userId: string } | null> {
+  if (!/^\d{6}$/.test(code)) return null;
+  const sql = client();
+  try {
+    return await sql.begin(async (transaction) => {
+      const rows = await transaction<
+        { id: string; user_id: string; code_hash: string | null; code_attempts: number }[]
+      >`
+        SELECT v.id,v.user_id,v.code_hash,v.code_attempts
+        FROM email_verifications v
+        JOIN user_emails e ON e.user_id=v.user_id
+        WHERE e.email_normalized=${normalizeEmail(emailInput)}
+          AND e.is_primary=true
+          AND v.used_at IS NULL
+          AND v.expires_at > now()
+        ORDER BY v.created_at DESC
+        LIMIT 1
+        FOR UPDATE
+      `;
+      const verification = rows[0];
+      if (
+        verification === undefined ||
+        verification.code_hash === null ||
+        verification.code_attempts >= 5
+      )
+        return null;
+      if (verification.code_hash !== hashOpaqueToken(code)) {
+        await transaction`UPDATE email_verifications SET code_attempts=code_attempts+1 WHERE id=${verification.id}`;
+        return null;
+      }
+      await transaction`UPDATE email_verifications SET used_at=now() WHERE id=${verification.id}`;
+      await transaction`UPDATE user_emails SET verified_at=now() WHERE user_id=${verification.user_id} AND is_primary=true`;
+      await transaction`UPDATE users SET status='ACTIVE',updated_at=now() WHERE id=${verification.user_id} AND status='PENDING_VERIFICATION'`;
+      return { userId: verification.user_id };
+    });
+  } finally {
+    await sql.end({ timeout: 1 });
+  }
+}
+
+export async function createUserSession(userId: string): Promise<{ token: string }> {
+  const sql = client();
+  const token = createSecretToken(sessionDays * 24 * 60 * 60 * 1000);
+  try {
+    await sql`INSERT INTO sessions (user_id,token_hash,expires_at) VALUES (${userId},${token.tokenHash},${token.expiresAt})`;
+    return { token: token.token };
   } finally {
     await sql.end({ timeout: 1 });
   }

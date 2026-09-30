@@ -1,14 +1,7 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { getCurrentActor, getProfileSummary } from '../lib/identity';
-
-const links: readonly [string, string, string][] = [
-  ['⌂', 'Home', '/feed'],
-  ['◌', 'My Network', '/mynetwork'],
-  ['▣', 'Jobs', '/jobs'],
-  ['✉', 'Messaging', '/messaging'],
-  ['♧', 'Notifications', '/notifications'],
-];
+import { PrimaryNavigation } from './primary-navigation';
 export async function Shell({ children }: { children: React.ReactNode }) {
   const actor = await getCurrentActor();
   if (actor === null) redirect('/login');
@@ -25,20 +18,13 @@ export async function Shell({ children }: { children: React.ReactNode }) {
         <Link className="brand" href="/home">
           VouchNet
         </Link>
-        <form className="topbar-search" action="/search">
+        <form className="topbar-search" action="/search" role="search">
           <label className="sr-only" htmlFor="global-search">
             Search VouchNet
           </label>
-          <input id="global-search" name="q" placeholder="Search VouchNet" />
+          <input id="global-search" name="q" placeholder="Search people, skills, or companies" />
         </form>
-        <nav aria-label="Primary navigation">
-          {links.map(([icon, label, href]) => (
-            <Link key={href} href={href}>
-              <span aria-hidden="true">{icon}</span>
-              {label}
-            </Link>
-          ))}
-        </nav>
+        <PrimaryNavigation />
         <details className="account-menu">
           <summary aria-label="Open account menu">
             <span className="nav-avatar" aria-hidden="true">
@@ -68,14 +54,7 @@ export async function Shell({ children }: { children: React.ReactNode }) {
           </div>
         </details>
       </header>
-      <nav className="mobile-nav" aria-label="Mobile navigation">
-        {links.map(([icon, label, href]) => (
-          <Link key={href} href={href}>
-            <span aria-hidden="true">{icon}</span>
-            {label}
-          </Link>
-        ))}
-      </nav>
+      <PrimaryNavigation mobile />
       <main className="app-main">{children}</main>
     </>
   );

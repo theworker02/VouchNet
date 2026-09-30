@@ -1,33 +1,44 @@
 import Link from 'next/link';
+import { VerificationForm } from './verification-form';
 
 export default async function VerifyEmail({
   searchParams,
 }: {
-  searchParams: Promise<{ token?: string; error?: string }>;
+  searchParams: Promise<{ code?: string; email?: string; error?: string; token?: string }>;
 }) {
-  const { token, error } = await searchParams;
+  const { code, email, error, token } = await searchParams;
+  const message =
+    error === 'expired'
+      ? 'That verification link is invalid or has expired. Request a new code from signup.'
+      : error === 'invalid'
+        ? 'That code could not be verified. Check the email and try again, or request a new code.'
+        : null;
   return (
-    <main className="auth">
+    <main className="auth verification-page">
       <Link className="brand" href="/">
         VouchNet
       </Link>
-      <h1>Verify your email</h1>
-      {error === 'expired' ? (
-        <p className="form-error">That verification link is invalid or has expired.</p>
-      ) : (
-        <p>
-          Confirm your email before you can sign in. In local development, VouchNet uses a visible
-          delivery adapter so this flow can be tested without an email provider.
+      <p className="eyebrow">One last step</p>
+      <h1>Verify your email.</h1>
+      <p className="verification-intro">
+        We sent a six-digit code to your inbox. Enter it below and we’ll sign you in securely.
+      </p>
+      {message === null ? null : (
+        <p className="form-error" role="alert">
+          {message}
         </p>
       )}
       {token === undefined ? (
-        <p>Open the verification link sent to your email address.</p>
+        <VerificationForm initialCode={code} initialEmail={email} />
       ) : (
-        <form action="/api/auth/verify" method="post">
+        <form action="/api/auth/verify" method="post" className="verification-form">
           <input type="hidden" name="token" value={token} />
           <button>Verify email and continue</button>
         </form>
       )}
+      <p className="verification-help">
+        Code not there? Check spam, then wait a minute and start signup again to receive a new one.
+      </p>
     </main>
   );
 }

@@ -30,6 +30,7 @@ async function HomeContent() {
                 .toUpperCase() ?? 'N'}
             </div>
             <div className="member-card-body">
+              <span className="member-status">Your profile</span>
               <h2>{profile?.fullName ?? 'VouchNet member'}</h2>
               <p>{profile?.headline ?? 'Add a professional headline'}</p>
               <Link href="/onboarding">Edit profile</Link>
@@ -46,21 +47,26 @@ async function HomeContent() {
             </div>
           </section>
           <section className="sidebar-links">
+            <span className="sidebar-label">Your workspace</span>
             <Link href="/projects">My projects</Link>
             <Link href="/saved">Saved items</Link>
+            <Link href="/settings">Settings & privacy</Link>
           </section>
         </aside>
         <section className="feed-column">
           <section className="home-intro">
-            <p className="eyebrow">Your professional space</p>
+            <div className="home-intro-topline">
+              <p className="eyebrow">Your signal desk</p>
+              <span>Private by default</span>
+            </div>
             <h1>
               {profile === null
                 ? 'Welcome to VouchNet.'
                 : `Welcome back, ${profile.fullName.split(' ')[0]}.`}
             </h1>
             <p>
-              Share work in a chronological feed, or switch to peer-verified signal when you want
-              the strongest professional contributions first.
+              Share useful work in a chronological feed, or switch to peer-verified signal when you
+              want strong professional contributions first.
             </p>
             <div className="actions">
               <Link className="primary" href="/onboarding">
@@ -75,6 +81,7 @@ async function HomeContent() {
         </section>
         <aside className="home-rail">
           <section className="rail-card">
+            <p className="rail-label">Next useful step</p>
             <h2>Build your network</h2>
             <p>
               {network.pendingReceivedCount} pending invitation
@@ -83,9 +90,17 @@ async function HomeContent() {
             <Link href="/network">Review network</Link>
           </section>
           <section className="rail-card">
+            <p className="rail-label">Explainable discovery</p>
             <h2>Discover people</h2>
             <p>Find professional introductions with explainable relationship signals.</p>
             <Link href="/network/discover">View suggestions</Link>
+          </section>
+          <section className="rail-card rail-principle">
+            <span aria-hidden="true">✓</span>
+            <p>
+              <strong>Humans participate.</strong> AI may assist with drafts, but never quietly acts
+              as you.
+            </p>
           </section>
         </aside>
       </section>

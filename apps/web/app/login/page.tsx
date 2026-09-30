@@ -1,28 +1,32 @@
-import Link from 'next/link';
 import { AuthForm } from '../components/auth-form';
+import { AuthShell } from '../components/auth-shell';
 
 export default function Login() {
   return (
-    <main className="auth">
-      <Link className="brand" href="/">
-        VouchNet
-      </Link>
-      <h1>Welcome back</h1>
+    <AuthShell
+      eyebrow="Welcome back"
+      title="Continue your professional story"
+      description="Sign in to your profile, network, and saved professional context."
+      footer={
+        <>
+          New to VouchNet? <a href="/signup">Create your profile</a>
+          <a className="auth-secondary-link" href="/forgot-password">
+            Forgot password?
+          </a>
+        </>
+      }
+    >
       <AuthForm action="/api/auth/login">
         <label>
-          Email
+          Work email
           <input name="email" type="email" autoComplete="email" required />
         </label>
         <label>
           Password
           <input name="password" type="password" autoComplete="current-password" required />
         </label>
-        <button>Sign in</button>
+        <button className="auth-submit">Sign in to VouchNet</button>
       </AuthForm>
-      <p>
-        <Link href="/signup">Create an account</Link> ·{' '}
-        <Link href="/forgot-password">Forgot password?</Link>
-      </p>
-    </main>
+    </AuthShell>
   );
 }

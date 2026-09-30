@@ -15,6 +15,8 @@ Implement email/password signup and login, verified email architecture, Argon2id
 
 The completed foundation is now being joined into real vertical slices. Current work has server-side
 session guards, local-development signup/verification, profile basics, PostgreSQL search, follow,
-Contact requests, and discovery. Posts/feed, notifications, messaging, organizations, jobs,
-projects, settings/privacy UI, production email delivery, and E2E coverage remain incomplete. The
-matrix in [IMPLEMENTATION_MATRIX.md](IMPLEMENTATION_MATRIX.md) is the source of truth.
+Contact requests, discovery, public projects, a source-reviewed organization directory,
+source-linked salary-transparent jobs, and embeddable SVG badges. Posts/feed, notifications,
+messaging, organization administration, internal job applications, settings/privacy UI, production
+email delivery, and E2E coverage remain incomplete. The matrix in
+[IMPLEMENTATION_MATRIX.md](IMPLEMENTATION_MATRIX.md) is the source of truth.

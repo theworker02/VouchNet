@@ -170,6 +170,15 @@ export function FeedClient() {
   return (
     <section className="feed-experience">
       <form className="post-composer" onSubmit={(event) => void publish(event)}>
+        <div className="composer-heading">
+          <div className="composer-avatar" aria-hidden="true">
+            +
+          </div>
+          <div>
+            <strong>Share a useful signal</strong>
+            <span>Technical notes, projects, hiring context, or a considered point of view.</span>
+          </div>
+        </div>
         <textarea
           name="bodyMarkdown"
           required
@@ -190,25 +199,29 @@ export function FeedClient() {
             <option value="FOLLOWERS">Followers</option>
             <option value="CONTACTS">Contacts</option>
           </select>
+          <span className="composer-note">Markdown supported</span>
           <button disabled={isSubmitting}>{isSubmitting ? 'Publishing…' : 'Publish'}</button>
         </div>
       </form>
       <div className="feed-toolbar">
-        <div className="feed-mode" role="group" aria-label="Feed order">
-          <button
-            className={mode === 'CHRONOLOGICAL' ? 'active-mode' : ''}
-            type="button"
-            onClick={() => setMode('CHRONOLOGICAL')}
-          >
-            Chronological
-          </button>
-          <button
-            className={mode === 'PEER_VERIFIED' ? 'active-mode' : ''}
-            type="button"
-            onClick={() => setMode('PEER_VERIFIED')}
-          >
-            Peer-verified signal
-          </button>
+        <div>
+          <p className="feed-toolbar-label">Your feed</p>
+          <div className="feed-mode" role="group" aria-label="Feed order">
+            <button
+              className={mode === 'CHRONOLOGICAL' ? 'active-mode' : ''}
+              type="button"
+              onClick={() => setMode('CHRONOLOGICAL')}
+            >
+              Chronological
+            </button>
+            <button
+              className={mode === 'PEER_VERIFIED' ? 'active-mode' : ''}
+              type="button"
+              onClick={() => setMode('PEER_VERIFIED')}
+            >
+              Peer-verified signal
+            </button>
+          </div>
         </div>
         <details>
           <summary>Filters</summary>

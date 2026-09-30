@@ -8,9 +8,19 @@ VouchNet is a pnpm workspace. The Next.js app is initially both the server-rende
 
 The current web product uses a canonical server-side `getCurrentActor` lookup for protected route
 trees. Its initial PostgreSQL people-search adapter is intentionally behind the search package
-contract so it can be replaced later. This is a **PARTIAL** application architecture: inline SQL
-adapters still need dedicated repository modules, and the organization, post, feed, messaging, job,
-notification, and MCP runtime boundaries do not exist end-to-end.
+contract so it can be replaced later. Public project and directory adapters live in
+`apps/web/app/lib/projects.ts` and `apps/web/app/lib/directory.ts`. This remains a **PARTIAL**
+application architecture: inline SQL adapters still need dedicated repository modules, and
+organization administration, internal applications, messaging, notifications, and MCP runtime
+boundaries do not exist end-to-end.
+
+## Public directory boundary
+
+Public profiles are readable without a session only when the profile visibility is `PUBLIC`.
+Public projects additionally require an active owner and a public owner profile. Organization
+records seeded from public sources are `SOURCE_REVIEWED`; they do not confer ownership, employment,
+or administrative rights. Curated jobs are external-source links with a review timestamp and a
+numeric salary range. No job application data is collected by VouchNet in this initial slice.
 
 No browser assertion establishes authorization. Future write endpoints must authenticate, validate with Zod, rate-limit, evaluate trust, authorize server-side, and emit an audit event where sensitive.
 

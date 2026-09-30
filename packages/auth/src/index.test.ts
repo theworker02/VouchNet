@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   createSecretToken,
+  createVerificationCode,
   evaluateRegistrationRisk,
   hashOpaqueToken,
   normalizeEmail,
@@ -12,6 +13,11 @@ describe('identity security primitives', () => {
     const token = createSecretToken(1_000);
     expect(token.tokenHash).toBe(hashOpaqueToken(token.token));
     expect(token.tokenHash).not.toContain(token.token);
+  });
+  it('creates a six-digit verification code with an opaque hash', () => {
+    const verification = createVerificationCode();
+    expect(verification.code).toMatch(/^\d{6}$/);
+    expect(verification.codeHash).toBe(hashOpaqueToken(verification.code));
   });
   it('escalates high registration velocity without treating VPN use as a signal', () => {
     expect(evaluateRegistrationRisk({ recentAttempts: 9, disposableEmail: false }).decision).toBe(

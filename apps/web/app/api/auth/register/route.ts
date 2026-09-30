@@ -30,13 +30,16 @@ export async function POST(request: NextRequest) {
       await sendVerificationEmail({
         email: input.email,
         firstName: input.firstName,
-        token: created.verificationToken,
+        code: created.verificationCode,
       });
     } catch (error) {
       // Local development remains testable without a provider; production never leaks a token.
       if (process.env.NEXUS_ENV === 'production') throw error;
       return NextResponse.redirect(
-        new URL(`/verify?token=${encodeURIComponent(created.verificationToken)}`, request.url),
+        new URL(
+          `/verify?code=${encodeURIComponent(created.verificationCode)}&email=${encodeURIComponent(input.email)}`,
+          request.url,
+        ),
         303,
       );
     }
