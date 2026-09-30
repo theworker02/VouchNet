@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 
 export default function BrandPage() {
   return (
@@ -13,7 +14,7 @@ export default function BrandPage() {
         endorsement, alter the mark, or use it beside deceptive or automated activity.
       </p>
       <section className="brand-preview">
-        <img alt="VouchNet mark" height="120" src="/brand/vouchnet-mark.svg" width="120" />
+        <Image alt="VouchNet mark" height={120} src="/brand/vouchnet-mark.svg" width={120} />
         <div>
           <strong>VouchNet</strong>
           <span>Evidence over noise.</span>
