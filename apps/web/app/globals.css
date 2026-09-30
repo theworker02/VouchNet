@@ -45,26 +45,29 @@ a {
   z-index: 5;
 }
 .brand {
-  font-weight: 800;
-  color: white;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 780;
+  color: var(--ink);
   text-decoration: none;
-  font-size: 0;
-  display: grid;
-  width: 33px;
-  height: 33px;
-  place-items: center;
-  border-radius: 9px;
-  background: var(--accent);
+  font-size: 1rem;
+  letter-spacing: -0.04em;
 }
-.brand::after {
-  content: 'V';
-  font-size: 1.08rem;
-  letter-spacing: -0.08em;
+.brand::before {
+  width: 32px;
+  height: 32px;
+  content: '';
+  background: url('/brand/vouchnet-mark.svg') center / contain no-repeat;
+  filter: drop-shadow(0 5px 10px rgb(23 70 162 / 0.16));
 }
 .topbar nav {
   display: flex;
   gap: 2px;
   margin-left: auto;
+}
+.mobile-nav {
+  display: none;
 }
 .topbar nav a {
   display: grid;
@@ -1317,6 +1320,28 @@ button:hover {
     min-height: auto;
     padding: 70px 0;
   }
+  .landing-hero-simple {
+    margin-top: 32px;
+    padding: 34px 24px 38px;
+    border-radius: 14px;
+  }
+  .landing-hero h1 {
+    font-size: clamp(2.8rem, 14vw, 4.3rem);
+    line-height: 0.95;
+  }
+  .landing-links {
+    margin-bottom: 46px;
+  }
+  .landing-links a {
+    min-height: 0;
+    padding: 22px;
+  }
+  .landing-links h2 {
+    margin-top: 18px;
+  }
+  .landing-links b {
+    margin-top: 18px;
+  }
   .hero-stage {
     min-height: 390px;
   }
@@ -1343,17 +1368,62 @@ button:hover {
     grid-template-columns: repeat(2, 1fr);
   }
   .topbar {
-    gap: 12px;
+    gap: 10px;
     padding: 0 16px;
   }
   .topbar nav {
     display: none;
   }
+  .mobile-nav {
+    position: fixed;
+    z-index: 10;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--line);
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 -8px 24px rgb(17 20 33 / 0.07);
+  }
+  .mobile-nav a {
+    display: grid;
+    min-height: 48px;
+    place-items: center;
+    gap: 3px;
+    color: var(--muted);
+    font-size: 0.62rem;
+    line-height: 1.1;
+    text-align: center;
+    text-decoration: none;
+  }
+  .mobile-nav a:focus-visible,
+  .mobile-nav a:hover {
+    color: var(--accent);
+    outline: none;
+  }
+  .mobile-nav span {
+    font-size: 1rem;
+    line-height: 1;
+  }
   .topbar-search {
     margin-left: auto;
   }
   .topbar-search input {
-    width: 110px;
+    width: min(31vw, 145px);
+  }
+  .brand {
+    gap: 6px;
+    font-size: 0.92rem;
+  }
+  .brand::before {
+    width: 29px;
+    height: 29px;
+  }
+  .work-menu {
+    display: none;
   }
   .account-label {
     display: none;
@@ -1410,7 +1480,7 @@ button:hover {
     display: none;
   }
   .app-main {
-    padding: 20px 14px 40px;
+    padding: 20px 14px 96px;
   }
   .home-intro,
   .feed-empty {

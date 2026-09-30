@@ -68,6 +68,14 @@ export async function Shell({ children }: { children: React.ReactNode }) {
           </div>
         </details>
       </header>
+      <nav className="mobile-nav" aria-label="Mobile navigation">
+        {links.map(([icon, label, href]) => (
+          <Link key={href} href={href}>
+            <span aria-hidden="true">{icon}</span>
+            {label}
+          </Link>
+        ))}
+      </nav>
       <main className="app-main">{children}</main>
     </>
   );

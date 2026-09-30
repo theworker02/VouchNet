@@ -2,6 +2,12 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  // Do not publish server or browser source maps with production deploys.
+  // This limits deployment metadata exposure; it does not make public source secret.
+  productionBrowserSourceMaps: false,
+  experimental: {
+    serverSourceMaps: false,
+  },
   transpilePackages: ['@nexus/config', '@nexus/observability', '@nexus/permissions', '@nexus/ui'],
   poweredByHeader: false,
   headers: async () => [
