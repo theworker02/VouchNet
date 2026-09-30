@@ -1,6 +1,7 @@
 {
   "name": "nexus",
   "private": true,
+  "version": "0.1.0",
   "packageManager": "pnpm@11.19.0",
   "scripts": {
     "dev": "pnpm --filter @nexus/web dev",
