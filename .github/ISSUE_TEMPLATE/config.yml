@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/theworker02/VouchNet/security/advisories/new
+    about: Please do not disclose security vulnerabilities in public issues.
+  - name: Privacy policy
+    url: https://vouchnet.dev/privacy
+    about: Read how VouchNet handles personal information and privacy requests.

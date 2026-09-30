@@ -38,8 +38,8 @@ export default async function JobsPage({
           <Link className="quiet-link" href="/login">
             Sign in
           </Link>
-          <Link className="primary" href="/signup">
-            Build your profile
+          <Link className="primary" href="/jobs/post">
+            Post a role
           </Link>
         </div>
       </header>
@@ -47,8 +47,9 @@ export default async function JobsPage({
         <p className="eyebrow">Transparent job directory</p>
         <h1>Know the compensation before you spend the time.</h1>
         <p>
-          Every listing below links to its source and includes a numeric salary range. Availability
-          can change at the source.
+          Every listing below links to its source. When compensation is published, we show the
+          numeric range; when it is absent, we label it plainly and place it later. Availability can
+          change at the source.
         </p>
         <form className="job-search">
           <label className="sr-only" htmlFor="job-query">
@@ -64,9 +65,9 @@ export default async function JobsPage({
         </form>
       </section>
       <div className="jobs-directory-note">
-        <span>15 source-linked technical roles</span>
-        <span>Salary range required</span>
-        <span>External application only</span>
+        <span>{jobs.length} source-linked technical roles</span>
+        <span>Salary disclosure ranked first</span>
+        <Link href="/jobs/post">Post free for two months →</Link>
       </div>
       <section className="job-list" aria-live="polite">
         {jobs.length === 0 ? (
@@ -88,10 +89,14 @@ export default async function JobsPage({
                   <span>
                     {job.workplaceType.toLowerCase()} · {job.location}
                   </span>
-                  <span>
-                    {money(job.salaryMin, job.salaryCurrency)} –{' '}
-                    {money(job.salaryMax, job.salaryCurrency)} / year
-                  </span>
+                  {job.salaryMin === null || job.salaryMax === null ? (
+                    <span className="job-salary-undisclosed">Salary not disclosed</span>
+                  ) : (
+                    <span>
+                      {money(job.salaryMin, job.salaryCurrency)} –{' '}
+                      {money(job.salaryMax, job.salaryCurrency)} / year
+                    </span>
+                  )}
                 </div>
                 <div className="project-tags">
                   {job.skillTags.map((tag) => (

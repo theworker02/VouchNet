@@ -1,0 +1,46 @@
+name: Feature request
+description: Suggest a concrete improvement that preserves VouchNet's high-signal, human-first model.
+title: '[Feature]: '
+labels:
+  - enhancement
+  - needs-triage
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping shape VouchNet. Please describe the user problem rather than assuming a specific implementation.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem should this solve?
+      description: Who has the problem, and what blocks them today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Your proposed outcome
+      description: Explain the experience or capability you would like to see.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Include workarounds or similar approaches that do not solve the problem well enough.
+  - type: dropdown
+    id: audience
+    attributes:
+      label: Who benefits most?
+      multiple: true
+      options:
+        - Individual professionals
+        - Hiring teams
+        - Organizations
+        - Developers and integrations
+        - Moderators and trust teams
+  - type: textarea
+    id: safeguards
+    attributes:
+      label: Trust, privacy, or abuse considerations
+      description: How should the feature preserve human participation and avoid spam, scraping, or misleading automation?

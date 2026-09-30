@@ -16,6 +16,7 @@ const environmentSchema = z.object({
   LINKEDIN_OAUTH_CLIENT_SECRET: z.string().min(1).optional(),
   VOUCHNET_OAUTH_ISSUER: z.url().optional(),
   VOUCHNET_OAUTH_SIGNING_KEY: z.string().min(32).optional(),
+  JOB_SYNC_SECRET: z.string().min(32).optional(),
 });
 
 export type NexusEnvironment = z.infer<typeof environmentSchema>;

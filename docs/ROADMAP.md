@@ -20,3 +20,14 @@ source-linked salary-transparent jobs, and embeddable SVG badges. Posts/feed, no
 messaging, organization administration, internal job applications, settings/privacy UI, production
 email delivery, and E2E coverage remain incomplete. The matrix in
 [IMPLEMENTATION_MATRIX.md](IMPLEMENTATION_MATRIX.md) is the source of truth.
+
+## In progress: transparent employer intake and provider sourcing
+
+- Authenticated employers can submit a role or register a Greenhouse/Lever public board at
+  `/jobs/post`.
+- The first role or source starts a two-calendar-month no-card launch window; VouchNet does not
+  charge automatically.
+- Listings and sources remain pending until an active human administrator approves them.
+- Approved Greenhouse and Lever sources can be refreshed by a signed server-only scheduler route.
+- The initial provider adapters preserve the external source URL and never scrape consumer career
+  pages. See [JOBS.md](JOBS.md) for the operating model and release limits.

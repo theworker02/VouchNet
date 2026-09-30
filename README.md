@@ -56,8 +56,8 @@ Visitors can explore useful professional context without creating an account:
   live-site links, and a shareable badge.
 - **Organizations** — `/company/[slug]` presents source-reviewed directory records with clear status
   disclosure and public technology references.
-- **Jobs** — `/jobs` provides source-linked technical roles with numerical salary ranges and explicit
-  external application links.
+- **Jobs** — `/jobs` provides source-linked technical roles with transparent salary disclosure when
+  it is supplied, clear external application links, and an employer launch workspace at `/jobs/post`.
 - **Daily challenge** — `/games` is a short platform-owned technical self-check, never a simulated
   member post.
 
@@ -73,6 +73,8 @@ VouchNet is an active early-stage product. The current vertical slices include:
 - A responsive Signal Desk application shell with a unified home, network, feed, and credential flow
 - Public, SEO-ready profile and project pages; project publishing; copyable, dynamic SVG profile badges
 - A source-reviewed organization directory and transparent external-job directory with salary ranges
+- Employer role intake and human-reviewed Greenhouse/Lever public-board sourcing, with a
+  no-card two-calendar-month founding employer window
 - A platform-owned daily technical challenge, published by an explicit system actor rather than a fake member
 - PostgreSQL migrations, Docker-based local PostgreSQL + Redis, and typed API boundaries
 
@@ -162,15 +164,16 @@ pnpm build
 
 All configuration is server-side. Never commit a real `.env` file.
 
-| Variable         | Local development            | Production                         |
-| ---------------- | ---------------------------- | ---------------------------------- |
-| `DATABASE_URL`   | Docker PostgreSQL connection | Hosted PostgreSQL connection       |
-| `REDIS_URL`      | Docker Redis connection      | Hosted Redis connection            |
-| `SESSION_SECRET` | Unique 32+ character value   | Unique production-only secret      |
-| `RESEND_API_KEY` | Optional for local delivery  | Required for transactional email   |
-| `EMAIL_FROM`     | Test or verified sender      | Sender on a Resend-verified domain |
-| `APP_URL`        | Local app URL                | `https://vouchnet.dev`             |
-| `NEXUS_ENV`      | `development`                | `production`                       |
+| Variable          | Local development            | Production                                   |
+| ----------------- | ---------------------------- | -------------------------------------------- |
+| `DATABASE_URL`    | Docker PostgreSQL connection | Hosted PostgreSQL connection                 |
+| `REDIS_URL`       | Docker Redis connection      | Hosted Redis connection                      |
+| `SESSION_SECRET`  | Unique 32+ character value   | Unique production-only secret                |
+| `RESEND_API_KEY`  | Optional for local delivery  | Required for transactional email             |
+| `EMAIL_FROM`      | Test or verified sender      | Sender on a Resend-verified domain           |
+| `APP_URL`         | Local app URL                | `https://vouchnet.dev`                       |
+| `NEXUS_ENV`       | `development`                | `production`                                 |
+| `JOB_SYNC_SECRET` | Unique 32+ character value   | Secret used only by the job-source scheduler |
 
 For detailed setup, read [development](docs/DEVELOPMENT.md), [authentication](docs/AUTH.md), and
 [Netlify deployment](docs/NETLIFY.md).
@@ -227,7 +230,15 @@ where applicable, and audit handling without exposing secrets or unnecessary per
 - [Developer portal](docs/DEVELOPER_PORTAL.md)
 - [Brand guidance](docs/BRAND.md)
 - [Analytics](docs/ANALYTICS.md)
+- [Job sourcing and employer launch](docs/JOBS.md)
 - [Release notes](CHANGELOG.md)
+
+## Contributing
+
+Use the repository's [bug report](../../issues/new?template=bug_report.yml) and
+[feature request](../../issues/new?template=feature_request.yml) forms to propose improvements.
+Please use [private security advisories](../../security/advisories/new) for vulnerabilities rather
+than opening public issues. Contributor expectations are in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Status
 

@@ -21,15 +21,15 @@ export type JobRecord = {
   title: string;
   summary: string;
   location: string;
-  workplaceType: 'REMOTE' | 'HYBRID' | 'ONSITE';
+  workplaceType: 'REMOTE' | 'HYBRID' | 'ONSITE' | 'UNSPECIFIED';
   employmentType: string;
-  salaryMin: number;
-  salaryMax: number;
+  salaryMin: number | null;
+  salaryMax: number | null;
   salaryCurrency: string;
   skillTags: string[];
   sourceUrl: string;
   sourceCheckedAt: Date;
-  sourceStatus: 'SOURCE_REVIEWED' | 'EXPIRED' | 'REMOVED';
+  sourceStatus: 'SOURCE_REVIEWED' | 'SOURCE_LIVE' | 'EXPIRED' | 'REMOVED';
   organizationName: string;
   organizationSlug: string;
 };
@@ -81,10 +81,10 @@ export async function listPublicJobs(query?: string): Promise<JobRecord[]> {
         j.source_checked_at AS "sourceCheckedAt",j.source_status AS "sourceStatus",
         o.name AS "organizationName",o.slug AS "organizationSlug"
       FROM jobs j JOIN organizations o ON o.id=j.organization_id
-      WHERE j.deleted_at IS NULL AND j.source_status='SOURCE_REVIEWED'
+      WHERE j.deleted_at IS NULL AND j.source_status IN ('SOURCE_REVIEWED','SOURCE_LIVE')
         AND (j.title ILIKE ${pattern} OR o.name ILIKE ${pattern} OR j.location ILIKE ${pattern}
           OR EXISTS (SELECT 1 FROM unnest(j.skill_tags) tag WHERE tag ILIKE ${pattern}))
-      ORDER BY j.source_checked_at DESC,j.created_at DESC LIMIT 30
+      ORDER BY (j.salary_min IS NULL) ASC,j.source_checked_at DESC,j.created_at DESC LIMIT 30
     `;
   } finally {
     await client.end({ timeout: 1 });
