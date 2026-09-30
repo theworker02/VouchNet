@@ -35,12 +35,18 @@ export default async function AuthorizePage({
       codeChallengeMethod: query.code_challenge_method ?? null,
     });
   } catch (error) {
-    return <AuthorizationError code={error instanceof ApplyOAuthError ? error.code : undefined} />;
+    return error instanceof ApplyOAuthError ? (
+      <AuthorizationError code={error.code} />
+    ) : (
+      <AuthorizationError />
+    );
   }
   const actor = await getCurrentActor();
-  const returnTo = `/oauth/authorize?${new URLSearchParams(
-    Object.entries(query).filter(([, value]): value is string => value !== undefined),
-  ).toString()}`;
+  const returnToParameters = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== undefined) returnToParameters.set(key, value);
+  }
+  const returnTo = `/oauth/authorize?${returnToParameters.toString()}`;
   if (actor === null)
     return (
       <main className="developer-page oauth-consent-page">
