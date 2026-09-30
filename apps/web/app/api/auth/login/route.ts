@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { attachSession, login } from '../../../lib/identity';
 import { logger } from '@nexus/observability';
+import { publicUrl } from '../../../lib/app-url';
 
 export const runtime = 'nodejs';
 
@@ -10,7 +11,7 @@ function failureResponse(
 ) {
   if (request.headers.get('accept')?.includes('application/json'))
     return NextResponse.json({ error }, { status: error === 'SERVICE_UNAVAILABLE' ? 503 : 401 });
-  return NextResponse.redirect(new URL(`/login?error=${error}`, request.url), 303);
+  return NextResponse.redirect(publicUrl(`/login?error=${error}`, request.url), 303);
 }
 
 export async function POST(request: NextRequest) {
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
   try {
     const result = await login(String(form.get('email') ?? ''), String(form.get('password') ?? ''));
     if (result === null) return failureResponse(request, 'INVALID_CREDENTIALS');
-    return attachSession(NextResponse.redirect(new URL(next, request.url), 303), result.token);
+    return attachSession(NextResponse.redirect(publicUrl(next, request.url), 303), result.token);
   } catch {
     logger.error({
       operation: 'auth.login',

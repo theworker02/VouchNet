@@ -55,10 +55,10 @@ export default function TermsPage() {
         <section>
           <h2>Your content</h2>
           <p>
-            You retain ownership of content you submit. You grant VouchNet the limited right to host,
-            reproduce, display, and distribute it only as necessary to operate the service according
-            to its visibility settings. You are responsible for having the rights to the content,
-            links, and files you share.
+            You retain ownership of content you submit. You grant VouchNet the limited right to
+            host, reproduce, display, and distribute it only as necessary to operate the service
+            according to its visibility settings. You are responsible for having the rights to the
+            content, links, and files you share.
           </p>
         </section>
 

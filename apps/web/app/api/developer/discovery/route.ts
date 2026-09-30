@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 
 export function GET(request: Request) {
-  const baseUrl = new URL(request.url).origin;
+  // Netlify route handlers may receive an internal deployment hostname; published links stay canonical.
+  const baseUrl = process.env.APP_URL ?? new URL(request.url).origin;
   return NextResponse.json(
     {
       name: 'VouchNet Developer Resources',

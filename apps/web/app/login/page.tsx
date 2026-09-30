@@ -21,7 +21,8 @@ export default async function Login({
   searchParams: Promise<{ error?: string; next?: string }>;
 }) {
   const { error, next } = await searchParams;
-  const safeNext = typeof next === 'string' && next.startsWith('/') && !next.startsWith('//') ? next : null;
+  const safeNext =
+    typeof next === 'string' && next.startsWith('/') && !next.startsWith('//') ? next : null;
   return (
     <AuthShell
       eyebrow="Welcome back"

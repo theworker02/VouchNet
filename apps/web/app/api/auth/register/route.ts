@@ -4,6 +4,7 @@ import { ZodError } from 'zod';
 import { IdentityError, registerHuman } from '../../../lib/identity';
 import { sendVerificationEmail } from '../../../lib/email';
 import { logger } from '@nexus/observability';
+import { publicUrl } from '../../../lib/app-url';
 
 export const runtime = 'nodejs';
 
@@ -14,7 +15,7 @@ function failureResponse(request: NextRequest, error: RegistrationError): NextRe
   const status = error === 'SERVICE_UNAVAILABLE' ? 503 : 400;
   if (request.headers.get('accept')?.includes('application/json'))
     return NextResponse.json({ error }, { status });
-  return NextResponse.redirect(new URL(`/signup?error=${error}`, request.url), 303);
+  return NextResponse.redirect(publicUrl(`/signup?error=${error}`, request.url), 303);
 }
 
 export async function POST(request: NextRequest) {
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
         303,
       );
     }
-    return NextResponse.redirect(new URL('/verify', request.url), 303);
+    return NextResponse.redirect(publicUrl('/verify', request.url), 303);
   } catch (error) {
     if (error instanceof ZodError) {
       logger.error({

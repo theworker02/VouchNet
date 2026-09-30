@@ -1,150 +1,148 @@
 import Link from 'next/link';
 import { VerifiedWorkBadge } from './components/verified-work-badge';
+import { ButtonLink } from './components/ui/button';
 
 export default function HomePage() {
   return (
-    <main className="landing">
-      <header className="public-nav">
+    <main className="landing landing--refined">
+      <header className="public-nav public-nav--refined">
         <Link className="brand" href="/">
           VouchNet
         </Link>
-        <div>
-          <Link className="quiet-link" href="/login">
+        <nav aria-label="Public navigation" className="public-nav-links">
+          <Link href="/explore">Explore</Link>
+          <Link href="/jobs">Jobs</Link>
+          <Link href="/developers">Developers</Link>
+        </nav>
+        <div className="public-nav-actions">
+          <Link className="public-nav-signin" href="/login">
             Sign in
           </Link>
-          <Link className="primary" href="/signup">
+          <ButtonLink href="/signup" size="sm">
             Build your profile
-          </Link>
+          </ButtonLink>
         </div>
       </header>
-      <section className="landing-hero">
-        <div className="landing-copy">
-          <p className="eyebrow">The professional network for real work</p>
-          <h1>Show what you can do. Not just where you have been.</h1>
-          <p>
-            A higher-signal place to build a profile, earn trusted Vouches, and take your work into
-            the opportunities that actually fit.
+
+      <section className="landing-hero landing-hero--refined">
+        <div className="landing-copy landing-copy--refined">
+          <p className="eyebrow">Professional context, not professional noise</p>
+          <h1>
+            Proof that travels <em>with your work.</em>
+          </h1>
+          <p className="landing-lede">
+            VouchNet brings your experience, project context, trusted peer signals, and next
+            opportunities into one deliberate professional identity.
           </p>
-          <div className="actions">
-            <Link className="primary" href="/signup">
+          <div className="landing-actions">
+            <ButtonLink href="/signup" size="lg">
               Build your profile
-            </Link>
-            <Link className="secondary" href="/login">
-              See how it works
-            </Link>
+            </ButtonLink>
+            <ButtonLink href="/explore" size="lg" variant="secondary">
+              Explore the network
+            </ButtonLink>
           </div>
-          <div className="landing-proof-points">
-            <span>Proof over performance</span>
-            <span>Vouched by peers</span>
-            <span>Privacy by default</span>
-          </div>
+          <dl className="landing-facts">
+            <div>
+              <dt>Portable</dt>
+              <dd>Use your approved profile when you apply.</dd>
+            </div>
+            <div>
+              <dt>Human-led</dt>
+              <dd>Meaningful actions stay under your control.</dd>
+            </div>
+            <div>
+              <dt>Evidence-first</dt>
+              <dd>Vouches add context, not vanity metrics.</dd>
+            </div>
+          </dl>
         </div>
-        <div className="landing-product-preview" aria-label="Example VouchNet profile workspace">
-          <div className="preview-toolbar">
-            <span className="preview-mark">V</span>
-            <span>My signal desk</span>
-            <i />
-            <i />
+
+        <div className="landing-workspace" aria-label="VouchNet profile workspace preview">
+          <div className="workspace-topline">
+            <span className="workspace-brand-mark" aria-hidden="true">
+              V
+            </span>
+            <span>Professional identity</span>
+            <span className="workspace-status">Live profile</span>
           </div>
-          <div className="preview-profile-row">
-            <div className="preview-person">AR</div>
+          <div className="workspace-profile">
+            <span className="workspace-avatar" aria-hidden="true">
+              AR
+            </span>
             <div>
               <strong>Alex Rivera</strong>
               <span>Product engineer · Brooklyn, NY</span>
             </div>
             <VerifiedWorkBadge compact />
           </div>
-          <span className="preview-badge-inspector" aria-label="Inspect verified work">
-            <span aria-hidden="true">⌕</span>
-            <i />
-          </span>
-          <article className="preview-signal-card">
-            <div className="preview-signal-header">
-              <span>PROJECT NOTE</span>
-              <time>Today</time>
-            </div>
-            <h2>What made our release handoff simpler</h2>
-            <p>
-              A small shared contract removed three recurring coordination steps from the release
-              process.
-            </p>
-            <div className="preview-signal-tags">
-              <span>Delivery systems</span>
-              <span>Peer verified</span>
-            </div>
-          </article>
-          <div className="preview-insight-row">
+          <div className="workspace-grid">
+            <article className="workspace-featured-work">
+              <span className="workspace-kicker">FEATURED WORK</span>
+              <h2>Release handoff that made room for better decisions.</h2>
+              <p>
+                A concise systems note that explains the trade-offs, the collaborators, and what
+                changed.
+              </p>
+              <footer>
+                <span>Delivery systems</span>
+                <span>Peer context attached</span>
+              </footer>
+            </article>
+            <aside className="workspace-proof-panel">
+              <div>
+                <small>Peer signals</small>
+                <strong>12</strong>
+                <span>specific Vouches</span>
+              </div>
+              <div className="workspace-proof-list">
+                <span>Reliable delivery</span>
+                <span>Clear collaboration</span>
+                <span>Thoughtful craft</span>
+              </div>
+            </aside>
+          </div>
+          <div className="workspace-application">
+            <span className="workspace-application-icon" aria-hidden="true">
+              ↗
+            </span>
             <div>
-              <small>Professional context</small>
-              <strong>Projects · skills · work history</strong>
+              <strong>Ready when an opportunity fits</strong>
+              <span>Share only the profile details you approve.</span>
             </div>
-            <div className="preview-spark" aria-hidden="true">
-              <i />
-              <i />
-              <i />
-              <i />
-              <i />
-            </div>
-          </div>
-          <div className="preview-trust-row">
-            <span>
-              <b>12</b> people vouched
-            </span>
-            <span>
-              <b>4</b> projects
-            </span>
-            <span className="preview-live">● Open to work</span>
+            <span className="workspace-application-state">Approved</span>
           </div>
         </div>
       </section>
-      <section className="landing-outcomes" aria-label="What VouchNet makes easier">
-        <div>
-          <span>01</span>
-          <strong>Build a living profile</strong>
-          <p>Bring projects, experience, skills, and evidence together in one credible place.</p>
-        </div>
-        <div>
-          <span>02</span>
-          <strong>Carry your application</strong>
-          <p>Use Apply with VouchNet to share only the data you approve with a hiring site.</p>
-        </div>
-        <div>
-          <span>03</span>
-          <strong>Keep control</strong>
-          <p>
-            Every consequential action stays attributable to a person, never an automated account.
-          </p>
-        </div>
-      </section>
-      <section className="landing-principles" aria-label="VouchNet principles">
+
+      <section className="landing-directives" aria-label="VouchNet principles">
         <article>
           <span>01</span>
-          <h2>Show the work</h2>
-          <p>
-            Turn professional experience into useful, readable context—not a static list of titles.
-          </p>
+          <h2>Build a living profile</h2>
+          <p>Bring projects, skills, experience, and the decisions behind your work together.</p>
         </article>
         <article>
           <span>02</span>
-          <h2>Choose the signal</h2>
-          <p>
-            Read chronologically or use peer-verified signal when quality matters more than volume.
-          </p>
+          <h2>Earn useful signal</h2>
+          <p>Peer Vouches are specific to how you showed up—not generic reaction inflation.</p>
         </article>
         <article>
           <span>03</span>
-          <h2>Own the action</h2>
+          <h2>Carry it forward</h2>
           <p>
-            Automation can assist, but people approve meaningful professional actions themselves.
+            Apply with VouchNet lets you share a consented professional profile when it matters.
           </p>
         </article>
       </section>
-      <section className="landing-close">
-        <p className="eyebrow">Build a credible next chapter</p>
-        <h2>Make the next professional move with more context and less performance.</h2>
-        <Link className="primary" href="/signup">
-          Create your VouchNet profile
-        </Link>
+
+      <section className="landing-close landing-close--refined">
+        <div>
+          <p className="eyebrow">A more credible next step</p>
+          <h2>Make your professional context worth opening.</h2>
+        </div>
+        <ButtonLink href="/signup" size="lg">
+          Create your profile
+        </ButtonLink>
       </section>
     </main>
   );

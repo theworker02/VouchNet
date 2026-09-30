@@ -12,6 +12,19 @@ Production browser and server source maps are explicitly disabled to avoid expos
 deployment metadata. Secrets, private configuration, database access, trust policy execution, and
 authorization decisions must remain server-side and must never be committed to the repository.
 
+## Browser and deployment boundaries
+
+- The web response sends CSP, HSTS, `nosniff`, anti-framing, cross-origin isolation, referrer,
+  and permissions headers. Cloudflare Web Analytics is the only currently permitted third-party
+  script/connect origin.
+- API responses are marked `no-store` and `noindex` to reduce accidental browser/proxy retention
+  and search indexing of authenticated or operational responses.
+- Cookie-authenticated mutations compare the browser `Origin` with the canonical `APP_URL` when
+  it is configured. This is important on Netlify, where an internal deployment hostname can differ
+  from the public domain. A request from any other origin is rejected.
+- These controls are defense in depth. They do not replace endpoint-specific authentication,
+  authorization, schema validation, rate limits, trust decisions, or audit writes.
+
 All future writes are required to authenticate, authorize, validate input, rate limit, evaluate trust as applicable, and audit sensitive decisions. This baseline does not claim that later feature-specific controls are already implemented.
 
 ## Implemented partial controls

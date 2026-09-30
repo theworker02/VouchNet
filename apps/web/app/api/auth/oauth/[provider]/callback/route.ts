@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { attachSession, createUserSession } from '../../../../../lib/identity';
+import { publicUrl } from '../../../../../lib/app-url';
 import {
   applyOAuthStateClear,
   issueOAuthRegistration,
@@ -21,26 +22,26 @@ export async function GET(
 ) {
   const provider = providerFrom((await context.params).provider);
   if (provider === null)
-    return NextResponse.redirect(new URL('/login?error=OAUTH_UNAVAILABLE', request.url), 302);
+    return NextResponse.redirect(publicUrl('/login?error=OAUTH_UNAVAILABLE', request.url), 302);
   try {
     const result = await resolveOAuthCallback(request, provider);
     if (result.type === 'session') {
       const session = await createUserSession(result.userId);
       return applyOAuthStateClear(
         attachSession(
-          NextResponse.redirect(new URL(result.returnTo ?? '/home', request.url), 303),
+          NextResponse.redirect(publicUrl(result.returnTo ?? '/home', request.url), 303),
           session.token,
         ),
       );
     }
     return issueOAuthRegistration(
-      applyOAuthStateClear(NextResponse.redirect(new URL('/oauth/complete', request.url), 303)),
+      applyOAuthStateClear(NextResponse.redirect(publicUrl('/oauth/complete', request.url), 303)),
       result.userId,
     );
   } catch (error) {
     const code = error instanceof OAuthError ? error.code : 'OAUTH_EXCHANGE_FAILED';
     return applyOAuthStateClear(
-      NextResponse.redirect(new URL(`/login?error=${code}`, request.url), 303),
+      NextResponse.redirect(publicUrl(`/login?error=${code}`, request.url), 303),
     );
   }
 }

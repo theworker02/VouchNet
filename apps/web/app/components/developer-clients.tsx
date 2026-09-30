@@ -36,7 +36,12 @@ export function DeveloperClients() {
           .split(/\r?\n/)
           .map((uri) => uri.trim())
           .filter(Boolean),
-        scopes: ['profile:read', ...(data.get('profileEmail') === 'on' ? ['profile:email'] : []), ...(data.get('skills') === 'on' ? ['skills:verify'] : []), ...(data.get('resume') === 'on' ? ['resume:read'] : [])],
+        scopes: [
+          'profile:read',
+          ...(data.get('profileEmail') === 'on' ? ['profile:email'] : []),
+          ...(data.get('skills') === 'on' ? ['skills:verify'] : []),
+          ...(data.get('resume') === 'on' ? ['resume:read'] : []),
+        ],
       }),
     });
     if (!response.ok) {
@@ -83,8 +88,12 @@ export function DeveloperClients() {
         <label className="setting-toggle">
           <input name="profileEmail" type="checkbox" /> Request the member’s verified email as well
         </label>
-        <label className="setting-toggle"><input name="skills" type="checkbox" /> Request verified skills</label>
-        <label className="setting-toggle"><input name="resume" type="checkbox" /> Request a PDF résumé when available</label>
+        <label className="setting-toggle">
+          <input name="skills" type="checkbox" /> Request verified skills
+        </label>
+        <label className="setting-toggle">
+          <input name="resume" type="checkbox" /> Request a PDF résumé when available
+        </label>
         <button className="primary" disabled={status === 'saving'} type="submit">
           {status === 'saving' ? 'Creating…' : 'Create integration client'}
         </button>

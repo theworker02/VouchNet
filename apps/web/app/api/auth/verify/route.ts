@@ -5,6 +5,7 @@ import {
   verifyEmail,
   verifyEmailCode,
 } from '../../../lib/identity';
+import { publicUrl } from '../../../lib/app-url';
 
 type VerificationInput = {
   code?: string | undefined;
@@ -18,7 +19,7 @@ function failureResponse(request: NextRequest, error: 'expired' | 'invalid'): Ne
       { error: error === 'expired' ? 'EXPIRED_TOKEN' : 'INVALID_CODE' },
       { status: 400 },
     );
-  return NextResponse.redirect(new URL(`/verify?error=${error}`, request.url), 303);
+  return NextResponse.redirect(publicUrl(`/verify?error=${error}`, request.url), 303);
 }
 
 export async function POST(request: NextRequest) {
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
     if (contentType.includes('application/json'))
       return attachSession(NextResponse.json({ verified: true }), session.token);
     return attachSession(
-      NextResponse.redirect(new URL('/onboarding', request.url), 303),
+      NextResponse.redirect(publicUrl('/onboarding', request.url), 303),
       session.token,
     );
   } catch {

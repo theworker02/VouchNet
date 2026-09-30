@@ -1,0 +1,143 @@
+'use client';
+
+import Link from 'next/link';
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+
+type ShellMenuProps = {
+  children: ReactNode;
+  label: string;
+  trigger: ReactNode;
+  wide?: boolean;
+};
+
+function ShellMenu({ children, label, trigger, wide = false }: ShellMenuProps) {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuId = useId();
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    function closeOnOutsidePointer(event: PointerEvent) {
+      if (event.target instanceof Node && !menuRef.current?.contains(event.target))
+        setIsOpen(false);
+    }
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') setIsOpen(false);
+    }
+    window.addEventListener('pointerdown', closeOnOutsidePointer);
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      window.removeEventListener('pointerdown', closeOnOutsidePointer);
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [isOpen]);
+
+  return (
+    <div className={wide ? 'shell-menu shell-menu--wide' : 'shell-menu'} ref={menuRef}>
+      <button
+        aria-controls={menuId}
+        aria-expanded={isOpen}
+        aria-haspopup="menu"
+        className="shell-menu-trigger"
+        type="button"
+        onClick={() => setIsOpen((open) => !open)}
+      >
+        {trigger}
+        <svg aria-hidden="true" viewBox="0 0 16 16">
+          <path d="m4 6 4 4 4-4" />
+        </svg>
+      </button>
+      {isOpen ? (
+        <div aria-label={label} className="shell-menu-popover" id={menuId} role="menu">
+          {children}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+export function AccountMenu({
+  initials,
+  profileSlug,
+}: {
+  initials: string;
+  profileSlug: string | null;
+}) {
+  return (
+    <ShellMenu
+      label="Account menu"
+      trigger={
+        <>
+          <span className="nav-avatar" aria-hidden="true">
+            {initials}
+          </span>
+          <span className="shell-menu-label">Me</span>
+        </>
+      }
+    >
+      <div className="shell-menu-heading">
+        <strong>Account</strong>
+        <span>Profile and preferences</span>
+      </div>
+      <div className="shell-menu-links">
+        <Link href={profileSlug === null ? '/onboarding' : `/vouch/${profileSlug}`} role="menuitem">
+          View profile
+        </Link>
+        <Link href="/saved" role="menuitem">
+          Saved items
+        </Link>
+        <Link href="/settings" role="menuitem">
+          Settings &amp; privacy
+        </Link>
+        <Link href="/settings/account" role="menuitem">
+          Display &amp; language
+        </Link>
+      </div>
+      <form action="/api/auth/logout" method="post">
+        <button className="shell-menu-signout" role="menuitem" type="submit">
+          Sign out
+        </button>
+      </form>
+    </ShellMenu>
+  );
+}
+
+export function WorkMenu() {
+  return (
+    <ShellMenu
+      label="Work menu"
+      wide
+      trigger={
+        <>
+          <span className="shell-menu-work-mark" aria-hidden="true">
+            ⌘
+          </span>
+          <span className="shell-menu-label">Work</span>
+        </>
+      }
+    >
+      <div className="shell-menu-heading">
+        <strong>Build professional momentum</strong>
+        <span>Tools for finding, sharing, and applying.</span>
+      </div>
+      <div className="shell-menu-links shell-menu-links--tiles">
+        <Link href="/jobs" role="menuitem">
+          <strong>Browse jobs</strong>
+          <span>Transparent roles and compensation</span>
+        </Link>
+        <Link href="/projects" role="menuitem">
+          <strong>Showcase projects</strong>
+          <span>Bring meaningful work forward</span>
+        </Link>
+        <Link href="/network/discover" role="menuitem">
+          <strong>Find people</strong>
+          <span>Discover relevant collaborators</span>
+        </Link>
+        <Link href="/settings/developers" role="menuitem">
+          <strong>Developer portal</strong>
+          <span>Apply with VouchNet integrations</span>
+        </Link>
+      </div>
+    </ShellMenu>
+  );
+}

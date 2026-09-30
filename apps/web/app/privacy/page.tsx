@@ -82,9 +82,9 @@ export default function PrivacyPage() {
             We use service providers to host the application, database, email delivery, and
             infrastructure. Cloudflare Web Analytics may collect privacy-oriented traffic and
             performance measurements without cookies, fingerprinting, or user-level profiles. These
-            providers may process information only as needed to provide their services.
-            We may disclose information when required by law, to protect people or the service, or
-            as part of a lawful business transfer.
+            providers may process information only as needed to provide their services. We may
+            disclose information when required by law, to protect people or the service, or as part
+            of a lawful business transfer.
           </p>
         </section>
 
@@ -106,8 +106,9 @@ export default function PrivacyPage() {
           <h2>Your requests</h2>
           <p>
             You may request access, correction, deletion, or information about your account where
-            applicable law provides those rights. Contact <a href="mailto:privacy@vouchnet.dev">privacy@vouchnet.dev</a>.
-            We may need to verify your identity before acting on a request.
+            applicable law provides those rights. Contact{' '}
+            <a href="mailto:privacy@vouchnet.dev">privacy@vouchnet.dev</a>. We may need to verify
+            your identity before acting on a request.
           </p>
         </section>
 

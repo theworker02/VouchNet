@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { actorFromRequest } from '../../../lib/identity';
 import { issueAuthorizationCode, resolveAuthorization } from '../../../lib/apply-oauth';
+import { publicUrl } from '../../../lib/app-url';
 import { hasSameOrigin } from '../../../lib/request-security';
 
 export const runtime = 'nodejs';
@@ -9,7 +10,7 @@ export async function POST(request: NextRequest) {
   if (!hasSameOrigin(request))
     return NextResponse.json({ error: 'CSRF_REJECTED' }, { status: 403 });
   const actor = await actorFromRequest(request);
-  if (actor === null) return NextResponse.redirect(new URL('/login', request.url), 303);
+  if (actor === null) return NextResponse.redirect(publicUrl('/login', request.url), 303);
   try {
     const form = await request.formData();
     const authorization = await resolveAuthorization({
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.redirect(callback, 303);
   } catch {
     return NextResponse.redirect(
-      new URL('/developers/integrations?error=authorization_failed', request.url),
+      publicUrl('/developers/integrations?error=authorization_failed', request.url),
       303,
     );
   }
