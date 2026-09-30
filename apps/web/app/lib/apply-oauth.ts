@@ -1,7 +1,7 @@
 import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { createSqlClient } from '@nexus/db';
 
-const availableScopes = ['profile:read', 'profile:email'] as const;
+const availableScopes = ['profile:read', 'profile:email', 'resume:read', 'skills:verify'] as const;
 export type ApplyScope = (typeof availableScopes)[number];
 const authorizationCodeLifetimeMs = 5 * 60 * 1000;
 const accessTokenLifetimeMs = 60 * 60 * 1000;
