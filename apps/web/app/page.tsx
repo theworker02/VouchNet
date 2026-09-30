@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { VerifiedWorkBadge } from './components/verified-work-badge';
 
 export default function HomePage() {
   return (
@@ -51,8 +52,12 @@ export default function HomePage() {
               <strong>Alex Rivera</strong>
               <span>Product engineer · Brooklyn, NY</span>
             </div>
-            <b>Verified work</b>
+            <VerifiedWorkBadge compact />
           </div>
+          <span className="preview-badge-inspector" aria-label="Inspect verified work">
+            <span aria-hidden="true">⌕</span>
+            <i />
+          </span>
           <article className="preview-signal-card">
             <div className="preview-signal-header">
               <span>PROJECT NOTE</span>

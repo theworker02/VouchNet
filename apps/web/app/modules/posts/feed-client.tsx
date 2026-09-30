@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { FormEvent, useEffect, useMemo, useState } from 'react';
-import type { FeedPost, PostCategory, ReactionType } from './service';
+import type { FeedPost, PostCategory, PostVisibility, ReactionType } from './service';
 
 const categories: readonly PostCategory[] = ['TECHNICAL', 'PROJECT', 'HIRING', 'STATUS', 'OPINION'];
 const reactions: readonly ReactionType[] = ['UPVOTE', 'VERIFY', 'INSIGHTFUL', 'BENCHMARK'];
@@ -99,6 +99,9 @@ export function FeedClient() {
   const [hidden, setHidden] = useState<PostCategory[]>([]);
   const [status, setStatus] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [category, setCategory] = useState<PostCategory>('TECHNICAL');
+  const [visibility, setVisibility] = useState<PostVisibility>('PUBLIC');
+  const [picker, setPicker] = useState<'category' | 'visibility' | null>(null);
   async function load() {
     try {
       const data = await requestFeed(mode, hidden);
@@ -175,7 +178,7 @@ export function FeedClient() {
             +
           </div>
           <div>
-            <strong>Share a useful signal</strong>
+            <strong>Share a useful post</strong>
             <span>Technical notes, projects, hiring context, or a considered point of view.</span>
           </div>
         </div>
@@ -187,18 +190,92 @@ export function FeedClient() {
           placeholder="Share useful work, a technical finding, or a project update…"
         />
         <div className="composer-controls">
-          <select name="category" defaultValue="TECHNICAL">
-            <option value="TECHNICAL">Technical</option>
-            <option value="PROJECT">Project</option>
-            <option value="HIRING">Hiring</option>
-            <option value="STATUS">Status</option>
-            <option value="OPINION">Opinion</option>
-          </select>
-          <select name="visibility" defaultValue="PUBLIC">
-            <option value="PUBLIC">Public</option>
-            <option value="FOLLOWERS">Followers</option>
-            <option value="CONTACTS">Contacts</option>
-          </select>
+          <input name="category" type="hidden" value={category} />
+          <input name="visibility" type="hidden" value={visibility} />
+          <div className="composer-picker">
+            <button
+              type="button"
+              className="composer-picker-trigger"
+              onClick={() => setPicker(picker === 'category' ? null : 'category')}
+            >
+              ⌘ {category[0]}
+              {category.slice(1).toLowerCase()} <span>⌄</span>
+            </button>
+            {picker === 'category' ? (
+              <div className="composer-picker-menu">
+                {categories.map((item) => (
+                  <button
+                    type="button"
+                    key={item}
+                    onClick={() => {
+                      setCategory(item);
+                      setPicker(null);
+                    }}
+                  >
+                    <strong>
+                      {item[0]}
+                      {item.slice(1).toLowerCase()}
+                    </strong>
+                    <small>
+                      {item === 'TECHNICAL'
+                        ? 'Engineering and practical insight'
+                        : item === 'PROJECT'
+                          ? 'Work you made or shipped'
+                          : item === 'HIRING'
+                            ? 'A role or opportunity'
+                            : item === 'STATUS'
+                              ? 'A concise professional update'
+                              : 'A considered perspective'}
+                    </small>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+          <div className="composer-picker">
+            <button
+              type="button"
+              className="composer-picker-trigger"
+              onClick={() => setPicker(picker === 'visibility' ? null : 'visibility')}
+            >
+              ◉{' '}
+              {visibility === 'PUBLIC'
+                ? 'Public'
+                : visibility === 'FOLLOWERS'
+                  ? 'Followers'
+                  : 'Contacts'}{' '}
+              <span>⌄</span>
+            </button>
+            {picker === 'visibility' ? (
+              <div className="composer-picker-menu visibility-menu">
+                {(['PUBLIC', 'FOLLOWERS', 'CONTACTS'] as PostVisibility[]).map((item) => (
+                  <button
+                    type="button"
+                    key={item}
+                    onClick={() => {
+                      setVisibility(item);
+                      setPicker(null);
+                    }}
+                  >
+                    <strong>
+                      {item === 'PUBLIC'
+                        ? 'Public'
+                        : item === 'FOLLOWERS'
+                          ? 'Followers'
+                          : 'Contacts'}
+                    </strong>
+                    <small>
+                      {item === 'PUBLIC'
+                        ? 'Visible on your public profile'
+                        : item === 'FOLLOWERS'
+                          ? 'Visible to people following you'
+                          : 'Visible to accepted contacts'}
+                    </small>
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
           <span className="composer-note">Markdown supported</span>
           <button disabled={isSubmitting}>{isSubmitting ? 'Publishing…' : 'Publish'}</button>
         </div>

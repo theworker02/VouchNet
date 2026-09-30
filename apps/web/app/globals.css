@@ -3162,6 +3162,64 @@ button {
   flex-wrap: wrap;
 }
 
+.composer-picker {
+  position: relative;
+}
+.composer-picker-trigger {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  padding: 8px 10px;
+  border: 1px solid #cdd9eb;
+  border-radius: 9px;
+  color: #263858;
+  background: #f8fbff;
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+.composer-picker-trigger:hover {
+  border-color: #94add8;
+  background: #fff;
+}
+.composer-picker-trigger span {
+  color: #6d7f9d;
+}
+.composer-picker-menu {
+  position: absolute;
+  z-index: 10;
+  bottom: calc(100% + 8px);
+  left: 0;
+  display: grid;
+  width: 265px;
+  padding: 6px;
+  border: 1px solid #cfdaec;
+  border-radius: 13px;
+  background: #fff;
+  box-shadow: 0 18px 40px rgb(28 54 103 / 0.18);
+}
+.composer-picker-menu button {
+  display: grid;
+  gap: 2px;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 9px;
+  text-align: left;
+  color: #223656;
+  background: transparent;
+}
+.composer-picker-menu button:hover {
+  background: #edf4ff;
+}
+.composer-picker-menu small {
+  color: #6c7a91;
+  font-size: 0.68rem;
+  font-weight: 500;
+}
+.visibility-menu {
+  left: auto;
+  right: 0;
+}
+
 .composer-note {
   margin-left: 3px;
 }
@@ -3800,18 +3858,61 @@ button {
   transform: rotate(1.5deg);
 }
 
-.landing-product-preview::before {
+.verified-work-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  width: max-content;
+  padding: 5px 8px;
+  border: 1px solid #9bd7bc;
+  border-radius: 999px;
+  color: #166547;
+  background: #edfbf3;
+  font-size: 0.7rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.verified-work-badge > span {
+  display: grid;
+  width: 14px;
+  height: 14px;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  background: #169460;
+  font-size: 0.58rem;
+}
+.verified-work-badge.compact {
+  padding: 4px 6px;
+  font-size: 0.62rem;
+}
+.preview-badge-inspector {
   position: absolute;
-  top: 52px;
-  right: -26px;
-  width: 80px;
-  height: 80px;
-  border: 1px solid #bdd1fa;
-  border-radius: 19px;
-  background: #eaf1ff;
-  box-shadow: 0 14px 32px rgb(40 71 137 / 0.16);
-  content: '';
-  transform: rotate(-8deg);
+  z-index: 2;
+  top: 44px;
+  right: -24px;
+  display: grid;
+  width: 58px;
+  height: 58px;
+  place-items: center;
+  border: 1px solid #9bd7bc;
+  border-radius: 50%;
+  color: #15724c;
+  background: rgb(255 255 255 / 0.95);
+  box-shadow: 0 16px 30px rgb(23 83 59 / 0.18);
+  font-size: 2rem;
+  transform: rotate(-11deg);
+}
+.preview-badge-inspector i {
+  position: absolute;
+  right: -17px;
+  bottom: -12px;
+  width: 32px;
+  height: 2px;
+  border-radius: 2px;
+  background: #15724c;
+  transform: rotate(48deg);
+  transform-origin: left center;
 }
 
 .preview-toolbar,
