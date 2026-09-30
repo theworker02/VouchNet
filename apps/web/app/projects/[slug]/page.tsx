@@ -21,7 +21,7 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
           VouchNet
         </Link>
         <div>
-          <Link className="quiet-link" href={`/in/${project.ownerSlug}`}>
+          <Link className="quiet-link" href={`/vouch/${project.ownerSlug}`}>
             View profile
           </Link>
           <Link className="primary" href="/signup">
@@ -33,7 +33,7 @@ export default async function PublicProjectPage({ params }: { params: Promise<{ 
         <div className="public-project-topline">
           <span>{project.status.toLowerCase()}</span>
           <span>
-            Published by <Link href={`/in/${project.ownerSlug}`}>{project.ownerName}</Link>
+            Published by <Link href={`/vouch/${project.ownerSlug}`}>{project.ownerName}</Link>
           </span>
         </div>
         <h1>{project.name}</h1>

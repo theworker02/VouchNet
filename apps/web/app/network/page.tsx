@@ -57,7 +57,7 @@ export default async function Network() {
                 {invitation.lastName[0]}
               </div>
               <p>
-                <Link href={`/in/${invitation.slug}`}>
+                <Link href={`/vouch/${invitation.slug}`}>
                   {invitation.firstName} {invitation.lastName}
                 </Link>
                 {invitation.headline === null ? null : <small>{invitation.headline}</small>}

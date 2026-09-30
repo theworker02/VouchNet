@@ -57,7 +57,7 @@ function PostCard({
             .slice(0, 2)}
         </div>
         <div>
-          <Link href={`/in/${post.authorSlug}`}>{post.authorName}</Link>
+          <Link href={`/vouch/${post.authorSlug}`}>{post.authorName}</Link>
           <p>
             {post.authorHeadline ?? 'VouchNet member'} · {post.category.toLowerCase()}
           </p>

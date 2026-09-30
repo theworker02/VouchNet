@@ -76,7 +76,7 @@ export function DiscoverClient() {
                 {item.mutual_contacts} mutual Contact{item.mutual_contacts === 1 ? '' : 's'}
               </p>
               <p>
-                <Link href={`/in/${item.slug}`}>View profile</Link>
+                <Link href={`/vouch/${item.slug}`}>View profile</Link>
               </p>
               <button type="button" onClick={() => void dismiss(item.user_id)}>
                 Remove suggestion

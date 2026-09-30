@@ -1,6 +1,7 @@
 import { AuthForm } from '../components/auth-form';
 import { AuthShell } from '../components/auth-shell';
 import Link from 'next/link';
+import { OAuthButtons } from '../components/oauth-buttons';
 
 const signupErrors = {
   ACCOUNT_EXISTS: 'If an account already exists for this email, sign in or reset its password.',
@@ -37,6 +38,7 @@ export default async function Signup({
           {message}
         </p>
       ) : null}
+      <OAuthButtons />
       <AuthForm action="/api/auth/register">
         <div className="two">
           <label>

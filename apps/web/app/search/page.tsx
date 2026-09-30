@@ -40,7 +40,7 @@ export default async function Search({ searchParams }: { searchParams: Promise<{
               </h2>
               <p>{person.headline ?? 'VouchNet member'}</p>
               {person.location === null ? null : <p>{person.location}</p>}
-              <Link href={`/in/${person.slug}`}>View profile</Link>
+              <Link href={`/vouch/${person.slug}`}>View profile</Link>
             </article>
           ))}
         </section>

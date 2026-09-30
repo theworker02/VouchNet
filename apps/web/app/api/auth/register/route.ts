@@ -3,6 +3,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { ZodError } from 'zod';
 import { IdentityError, registerHuman } from '../../../lib/identity';
 import { sendVerificationEmail } from '../../../lib/email';
+import { logger } from '@nexus/observability';
+
+export const runtime = 'nodejs';
 
 type RegistrationError =
   'ACCOUNT_EXISTS' | 'INVALID_INPUT' | 'VERIFICATION_RECENTLY_SENT' | 'SERVICE_UNAVAILABLE';
@@ -15,6 +18,7 @@ function failureResponse(request: NextRequest, error: RegistrationError): NextRe
 }
 
 export async function POST(request: NextRequest) {
+  const requestId = request.headers.get('x-request-id') ?? crypto.randomUUID();
   try {
     const form = await request.formData();
     const input = registrationSchema.parse({
@@ -45,7 +49,15 @@ export async function POST(request: NextRequest) {
     }
     return NextResponse.redirect(new URL('/verify', request.url), 303);
   } catch (error) {
-    if (error instanceof ZodError) return failureResponse(request, 'INVALID_INPUT');
+    if (error instanceof ZodError) {
+      logger.error({
+        operation: 'auth.register',
+        outcome: 'failure',
+        errorCode: 'INVALID_INPUT',
+        requestId,
+      });
+      return failureResponse(request, 'INVALID_INPUT');
+    }
     if (error instanceof IdentityError) {
       if (error.code === 'ACCOUNT_ALREADY_ACTIVE')
         return failureResponse(request, 'ACCOUNT_EXISTS');
@@ -54,6 +66,12 @@ export async function POST(request: NextRequest) {
     }
     // Do not expose database or provider details to the browser. Unknown failures are operational
     // until proved otherwise and should direct the person to retry, not blame their input.
+    logger.error({
+      operation: 'auth.register',
+      outcome: 'failure',
+      errorCode: 'REGISTRATION_FAILED',
+      requestId,
+    });
     return failureResponse(request, 'SERVICE_UNAVAILABLE');
   }
 }

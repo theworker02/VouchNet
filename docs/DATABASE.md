@@ -12,3 +12,15 @@ are seeded as `SOURCE_REVIEWED`, not domain-verified. Each external job retains 
 review timestamp; the platform must never imply a listing remains open after its source changes.
 
 Apply migrations with `pnpm db:migrate`. Generate new migrations with `pnpm db:generate`; review generated SQL before applying it.
+
+`0009_profile_vouches.sql` adds `profile_vouches`: one updateable, categorized professional signal
+per accepted connection direction. The table forbids self-vouches and indexes recipient and voucher
+history separately. `0010_oauth_identities.sql` maps a human VouchNet account to a provider subject
+without storing provider access tokens. It prevents duplicate subjects and duplicate provider links
+per VouchNet account.
+
+`0011_vouchnet_apply_oauth.sql` adds the server-side Apply with VouchNet boundary:
+`developer_clients`, short-lived PKCE-bound `oauth_authorization_codes`, and revocable,
+short-lived `oauth_access_tokens`. Client secrets, authorization codes, and access tokens are only
+stored as keyed hashes; the tables cannot reconstruct their plaintext values. Client revocation
+invalidates all corresponding access tokens.

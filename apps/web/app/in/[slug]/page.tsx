@@ -5,6 +5,9 @@ import { Shell } from '../../components/shell';
 import { getCurrentActor } from '../../lib/identity';
 import { getVisibleProfile } from '../../lib/people';
 import { RelationshipActions } from '../../components/relationship-actions';
+import { ProfileVouch } from '../../components/profile-vouch';
+import { ProfileVouchRoster } from '../../components/profile-vouch-roster';
+import { getProfileVouches } from '../../lib/vouches';
 
 export async function generateMetadata({
   params,
@@ -26,7 +29,7 @@ export async function generateMetadata({
   return {
     title: `${name} | VouchNet`,
     description,
-    alternates: { canonical: `/in/${profile.slug}` },
+    alternates: { canonical: `/vouch/${profile.slug}` },
     openGraph: { title: `${name} | VouchNet`, description, type: 'profile' },
   };
 }
@@ -35,7 +38,8 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
   const actor = await getCurrentActor();
   const profile = await getVisibleProfile(actor?.userId ?? null, (await params).slug);
   if (profile === null) notFound();
-  if (actor === null) return <PublicProfile profile={profile} />;
+  const vouchData = await getProfileVouches(actor?.userId ?? null, profile.userId);
+  if (actor === null) return <PublicProfile profile={profile} vouchData={vouchData} />;
   return (
     <Shell>
       <section className="profile-surface">
@@ -66,7 +70,10 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
               </Link>
             </>
           ) : (
-            <RelationshipActions userId={profile.userId} />
+            <>
+              <RelationshipActions userId={profile.userId} />
+              <ProfileVouch recipientId={profile.userId} initialVouch={vouchData.viewerVouch} />
+            </>
           )}
         </div>
       </section>
@@ -122,14 +129,21 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
           contributions—not anonymous counters.
         </p>
       </section>
+      <ProfileVouchRoster
+        isOwner={profile.userId === actor.userId}
+        isVisible={vouchData.displayVouches}
+        vouches={vouchData.vouches}
+      />
     </Shell>
   );
 }
 
 function PublicProfile({
   profile,
+  vouchData,
 }: {
   profile: NonNullable<Awaited<ReturnType<typeof getVisibleProfile>>>;
+  vouchData: Awaited<ReturnType<typeof getProfileVouches>>;
 }) {
   return (
     <main className="public-profile">
@@ -179,6 +193,15 @@ function PublicProfile({
           </Link>
         </aside>
       </section>
+      {vouchData.displayVouches ? (
+        <section className="public-profile-content public-vouch-section">
+          <ProfileVouchRoster
+            isOwner={false}
+            isVisible={vouchData.displayVouches}
+            vouches={vouchData.vouches}
+          />
+        </section>
+      ) : null}
     </main>
   );
 }

@@ -1,8 +1,27 @@
 # OAuth configuration
 
-VouchNet will use server-side OAuth authorization-code flows with state validation and PKCE. The
-provider secrets stay only in the deployment environment; do not expose them in browser code,
-GitHub, screenshots, or support requests.
+## Apply with VouchNet
+
+VouchNet is also an authorization server for the narrowly scoped “Apply with VouchNet” flow.
+Register a confidential hiring-site client at **Settings → Developer center → Integration clients**.
+Client secrets are shown once and retained only as HMAC hashes. Use the following endpoints:
+
+- Authorize: `GET /oauth/authorize` with `response_type=code`, `client_id`, an exact
+  `redirect_uri`, `scope`, `state`, `code_challenge`, and `code_challenge_method=S256`.
+- Token: `POST /api/oauth/token` with HTTP Basic client authentication (or form credentials),
+  `grant_type=authorization_code`, `code`, exact `redirect_uri`, and `code_verifier`.
+- User info: `GET /api/oauth/userinfo` with `Authorization: Bearer <access token>`.
+
+Supported scopes are `profile:read` (profile URL, name, and headline) and `profile:email`
+(verified email). Each member sees and approves the exact requested access before VouchNet sends a
+short-lived authorization code. Access tokens expire after one hour; revoking the integration
+invalidates all of its tokens. Resumes, private messages, passwords, browser sessions, and social
+actions are never shared through this flow.
+
+VouchNet uses server-side OAuth authorization-code flows with state validation and PKCE. Provider
+secrets stay only in the deployment environment; do not expose them in browser code, GitHub,
+screenshots, or support requests. Access tokens are used only to read the provider identity during
+the callback and are never stored.
 
 ## Local environment
 
@@ -28,15 +47,26 @@ Generate `VOUCHNET_OAUTH_SIGNING_KEY` independently from `SESSION_SECRET`; it mu
 Register the following exact production callback addresses. Add the equivalent localhost callbacks
 only to the provider app used for local development.
 
-| Provider | Callback URL |
-| --- | --- |
-| Google | `https://vouchnet.dev/api/auth/oauth/google/callback` |
-| GitHub | `https://vouchnet.dev/api/auth/oauth/github/callback` |
+| Provider | Callback URL                                            |
+| -------- | ------------------------------------------------------- |
+| Google   | `https://vouchnet.dev/api/auth/oauth/google/callback`   |
+| GitHub   | `https://vouchnet.dev/api/auth/oauth/github/callback`   |
 | LinkedIn | `https://vouchnet.dev/api/auth/oauth/linkedin/callback` |
 
 Request only identity scopes: Google `openid email profile`, GitHub `read:user user:email`, and
 LinkedIn `openid profile email`. VouchNet will not request repository, posting, or connection
 permissions for sign-in.
+
+## First sign-in behavior
+
+Provider sign-in establishes identity but does not silently accept VouchNet terms. A first-time
+member is sent to `/oauth/complete`, where they must explicitly accept the Terms of Service and
+Privacy Policy before VouchNet activates the account and creates a session. Existing linked
+members go directly to their home surface.
+
+VouchNet requires a verified email address from the provider. It does not automatically attach a
+provider identity to an existing email/password account; that account-linking workflow requires a
+separate, re-authenticated security flow.
 
 ## Netlify
 

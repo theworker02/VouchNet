@@ -33,7 +33,7 @@ export async function Shell({ children }: { children: React.ReactNode }) {
             <span className="account-label">Me</span>
           </summary>
           <div>
-            <Link href={`/in/${profile?.slug ?? ''}`}>View profile</Link>
+            <Link href={`/vouch/${profile?.slug ?? ''}`}>View profile</Link>
             <Link href="/projects">My projects</Link>
             <Link href="/saved">Saved</Link>
             <Link href="/settings">Settings</Link>
@@ -50,7 +50,7 @@ export async function Shell({ children }: { children: React.ReactNode }) {
           <div>
             <Link href="/jobs">Post a job</Link>
             <Link href="/jobs">Company tools</Link>
-            <Link href="/settings/data">Developer portal</Link>
+            <Link href="/settings/developers">Developer portal</Link>
           </div>
         </details>
       </header>

@@ -19,7 +19,7 @@ export default async function ProjectsPage() {
         <EmbedBadge
           label={`${profile.fullName} on VouchNet`}
           imageUrl={`${appUrl}/api/badges/profile/${profile.slug}`}
-          targetUrl={`${appUrl}/in/${profile.slug}`}
+          targetUrl={`${appUrl}/vouch/${profile.slug}`}
         />
       )}
     </Shell>

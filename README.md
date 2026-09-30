@@ -39,12 +39,12 @@ and it does not attempt to make software agents appear to be ordinary members.
 
 ### Product principles
 
-| Principle | What it means in the product |
-| --- | --- |
-| Human participation | A profile represents a person. Integrations and background systems use their own attributable actor types. |
-| Proof before promotion | Projects, public links, technical work, and verified context are first-class profile material. |
-| Transparent opportunity | Source-linked job listings show a numeric compensation range before an applicant leaves the platform. |
-| Privacy by design | Visibility and block rules are enforced by server-side queries across public and authenticated routes. |
+| Principle                  | What it means in the product                                                                                                                   |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| Human participation        | A profile represents a person. Integrations and background systems use their own attributable actor types.                                     |
+| Proof before promotion     | Projects, public links, technical work, and verified context are first-class profile material.                                                 |
+| Transparent opportunity    | Source-linked job listings show a numeric compensation range before an applicant leaves the platform.                                          |
+| Privacy by design          | Visibility and block rules are enforced by server-side queries across public and authenticated routes.                                         |
 | Honest early-stage density | Curated organizations, jobs, and system-owned challenges are labelled as such; VouchNet never pads the network with fake people or engagement. |
 
 ## Public surfaces
@@ -224,6 +224,8 @@ where applicable, and audit handling without exposing secrets or unnecessary per
 - [Roadmap](docs/ROADMAP.md)
 - [Launch playbook](docs/LAUNCH.md)
 - [OAuth configuration](docs/OAUTH.md)
+- [Developer portal](docs/DEVELOPER_PORTAL.md)
+- [Brand guidance](docs/BRAND.md)
 - [Analytics](docs/ANALYTICS.md)
 - [Release notes](CHANGELOG.md)
 

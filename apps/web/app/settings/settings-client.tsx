@@ -2,7 +2,8 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-type SettingSection = 'account' | 'security' | 'visibility' | 'notifications' | 'data';
+type SettingSection =
+  'account' | 'security' | 'visibility' | 'notifications' | 'data' | 'developers';
 type UserSettings = {
   preferences: {
     theme: 'LIGHT' | 'DARK' | 'SYSTEM';
@@ -17,6 +18,7 @@ type UserSettings = {
     activeStatus: boolean;
     connectionVisibility: 'ONLY_ME' | 'CONNECTIONS' | 'PUBLIC';
     aiTrainingAllowed: boolean;
+    displayVouches: boolean;
   };
   notifications: {
     frequency: 'REAL_TIME' | 'DAILY_DIGEST' | 'PAUSED';
@@ -32,6 +34,7 @@ const settingSections: readonly SettingSection[] = [
   'visibility',
   'notifications',
   'data',
+  'developers',
 ];
 
 const labels: Record<SettingSection, string> = {
@@ -40,6 +43,7 @@ const labels: Record<SettingSection, string> = {
   visibility: 'Visibility & privacy',
   notifications: 'Notifications',
   data: 'Data & export',
+  developers: 'Developer center',
 };
 const channelLabels = {
   DIRECT_MESSAGES: 'Direct messages',
@@ -185,6 +189,10 @@ export function SettingsClient({ section }: { section: SettingSection }) {
               'aiTrainingAllowed',
               'Allow my public content in public AI training datasets',
             )}
+            {privacyToggle(
+              'displayVouches',
+              'Display people who have vouched for me on my profile',
+            )}
             <label>
               Profile visibility
               <select
@@ -304,7 +312,7 @@ export function SettingsClient({ section }: { section: SettingSection }) {
             </p>
           </>
         ) : null}
-        {section !== 'data' ? (
+        {section !== 'data' && section !== 'developers' ? (
           <>
             <button onClick={() => void save()} disabled={status === 'saving'}>
               {status === 'saving' ? 'Saving…' : 'Save preferences'}
@@ -313,6 +321,22 @@ export function SettingsClient({ section }: { section: SettingSection }) {
             {status === 'error' ? (
               <p className="form-error">Settings could not be loaded or saved.</p>
             ) : null}
+          </>
+        ) : null}
+        {section === 'developers' ? (
+          <>
+            <h2>Integration resources</h2>
+            <p className="muted-copy">
+              Developer tools use separate credentials and scopes; they never inherit a browser
+              session or masquerade as a member.
+            </p>
+            <div className="developer-link-list">
+              <Link href="/developers/integrations">Integration guide</Link>
+              <Link href="/settings/developers/clients">Manage integration clients</Link>
+              <Link href="/developers/mcp">MCP gateway status</Link>
+              <Link href="/developers/servers">Server integration</Link>
+              <Link href="/developers/brand">Brand kit</Link>
+            </div>
           </>
         ) : null}
       </section>

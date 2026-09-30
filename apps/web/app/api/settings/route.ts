@@ -19,6 +19,7 @@ const settingsSchema = z.object({
     activeStatus: z.boolean(),
     connectionVisibility: z.enum(['ONLY_ME', 'CONNECTIONS', 'PUBLIC']),
     aiTrainingAllowed: z.boolean(),
+    displayVouches: z.boolean(),
   }),
   notifications: z.object({
     frequency: z.enum(['REAL_TIME', 'DAILY_DIGEST', 'PAUSED']),

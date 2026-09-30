@@ -23,6 +23,7 @@ export interface UserSettings {
     activeStatus: boolean;
     connectionVisibility: 'ONLY_ME' | 'CONNECTIONS' | 'PUBLIC';
     aiTrainingAllowed: boolean;
+    displayVouches: boolean;
   };
   notifications: {
     frequency: 'REAL_TIME' | 'DAILY_DIGEST' | 'PAUSED';
@@ -47,6 +48,7 @@ const defaults: UserSettings = {
     activeStatus: true,
     connectionVisibility: 'CONNECTIONS',
     aiTrainingAllowed: false,
+    displayVouches: true,
   },
   notifications: {
     frequency: 'REAL_TIME',
@@ -76,7 +78,19 @@ export async function getUserSettings(userId: string): Promise<UserSettings> {
       }[]
     >`SELECT preferences,privacy,notifications FROM user_settings WHERE user_id=${userId}`;
     const row = rows[0];
-    return row === undefined ? defaults : row;
+    // Settings were introduced incrementally. Merge persisted JSON with defaults so a newly
+    // added privacy control never becomes implicitly disabled for existing members.
+    return row === undefined
+      ? defaults
+      : {
+          preferences: { ...defaults.preferences, ...row.preferences },
+          privacy: { ...defaults.privacy, ...row.privacy },
+          notifications: {
+            ...defaults.notifications,
+            ...row.notifications,
+            channels: { ...defaults.notifications.channels, ...row.notifications.channels },
+          },
+        };
   } finally {
     await sql.end({ timeout: 1 });
   }
