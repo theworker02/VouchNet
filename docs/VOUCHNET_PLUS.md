@@ -36,6 +36,11 @@ or human approval for protected social actions. Configure its recurring Stripe P
 `STRIPE_DEVELOPER_ACCESS_PRICE_ID`; it uses the same signed webhook endpoint and subscription
 events as VouchNet+.
 
+When Stripe sends a cancellation update, VouchNet revokes the entitlement immediately—even if
+Stripe's subscription is configured to end at the current billing period. Every protected request
+checks the server-side entitlement record, so a stale browser or cached page cannot keep a canceled
+member's paid tools enabled.
+
 ## Still intentionally unavailable
 
 Priority outreach is not exposed until messaging has a real persistence, delivery, abuse-control,

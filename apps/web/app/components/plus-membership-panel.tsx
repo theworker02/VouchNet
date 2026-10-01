@@ -16,12 +16,35 @@ export function PlusMembershipPanel() {
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    void fetch('/api/billing/status')
-      .then(async (response) => {
+    let attempts = 0;
+    let pollTimer: number | null = null;
+    const awaitCheckoutWebhook =
+      new URLSearchParams(window.location.search).get('billing') === 'success';
+    async function refreshBillingStatus() {
+      try {
+        const response = await fetch('/api/billing/status');
         if (!response.ok) throw new Error('BILLING_STATUS_UNAVAILABLE');
-        setBilling((await response.json()) as BillingStatus);
-      })
-      .catch(() => setMessage('Membership status is temporarily unavailable.'));
+        const nextBilling = (await response.json()) as BillingStatus;
+        setBilling(nextBilling);
+        if (awaitCheckoutWebhook && (nextBilling.isPlus || nextBilling.developerAccess.isActive)) {
+          if (pollTimer !== null) window.clearInterval(pollTimer);
+          setMessage('Your paid access is active.');
+        }
+      } catch {
+        setMessage('Membership status is temporarily unavailable.');
+      }
+    }
+    void refreshBillingStatus();
+    if (awaitCheckoutWebhook) {
+      pollTimer = window.setInterval(() => {
+        attempts += 1;
+        if (attempts >= 20 && pollTimer !== null) window.clearInterval(pollTimer);
+        else void refreshBillingStatus();
+      }, 3000);
+    }
+    return () => {
+      if (pollTimer !== null) window.clearInterval(pollTimer);
+    };
   }, []);
 
   async function redirectTo(

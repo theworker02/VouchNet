@@ -1,20 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type Stripe from 'stripe';
 import { stripeClient, webhookSecret } from '../../../lib/stripe';
-import {
-  syncStripeDeveloperAccess,
-  syncStripeSubscription,
-  type SubscriptionSummary,
-} from '../../../lib/subscription';
+import { stripeEntitlementStatus } from '../../../lib/stripe-entitlement';
+import { syncStripeDeveloperAccess, syncStripeSubscription } from '../../../lib/subscription';
 
 export const runtime = 'nodejs';
-
-function entitlementStatus(status: Stripe.Subscription.Status): SubscriptionSummary['status'] {
-  if (status === 'active' || status === 'trialing') return 'ACTIVE';
-  if (status === 'past_due' || status === 'unpaid') return 'PAST_DUE';
-  if (status === 'canceled') return 'CANCELED';
-  return 'EXPIRED';
-}
 
 function asId(value: string | { id: string } | null): string | null {
   return typeof value === 'string' ? value : (value?.id ?? null);
@@ -28,7 +18,7 @@ async function syncSubscription(subscription: Stripe.Subscription): Promise<void
     userId,
     customerId,
     subscriptionId: subscription.id,
-    status: entitlementStatus(subscription.status),
+    status: stripeEntitlementStatus(subscription),
     currentPeriodEndsAt:
       subscription.items.data[0] === undefined
         ? null

@@ -149,7 +149,7 @@ export async function getDeveloperAccessSummary(
     `;
     const access = rows[0];
     return access === undefined
-      ? { status: 'ACTIVE', customerId: null, subscriptionId: null, currentPeriodEndsAt: null }
+      ? { status: 'EXPIRED', customerId: null, subscriptionId: null, currentPeriodEndsAt: null }
       : {
           status: access.status,
           customerId: access.provider_customer_id,
