@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeClientError } from './telemetry';
+import { normalizeClientError, shouldReportClientError } from './telemetry';
 
 describe('normalizeClientError', () => {
   it('redacts recognizable secrets and enforces bounded diagnostic fields', () => {
@@ -20,5 +20,17 @@ describe('normalizeClientError', () => {
     expect(
       normalizeClientError({ errorMessage: '', errorName: '', route: 'invalid', severity: 'LOW' }),
     ).toMatchObject({ errorMessage: 'Unknown client error', errorName: 'Error', route: '/' });
+  });
+
+  it('suppresses a duplicate browser error briefly without hiding a later recurrence', () => {
+    const event = normalizeClientError({
+      errorMessage: 'A repeated render fault',
+      errorName: 'RenderError',
+      route: '/feed',
+      severity: 'HIGH',
+    });
+    expect(shouldReportClientError(event, 1_000)).toBe(true);
+    expect(shouldReportClientError(event, 1_001)).toBe(false);
+    expect(shouldReportClientError(event, 31_001)).toBe(true);
   });
 });

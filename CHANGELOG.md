@@ -3,6 +3,26 @@
 All notable changes to VouchNet are documented here. This project follows
 [Semantic Versioning](https://semver.org/).
 
+## 0.9.1 - 2026-10-01
+
+### Stability and resilience
+
+- Reduced authenticated navigation overhead by materializing the daily game notification and
+  calculating its unread badge count through one database lifecycle.
+- Feed status messaging now clears after a successful refresh, post, or reaction persistence rather
+  than leaving a stale error visible.
+- The reaction picker now closes after a selection, and keyboard users can skip directly to the
+  protected application content.
+- Client error telemetry suppresses duplicate browser reports for 30 seconds, limiting a broken
+  view from amplifying diagnostic traffic.
+- The telemetry intake is rate limited, and follow, unfollow, and block mutations now use the
+  existing distributed social-write limit and strict UUID route validation.
+
+### Release contents
+
+- This is a source-only patch release. It contains no compiled binaries, installer packages, or
+  downloadable artifacts. See [`docs/releases/v0.9.1.md`](docs/releases/v0.9.1.md).
+
 ## [0.9.0] - 2026-10-01
 
 ### Highlights

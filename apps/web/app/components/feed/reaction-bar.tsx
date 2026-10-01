@@ -11,6 +11,7 @@ import {
   ThumbsUp,
 } from 'lucide-react';
 import type { ComponentType } from 'react';
+import { useState } from 'react';
 import type { ReactionType } from '../../modules/posts/service';
 
 type ReactionOption = {
@@ -76,19 +77,26 @@ export function ReactionBar({
   value: ReactionType | null;
   onReact: (reaction: ReactionType) => void;
 }) {
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
   const selected =
     primaryReactions.find((item) => item.type === value) ??
     signalReactions.find((item) => item.type === value);
   const primary = selected ?? defaultReaction;
+
+  function chooseReaction(reaction: ReactionType) {
+    onReact(reaction);
+    setIsPickerOpen(false);
+  }
+
   return (
     <div className="reaction-bar" aria-label="Post reactions">
       <ReactionButton
         active={value === primary.type}
         count={counts[primary.type]}
-        onReact={onReact}
+        onReact={chooseReaction}
         option={primary}
       />
-      <Popover.Root>
+      <Popover.Root onOpenChange={setIsPickerOpen} open={isPickerOpen}>
         <Popover.Trigger asChild>
           <button aria-label="Choose a reaction" className="reaction-more" type="button">
             <ChevronDown aria-hidden="true" size={15} />
@@ -103,7 +111,7 @@ export function ReactionBar({
                   <ReactionButton
                     active={value === option.type}
                     key={option.type}
-                    onReact={onReact}
+                    onReact={chooseReaction}
                     option={option}
                   />
                 ))}
@@ -116,7 +124,7 @@ export function ReactionBar({
                   <ReactionButton
                     active={value === option.type}
                     key={option.type}
-                    onReact={onReact}
+                    onReact={chooseReaction}
                     option={option}
                   />
                 ))}

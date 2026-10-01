@@ -137,6 +137,40 @@ export async function unreadMemberNotificationCount(userId: string): Promise<num
   }
 }
 
+/**
+ * The application shell needs the current badge count on every authenticated navigation. Keep the
+ * once-per-day materialization and the count on one connection so the navigation does not wait on
+ * two sequential database lifecycles.
+ */
+export async function syncDailyStrategyNotificationAndGetUnreadCount(
+  userId: string,
+): Promise<number> {
+  const game = getDailyStrategyGame(dayKey());
+  const sql = createSqlClient(databaseUrl());
+  try {
+    await sql`
+      INSERT INTO member_notifications (user_id,category,resource_key,title,body,href)
+      VALUES (
+        ${userId},
+        'DAILY_GAME',
+        ${game.date},
+        ${`${game.title} is ready`},
+        ${`${game.difficultyLabel} difficulty · solve the signal grid in ${game.moveBudget} moves or fewer.`},
+        '/games'
+      )
+      ON CONFLICT (user_id,category,resource_key) DO NOTHING
+    `;
+    const rows = await sql<{ count: number }[]>`
+      SELECT COUNT(*)::integer AS count
+      FROM member_notifications
+      WHERE user_id=${userId} AND read_at IS NULL
+    `;
+    return rows[0]?.count ?? 0;
+  } finally {
+    await sql.end({ timeout: 1 });
+  }
+}
+
 export async function markMemberNotificationRead(
   userId: string,
   notificationId: string,

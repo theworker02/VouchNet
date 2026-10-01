@@ -156,6 +156,7 @@ export function FeedClient() {
     try {
       const data = await requestFeed(mode, hidden);
       setPosts(data.posts);
+      setStatus(null);
     } catch {
       setStatus('The feed is unavailable right now.');
     }
@@ -165,7 +166,10 @@ export function FeedClient() {
     const timer = window.setTimeout(() => {
       void requestFeed(mode, hidden)
         .then((data) => {
-          if (active) setPosts(data.posts);
+          if (active) {
+            setPosts(data.posts);
+            setStatus(null);
+          }
         })
         .catch(() => {
           if (active) {
@@ -201,6 +205,7 @@ export function FeedClient() {
         setStatus('Your post could not be published.');
         return;
       }
+      setStatus(null);
       event.currentTarget.reset();
       await load();
     } catch {
@@ -234,6 +239,7 @@ export function FeedClient() {
         setStatus('That reaction could not be saved.');
         return;
       }
+      setStatus(null);
     } catch {
       setPosts(previousPosts);
       setStatus('That reaction could not be saved.');

@@ -38,6 +38,27 @@ body {
     sans-serif;
   font-synthesis: none;
 }
+.skip-navigation {
+  position: fixed;
+  z-index: 60;
+  top: 10px;
+  left: 50%;
+  transform: translate(-50%, -180%);
+  padding: 9px 13px;
+  color: #ffffff;
+  border-radius: 7px;
+  background: var(--accent-strong);
+  box-shadow: 0 8px 24px rgb(18 41 91 / 0.22);
+  font-size: 0.84rem;
+  font-weight: 760;
+  text-decoration: none;
+  transition: transform 140ms ease;
+}
+.skip-navigation:focus {
+  transform: translate(-50%, 0);
+  outline: 3px solid color-mix(in srgb, var(--accent) 50%, #ffffff);
+  outline-offset: 3px;
+}
 a {
   color: inherit;
 }

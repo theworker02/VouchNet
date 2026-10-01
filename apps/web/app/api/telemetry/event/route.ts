@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { actorFromRequest } from '../../../lib/identity';
 import { hasSameOrigin } from '../../../lib/request-security';
+import { enforceRateLimit } from '../../../lib/security/rate-limit';
+import { rateLimitResponse } from '../../../lib/security/rate-limit-response';
 import { recordErrorEvent } from '../../../lib/telemetry-server';
 
 const errorEventSchema = z.object({
@@ -21,7 +23,10 @@ export async function POST(request: NextRequest) {
     );
   }
   try {
-    const [actor, payload] = await Promise.all([actorFromRequest(request), request.json()]);
+    const actor = await actorFromRequest(request);
+    const rateLimit = await enforceRateLimit(request, 'generalApi', actor?.userId ?? null);
+    if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
+    const payload = await request.json();
     const event = errorEventSchema.parse(payload);
     await recordErrorEvent({
       componentStack: event.componentStack ?? null,

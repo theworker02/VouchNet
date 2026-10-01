@@ -4,11 +4,13 @@ Implemented protected routes validate the session server-side through `getCurren
 existing in the browser is insufficient. Invalid or absent sessions redirect through the shell to
 `/login`.
 
-Implemented product routes are `/home`, `/network`, `/network/discover`, `/search`, `/in/[slug]`,
-and `/onboarding`. `/explore`, `/jobs`, `/messaging`, `/notifications`, `/games`, `/projects`,
-`/saved`, and `/settings` use the same protected shell but explicitly state when their underlying
-product feature is unavailable. They do not display fabricated records.
+Implemented product routes include `/home`, `/network`, `/network/discover`, `/search`,
+`/in/[slug]`, `/onboarding`, `/feed`, `/jobs`, `/jobs/tracker`, `/notifications`, `/games`,
+`/projects`, `/saved`, and `/settings`. The messaging route remains deliberately unavailable until
+conversation persistence, membership authorization, delivery, and abuse controls are complete; it
+does not display fabricated records.
 
 The avatar menu links to the real profile, projects, saved items, settings, and the real POST logout
-route. A full visual account menu, mobile navigation, route-level loading skeletons, and error
-boundaries remain planned.
+route. The protected shell includes responsive primary navigation, an accessible keyboard skip link,
+route-level loading skeletons, error boundaries, and a daily-notification badge. Daily notification
+materialization and the unread count share one database lifecycle per authenticated shell render.

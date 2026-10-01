@@ -7,18 +7,14 @@ import { ConnectionCooldownNotice } from './connection-cooldown-notice';
 import { getConnectionCooldown } from '../lib/social';
 import { PageTransition } from './motion/page-transition';
 import { VouchNetLogo } from './brand';
-import {
-  ensureDailyStrategyNotification,
-  unreadMemberNotificationCount,
-} from '../lib/daily-strategy';
+import { syncDailyStrategyNotificationAndGetUnreadCount } from '../lib/daily-strategy';
 export async function Shell({ children }: { children: React.ReactNode }) {
   const actor = await getCurrentActor();
   if (actor === null) redirect('/login');
-  await ensureDailyStrategyNotification(actor.userId).catch(() => undefined);
   const [profile, connectionCooldown, unreadAlerts] = await Promise.all([
     getProfileSummary(actor.userId),
     getConnectionCooldown(actor.userId).catch(() => null),
-    unreadMemberNotificationCount(actor.userId).catch(() => 0),
+    syncDailyStrategyNotificationAndGetUnreadCount(actor.userId).catch(() => 0),
   ]);
   const initials = (profile?.fullName ?? 'VouchNet member')
     .split(' ')
@@ -28,6 +24,9 @@ export async function Shell({ children }: { children: React.ReactNode }) {
     .toUpperCase();
   return (
     <>
+      <a className="skip-navigation" href="#main-content">
+        Skip to main content
+      </a>
       <header className="topbar">
         <Link className="brand" href="/home">
           <VouchNetLogo className="topbar-brand-logo" />
@@ -46,7 +45,7 @@ export async function Shell({ children }: { children: React.ReactNode }) {
       {connectionCooldown === null ? null : (
         <ConnectionCooldownNotice resetsAt={connectionCooldown} />
       )}
-      <main className="app-main">
+      <main className="app-main" id="main-content" tabIndex={-1}>
         <PageTransition>{children}</PageTransition>
       </main>
     </>

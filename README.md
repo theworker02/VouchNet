@@ -245,6 +245,7 @@ than opening public issues. Contributor expectations are in [CONTRIBUTING.md](CO
 
 ## Status
 
-The current release is [v0.8.0](https://github.com/theworker02/VouchNet/releases/tag/v0.8.0).
+The current source release is [v0.9.1](docs/releases/v0.9.1.md). No binaries are distributed with
+this release.
 VouchNet is not yet a production-complete social network; the implementation matrix is the source
 of truth for capability readiness and deliberate scope boundaries.
