@@ -1,7 +1,11 @@
 import { z } from 'zod';
 import { NextRequest, NextResponse } from 'next/server';
 import { actorFromRequest } from '../../../lib/identity';
-import { requestConnection, respondToConnection } from '../../../lib/social';
+import {
+  ConnectionCooldownError,
+  requestConnection,
+  respondToConnection,
+} from '../../../lib/social';
 import { hasSameOrigin } from '../../../lib/request-security';
 const requestSchema = z.object({ targetUserId: z.string().uuid() });
 const responseSchema = z.object({
@@ -27,6 +31,11 @@ export async function POST(request: NextRequest) {
     );
     return NextResponse.json({ state: data.action === 'accept' ? 'ACCEPTED' : 'DECLINED' });
   } catch (error) {
+    if (error instanceof ConnectionCooldownError)
+      return NextResponse.json(
+        { error: 'CONNECTION_COOLDOWN', resetsAt: error.resetsAt.toISOString() },
+        { status: 429 },
+      );
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'CONNECTION_FAILED' },
       { status: 400 },

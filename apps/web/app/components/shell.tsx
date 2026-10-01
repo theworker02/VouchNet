@@ -3,10 +3,15 @@ import { redirect } from 'next/navigation';
 import { getCurrentActor, getProfileSummary } from '../lib/identity';
 import { PrimaryNavigation } from './primary-navigation';
 import { AccountMenu, WorkMenu } from './shell-menus';
+import { ConnectionCooldownNotice } from './connection-cooldown-notice';
+import { getConnectionCooldown } from '../lib/social';
 export async function Shell({ children }: { children: React.ReactNode }) {
   const actor = await getCurrentActor();
   if (actor === null) redirect('/login');
-  const profile = await getProfileSummary(actor.userId);
+  const [profile, connectionCooldown] = await Promise.all([
+    getProfileSummary(actor.userId),
+    getConnectionCooldown(actor.userId).catch(() => null),
+  ]);
   const initials = (profile?.fullName ?? 'VouchNet member')
     .split(' ')
     .map((part) => part[0])
@@ -30,6 +35,9 @@ export async function Shell({ children }: { children: React.ReactNode }) {
         <WorkMenu />
       </header>
       <PrimaryNavigation mobile />
+      {connectionCooldown === null ? null : (
+        <ConnectionCooldownNotice resetsAt={connectionCooldown} />
+      )}
       <main className="app-main">{children}</main>
     </>
   );

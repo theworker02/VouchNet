@@ -106,6 +106,20 @@
       "when": 1781380800000,
       "tag": "0014_profile_view_analytics",
       "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1781467200000,
+      "tag": "0015_connection_cooldowns",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1781553600000,
+      "tag": "0016_developer_access_subscriptions",
+      "breakpoints": true
     }
   ]
 }

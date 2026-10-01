@@ -12,6 +12,7 @@ const settingsSchema = z.object({
     codeFont: z.enum(['FIRA_CODE', 'JETBRAINS_MONO']),
     language: z.string().min(2).max(16),
     timezone: z.string().min(1).max(64),
+    feedMuteKeywords: z.array(z.string().trim().min(2).max(64)).max(15),
   }),
   privacy: z.object({
     profileVisibility: z.enum(['PUBLIC', 'MEMBERS', 'CONNECTIONS', 'PRIVATE']),

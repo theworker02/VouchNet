@@ -58,6 +58,11 @@ function PostCard({
         </div>
         <div>
           <Link href={`/vouch/${post.authorSlug}`}>{post.authorName}</Link>
+          {post.isPlusAuthor ? (
+            <span className="emerald-signal" title="VouchNet+ member">
+              Emerald signal
+            </span>
+          ) : null}
           <p>
             {post.authorHeadline ?? 'VouchNet member'} · {post.category.toLowerCase()}
           </p>

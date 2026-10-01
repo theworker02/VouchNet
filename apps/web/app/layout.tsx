@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
+import { SiteMaintenanceBanner } from './components/site-maintenance-banner';
 import './globals.css';
 
 const siteUrl = new URL(process.env.APP_URL?.trim() || 'https://vouchnet.dev');
@@ -63,6 +64,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="en">
       <body>
+        <SiteMaintenanceBanner />
         {children}
         <Script
           id="vouch-net-organization-schema"

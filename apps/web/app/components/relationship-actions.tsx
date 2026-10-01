@@ -6,6 +6,7 @@ export function RelationshipActions({ userId }: { userId: string }) {
   const [status, setStatus] = useState<'idle' | 'working' | 'connected' | 'following' | 'error'>(
     'idle',
   );
+  const [cooldownResetAt, setCooldownResetAt] = useState<string | null>(null);
   async function requestConnection() {
     setStatus('working');
     try {
@@ -14,7 +15,20 @@ export function RelationshipActions({ userId }: { userId: string }) {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ targetUserId: userId }),
       });
-      setStatus(response.ok ? 'connected' : 'error');
+      if (response.ok) {
+        setStatus('connected');
+        return;
+      }
+      const body = (await response.json().catch(() => ({}))) as {
+        error?: string;
+        resetsAt?: string;
+      };
+      if (body.error === 'CONNECTION_COOLDOWN' && body.resetsAt !== undefined) {
+        setCooldownResetAt(body.resetsAt);
+        setStatus('idle');
+        return;
+      }
+      setStatus('error');
     } catch {
       setStatus('error');
     }
@@ -53,6 +67,24 @@ export function RelationshipActions({ userId }: { userId: string }) {
           That action could not be completed. Refresh to check its current state.
         </p>
       ) : null}
+      {cooldownResetAt === null ? null : (
+        <section className="connection-cooldown-notice relationship-cooldown" role="status">
+          <div>
+            <strong>Slow down on connection requests</strong>
+            <p>
+              This protection resets{' '}
+              {new Intl.DateTimeFormat(undefined, {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+              }).format(new Date(cooldownResetAt))}
+              .
+            </p>
+          </div>
+          <button type="button" onClick={() => setCooldownResetAt(null)}>
+            Dismiss
+          </button>
+        </section>
+      )}
     </div>
   );
 }

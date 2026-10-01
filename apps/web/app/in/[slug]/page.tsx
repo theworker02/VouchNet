@@ -9,6 +9,7 @@ import { ProfileVouch } from '../../components/profile-vouch';
 import { ProfileVouchRoster } from '../../components/profile-vouch-roster';
 import { getProfileVouches } from '../../lib/vouches';
 import { recordProfileView } from '../../lib/profile-analytics';
+import { listFeaturedProofNodes } from '../../lib/featured-proof';
 
 export async function generateMetadata({
   params,
@@ -40,8 +41,12 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
   const profile = await getVisibleProfile(actor?.userId ?? null, (await params).slug);
   if (profile === null) notFound();
   await recordProfileView(profile.userId, actor?.userId ?? null).catch(() => undefined);
-  const vouchData = await getProfileVouches(actor?.userId ?? null, profile.userId);
-  if (actor === null) return <PublicProfile profile={profile} vouchData={vouchData} />;
+  const [vouchData, featuredNodes] = await Promise.all([
+    getProfileVouches(actor?.userId ?? null, profile.userId),
+    listFeaturedProofNodes(profile.userId),
+  ]);
+  if (actor === null)
+    return <PublicProfile profile={profile} vouchData={vouchData} featuredNodes={featuredNodes} />;
   return (
     <Shell>
       <section className="profile-surface">
@@ -105,18 +110,21 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
       ) : null}
       <section className="profile-section profile-featured">
         <h2>Featured work</h2>
-        <div>
-          <article>
-            <strong>Projects</strong>
-            <p>
-              Feature portfolio links, presentations, evidence, and collaborators from your profile.
-            </p>
-          </article>
-          <article>
-            <strong>Proof of work</strong>
-            <p>Peer verification appears alongside the work it confirms.</p>
-          </article>
-        </div>
+        {featuredNodes.length === 0 ? (
+          <p>Featured proof-of-work nodes appear here when this member selects them.</p>
+        ) : (
+          <div>
+            {featuredNodes.map((node) => (
+              <article key={node.id}>
+                <strong>{node.label}</strong>
+                <p>{node.projectSummary ?? 'Featured professional evidence.'}</p>
+                {node.projectSlug === null ? null : (
+                  <Link href={`/projects/${node.projectSlug}`}>Open proof →</Link>
+                )}
+              </article>
+            ))}
+          </div>
+        )}
       </section>
       <section className="profile-section">
         <h2>About</h2>
@@ -148,9 +156,11 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
 function PublicProfile({
   profile,
   vouchData,
+  featuredNodes,
 }: {
   profile: NonNullable<Awaited<ReturnType<typeof getVisibleProfile>>>;
   vouchData: Awaited<ReturnType<typeof getProfileVouches>>;
+  featuredNodes: Awaited<ReturnType<typeof listFeaturedProofNodes>>;
 }) {
   return (
     <main className="public-profile">
@@ -200,6 +210,23 @@ function PublicProfile({
           </Link>
         </aside>
       </section>
+      {featuredNodes.length === 0 ? null : (
+        <section className="public-profile-content public-vouch-section">
+          <article>
+            <p className="eyebrow">Featured proof of work</p>
+            <h2>Selected professional evidence</h2>
+            {featuredNodes.map((node) => (
+              <div key={node.id}>
+                <strong>{node.label}</strong>
+                <p>{node.projectSummary ?? 'Featured professional evidence.'}</p>
+                {node.projectSlug === null ? null : (
+                  <Link href={`/projects/${node.projectSlug}`}>Open proof →</Link>
+                )}
+              </div>
+            ))}
+          </article>
+        </section>
+      )}
       {vouchData.displayVouches ? (
         <section className="public-profile-content public-vouch-section">
           <ProfileVouchRoster

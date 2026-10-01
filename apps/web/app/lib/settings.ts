@@ -16,6 +16,7 @@ export interface UserSettings {
     codeFont: 'FIRA_CODE' | 'JETBRAINS_MONO';
     language: string;
     timezone: string;
+    feedMuteKeywords: string[];
   };
   privacy: {
     profileVisibility: 'PUBLIC' | 'MEMBERS' | 'CONNECTIONS' | 'PRIVATE';
@@ -41,6 +42,7 @@ const defaults: UserSettings = {
     codeFont: 'JETBRAINS_MONO',
     language: 'en',
     timezone: 'UTC',
+    feedMuteKeywords: [],
   },
   privacy: {
     profileVisibility: 'PUBLIC',

@@ -5,6 +5,15 @@ function sql() {
   if (url === undefined) throw new Error('DATABASE_UNAVAILABLE');
   return createSqlClient(url);
 }
+
+const connectionRequestLimit = 10;
+const connectionCooldownMilliseconds = 24 * 60 * 60 * 1000;
+
+export class ConnectionCooldownError extends Error {
+  constructor(readonly resetsAt: Date) {
+    super('CONNECTION_COOLDOWN');
+  }
+}
 async function blocked(client: ReturnType<typeof createSqlClient>, left: string, right: string) {
   const rows =
     await client`SELECT 1 FROM blocks WHERE (blocker_id=${left} AND blocked_id=${right}) OR (blocker_id=${right} AND blocked_id=${left})`;
@@ -33,10 +42,62 @@ export async function requestConnection(actorId: string, targetId: string) {
   const [low, high] = actorId < targetId ? [actorId, targetId] : [targetId, actorId];
   const client = sql();
   try {
-    if (await blocked(client, actorId, targetId)) throw new Error('BLOCKED_RELATIONSHIP');
-    const rows =
-      await client`INSERT INTO connections (requester_id,recipient_id,pair_low_id,pair_high_id,state) VALUES (${actorId},${targetId},${low},${high},'PENDING') ON CONFLICT (pair_low_id,pair_high_id) DO NOTHING RETURNING id`;
-    if (rows.length === 0) throw new Error('CONNECTION_EXISTS');
+    await client.begin(async (transaction) => {
+      const restrictions = await transaction<{ resets_at: Date }[]>`
+        SELECT resets_at FROM connection_request_restrictions
+        WHERE user_id=${actorId} AND resets_at>now() FOR UPDATE
+      `;
+      const restriction = restrictions[0];
+      if (restriction !== undefined) throw new ConnectionCooldownError(restriction.resets_at);
+      const blockedRows = await transaction`
+        SELECT 1 FROM blocks
+        WHERE (blocker_id=${actorId} AND blocked_id=${targetId})
+           OR (blocker_id=${targetId} AND blocked_id=${actorId})
+      `;
+      if (blockedRows.length > 0) throw new Error('BLOCKED_RELATIONSHIP');
+      const recent = await transaction<{ count: number }[]>`
+        SELECT count(*)::int AS count FROM connections
+        WHERE requester_id=${actorId} AND created_at>=now()-interval '24 hours'
+      `;
+      if ((recent[0]?.count ?? 0) >= connectionRequestLimit) {
+        const resetsAt = new Date(Date.now() + connectionCooldownMilliseconds);
+        await transaction`
+          INSERT INTO connection_request_restrictions (user_id,reason_code,resets_at)
+          VALUES (${actorId},'CONNECTION_REQUEST_VELOCITY',${resetsAt})
+          ON CONFLICT (user_id) DO UPDATE
+            SET reason_code=EXCLUDED.reason_code,imposed_at=now(),resets_at=EXCLUDED.resets_at,dismissed_at=NULL
+        `;
+        throw new ConnectionCooldownError(resetsAt);
+      }
+      const rows =
+        await transaction`INSERT INTO connections (requester_id,recipient_id,pair_low_id,pair_high_id,state) VALUES (${actorId},${targetId},${low},${high},'PENDING') ON CONFLICT (pair_low_id,pair_high_id) DO NOTHING RETURNING id`;
+      if (rows.length === 0) throw new Error('CONNECTION_EXISTS');
+    });
+  } finally {
+    await client.end({ timeout: 1 });
+  }
+}
+
+export async function getConnectionCooldown(userId: string): Promise<Date | null> {
+  const client = sql();
+  try {
+    const rows = await client<{ resets_at: Date }[]>`
+      SELECT resets_at FROM connection_request_restrictions WHERE user_id=${userId} AND resets_at>now()
+    `;
+    return rows[0]?.resets_at ?? null;
+  } finally {
+    await client.end({ timeout: 1 });
+  }
+}
+
+/** Dismissal hides the reminder only; it never bypasses the server-side restriction. */
+export async function dismissConnectionCooldown(userId: string): Promise<void> {
+  const client = sql();
+  try {
+    await client`
+      UPDATE connection_request_restrictions SET dismissed_at=now()
+      WHERE user_id=${userId} AND resets_at>now()
+    `;
   } finally {
     await client.end({ timeout: 1 });
   }

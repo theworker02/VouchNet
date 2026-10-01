@@ -1,4 +1,6 @@
 import { createSqlClient } from '@nexus/db';
+import { getUserSettings } from '../../lib/settings';
+import { hasVouchNetPlus } from '../../lib/subscription';
 
 export const postCategories = ['TECHNICAL', 'PROJECT', 'HIRING', 'STATUS', 'OPINION'] as const;
 export type PostCategory = (typeof postCategories)[number];
@@ -36,6 +38,7 @@ export interface FeedPost {
   reactionCounts: Record<ReactionType, number>;
   commentCount: number;
   viewerReaction: ReactionType | null;
+  isPlusAuthor: boolean;
 }
 
 function sql() {
@@ -88,8 +91,14 @@ export async function getFeed(
 ): Promise<FeedPost[]> {
   const client = sql();
   try {
+    const [settings, isPlus] = await Promise.all([
+      getUserSettings(viewerId),
+      hasVouchNetPlus(viewerId),
+    ]);
+    const mutedTerms = isPlus ? settings.preferences.feedMuteKeywords : [];
     const rows = await client<FeedPost[]>`
       SELECT p.id,p.author_id AS "authorId",concat(pr.first_name,' ',pr.last_name) AS "authorName",pr.slug AS "authorSlug",pr.headline AS "authorHeadline",p.body_markdown AS "bodyMarkdown",p.code_snippets AS "codeSnippets",p.media_urls AS "mediaUrls",p.feed_category AS category,p.visibility,p.created_at AS "createdAt",
+        EXISTS (SELECT 1 FROM user_subscriptions us WHERE us.user_id=p.author_id AND us.tier='PLUS' AND us.status='ACTIVE' AND (us.current_period_ends_at IS NULL OR us.current_period_ends_at>now())) AS "isPlusAuthor",
         COALESCE((SELECT sum(CASE r.reaction_type WHEN 'VERIFY' THEN 4 WHEN 'BENCHMARK' THEN 3 WHEN 'INSIGHTFUL' THEN 2 ELSE 1 END)::int FROM post_reactions r JOIN connections c ON c.state='ACCEPTED' AND ((c.requester_id=r.user_id AND c.recipient_id=p.author_id) OR (c.recipient_id=r.user_id AND c.requester_id=p.author_id)) WHERE r.post_id=p.id),0) AS "peerSignal",
         (SELECT count(*)::int FROM post_comments pc WHERE pc.post_id=p.id AND pc.deleted_at IS NULL) AS "commentCount",
         (SELECT reaction_type FROM post_reactions vr WHERE vr.post_id=p.id AND vr.user_id=${viewerId}) AS "viewerReaction",
@@ -100,7 +109,11 @@ export async function getFeed(
         AND (p.author_id=${viewerId} OR p.visibility IN ('PUBLIC','MEMBERS') OR (p.visibility='FOLLOWERS' AND EXISTS (SELECT 1 FROM follows f WHERE f.follower_id=${viewerId} AND f.followed_id=p.author_id)) OR (p.visibility='CONTACTS' AND EXISTS (SELECT 1 FROM connections c WHERE c.state='ACCEPTED' AND ((c.requester_id=${viewerId} AND c.recipient_id=p.author_id) OR (c.recipient_id=${viewerId} AND c.requester_id=p.author_id)))))
       ORDER BY p.created_at DESC LIMIT 100
     `;
-    const visible = rows.filter((post) => !hiddenCategories.includes(post.category));
+    const visible = rows.filter(
+      (post) =>
+        !hiddenCategories.includes(post.category) &&
+        !mutedTerms.some((term) => post.bodyMarkdown.toLocaleLowerCase().includes(term)),
+    );
     return mode === 'PEER_VERIFIED'
       ? visible.sort(
           (left, right) =>

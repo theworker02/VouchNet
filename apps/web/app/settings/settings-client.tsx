@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { PlusMembershipPanel } from '../components/plus-membership-panel';
+import { FeedMuteControls } from '../components/feed-mute-controls';
 type SettingSection =
   'account' | 'security' | 'visibility' | 'notifications' | 'data' | 'developers';
 type UserSettings = {
@@ -169,6 +171,8 @@ export function SettingsClient({ section }: { section: SettingSection }) {
         <h1>{labels[section]}</h1>
         {section === 'account' ? (
           <>
+            <PlusMembershipPanel />
+            <FeedMuteControls />
             <h2>Email verification</h2>
             {emailStatus === null ? (
               <p className="muted-copy">Email status is temporarily unavailable.</p>

@@ -138,6 +138,32 @@ export function WorkMenu() {
           <span>Apply with VouchNet integrations</span>
         </Link>
       </div>
+      <div className="shell-menu-support" aria-label="Project support">
+        <a
+          href="https://github.com/theworker02/VouchNet/issues/new?template=bug_report.yml"
+          rel="noreferrer"
+          role="menuitem"
+          target="_blank"
+        >
+          Submit an issue
+        </a>
+        <a
+          href="https://github.com/theworker02/VouchNet/issues/new?template=feature_request.yml"
+          rel="noreferrer"
+          role="menuitem"
+          target="_blank"
+        >
+          Request a feature
+        </a>
+        <a
+          href="https://github.com/theworker02/VouchNet"
+          rel="noreferrer"
+          role="menuitem"
+          target="_blank"
+        >
+          View repository
+        </a>
+      </div>
     </ShellMenu>
   );
 }

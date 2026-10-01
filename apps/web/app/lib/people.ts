@@ -7,6 +7,7 @@ export interface PersonCard {
   lastName: string;
   headline: string | null;
   location: string | null;
+  isPlus: boolean;
 }
 
 function sql() {
@@ -24,7 +25,8 @@ export async function searchPeople(viewerId: string, query: string): Promise<Per
     const pattern = `%${query}%`;
     return await client<PersonCard[]>`
       SELECT p.user_id AS "userId",p.slug,p.first_name AS "firstName",p.last_name AS "lastName",
-             p.headline,p.location
+             p.headline,p.location,
+             EXISTS (SELECT 1 FROM user_subscriptions us WHERE us.user_id=p.user_id AND us.tier='PLUS' AND us.status='ACTIVE' AND (us.current_period_ends_at IS NULL OR us.current_period_ends_at>now())) AS "isPlus"
       FROM profiles p
       WHERE (p.visibility IN ('PUBLIC','MEMBERS') OR p.user_id=${viewerId})
         AND (p.first_name ILIKE ${pattern}
@@ -36,7 +38,7 @@ export async function searchPeople(viewerId: string, query: string): Promise<Per
           WHERE (b.blocker_id=${viewerId} AND b.blocked_id=p.user_id)
              OR (b.blocker_id=p.user_id AND b.blocked_id=${viewerId})
         )
-      ORDER BY p.first_name ASC,p.last_name ASC
+      ORDER BY "isPlus" DESC,p.first_name ASC,p.last_name ASC
       LIMIT 25
     `;
   } finally {
@@ -58,7 +60,9 @@ export async function getVisibleProfile(
   try {
     const rows = await client<(PersonCard & { about: string | null; visibility: string })[]>`
       SELECT p.user_id AS "userId",p.slug,p.first_name AS "firstName",p.last_name AS "lastName",
-             p.headline,p.location,p.about,p.visibility
+             p.headline,p.location,
+             EXISTS (SELECT 1 FROM user_subscriptions us WHERE us.user_id=p.user_id AND us.tier='PLUS' AND us.status='ACTIVE' AND (us.current_period_ends_at IS NULL OR us.current_period_ends_at>now())) AS "isPlus",
+             p.about,p.visibility
       FROM profiles p
       WHERE p.slug=${slug}
         AND (p.visibility='PUBLIC' OR p.user_id=${viewerId})

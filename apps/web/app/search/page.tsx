@@ -37,6 +37,7 @@ export default async function Search({ searchParams }: { searchParams: Promise<{
             <article key={person.userId}>
               <h2>
                 {person.firstName} {person.lastName}
+                {person.isPlus ? <span className="emerald-signal">Emerald signal</span> : null}
               </h2>
               <p>{person.headline ?? 'VouchNet member'}</p>
               {person.location === null ? null : <p>{person.location}</p>}
