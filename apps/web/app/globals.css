@@ -1664,6 +1664,378 @@ button:hover {
     transform: none;
   }
 }
+
+.strategy-game-page,
+.notification-page {
+  width: min(100% - 32px, 1050px);
+  margin: 32px auto 56px;
+}
+
+.strategy-game,
+.notification-empty,
+.notification-inbox {
+  border: 1px solid #d7e1f0;
+  border-radius: 16px;
+  background: linear-gradient(145deg, #fff, #f7faff);
+  box-shadow: 0 18px 45px rgb(29 59 111 / 0.08);
+}
+
+.strategy-game {
+  padding: clamp(20px, 4vw, 38px);
+}
+
+.strategy-game-header {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.strategy-game-header h1,
+.notification-heading h1 {
+  margin: 6px 0 9px;
+  color: #17284a;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  letter-spacing: -0.055em;
+}
+
+.strategy-game-header > div:first-child > p:last-child,
+.notification-heading > p:last-child {
+  max-width: 620px;
+  margin: 0;
+  color: #5d6d86;
+  line-height: 1.6;
+}
+
+.strategy-game-level {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  min-width: 164px;
+  gap: 2px 9px;
+  align-items: center;
+  padding: 12px 14px;
+  color: #1d7057;
+  border: 1px solid #a5dccc;
+  border-radius: 12px;
+  background: linear-gradient(145deg, #edfff8, #f9fffc);
+}
+
+.strategy-game-level svg {
+  grid-row: span 2;
+}
+
+.strategy-game-level span {
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.strategy-game-level strong {
+  font-size: 0.84rem;
+}
+
+.strategy-game-objective {
+  display: flex;
+  gap: 12px;
+  align-items: baseline;
+  margin: 28px 0;
+  padding: 12px 14px;
+  color: #405270;
+  border-left: 3px solid #5a7ed3;
+  border-radius: 0 8px 8px 0;
+  background: #eff5ff;
+  font-size: 0.92rem;
+}
+
+.strategy-game-objective strong {
+  color: #1c408d;
+}
+
+.strategy-boards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(18px, 4vw, 46px);
+}
+
+.strategy-board-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.strategy-board-heading h2 {
+  margin: 0;
+  color: #23395e;
+  font-size: 1rem;
+}
+
+.strategy-board-heading span {
+  color: #72829a;
+  font-size: 0.75rem;
+}
+
+.strategy-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--board-size), minmax(0, 1fr));
+  gap: 7px;
+  max-width: 390px;
+  padding: 11px;
+  border: 1px solid #c8d6ed;
+  border-radius: 13px;
+  background: #eaf0fa;
+}
+
+.signal-cell {
+  display: block;
+  aspect-ratio: 1;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid #bdd0eb;
+  border-radius: 8px;
+  background: #f9fbff;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9);
+}
+
+button.signal-cell {
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    border-color 120ms ease,
+    background 120ms ease;
+}
+
+button.signal-cell:hover:not(:disabled),
+button.signal-cell:focus-visible {
+  border-color: #426fce;
+  outline: 2px solid #94b5f4;
+  outline-offset: 2px;
+  transform: translateY(-1px);
+}
+
+.signal-cell.is-active {
+  border-color: #177e61;
+  background:
+    radial-gradient(circle at 35% 30%, #c7ffe8 0 10%, transparent 11%),
+    linear-gradient(145deg, #22a67d, #12644d);
+  box-shadow:
+    inset 0 1px 1px rgb(255 255 255 / 0.42),
+    0 4px 9px rgb(19 117 86 / 0.18);
+}
+
+.strategy-grid--target .signal-cell {
+  cursor: default;
+}
+
+.strategy-game-controls {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 27px;
+  padding-top: 18px;
+  border-top: 1px solid #dce5f2;
+}
+
+.strategy-game-controls p {
+  margin: 0;
+  color: #61718a;
+  font-size: 0.86rem;
+}
+
+.strategy-game-controls button:disabled,
+.signal-cell:disabled {
+  cursor: default;
+  opacity: 0.72;
+}
+
+.notification-heading {
+  margin-bottom: 20px;
+}
+
+.notification-empty {
+  padding: 28px;
+}
+
+.notification-empty h2 {
+  margin: 0 0 8px;
+  color: #1d3156;
+}
+
+.notification-empty p {
+  max-width: 550px;
+  margin: 0 0 20px;
+  color: #66758c;
+}
+
+.notification-inbox {
+  overflow: hidden;
+}
+
+.notification-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 18px 20px;
+}
+
+.notification-item + .notification-item {
+  border-top: 1px solid #e1e8f3;
+}
+
+.notification-item.is-unread {
+  background: linear-gradient(90deg, #f0f6ff, #fbfdff);
+}
+
+.notification-item-mark {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  color: #176e55;
+  border: 1px solid #a6dfcf;
+  border-radius: 9px;
+  background: #eafff7;
+  font-size: 1.35rem;
+  font-weight: 800;
+}
+
+.notification-item h2,
+.notification-item p,
+.notification-item time {
+  margin: 0;
+}
+
+.notification-item h2 {
+  color: #20365c;
+  font-size: 0.96rem;
+}
+
+.notification-item p {
+  margin-top: 3px;
+  color: #64738a;
+  font-size: 0.84rem;
+}
+
+.notification-item time {
+  display: block;
+  margin-top: 7px;
+  color: #8290a5;
+  font-size: 0.72rem;
+}
+
+.notification-item > a {
+  color: #305eb8;
+  font-size: 0.8rem;
+  font-weight: 750;
+}
+
+.nav-notification-count {
+  position: absolute;
+  top: 1px;
+  right: 1px;
+  z-index: 2;
+  min-width: 15px;
+  padding: 1px 3px;
+  color: #fff;
+  border: 1px solid #fff;
+  border-radius: 999px;
+  background: #d64a4a;
+  font-size: 0.6rem !important;
+  font-weight: 800;
+  line-height: 1.15 !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .strategy-game,
+  .notification-empty,
+  .notification-inbox {
+    border-color: #394b68;
+    background: linear-gradient(145deg, #17233a, #141e31);
+  }
+
+  .strategy-game-header h1,
+  .notification-heading h1,
+  .strategy-board-heading h2,
+  .notification-empty h2,
+  .notification-item h2 {
+    color: #eef3ff;
+  }
+
+  .strategy-game-header > div:first-child > p:last-child,
+  .notification-heading > p:last-child,
+  .notification-empty p,
+  .notification-item p,
+  .strategy-game-controls p {
+    color: #b2c0d5;
+  }
+
+  .strategy-game-objective {
+    color: #c6d6ef;
+    background: #1a2b49;
+  }
+
+  .strategy-grid {
+    border-color: #405572;
+    background: #111b2d;
+  }
+
+  .signal-cell {
+    border-color: #394e6e;
+    background: #1c2a42;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.04);
+  }
+
+  .strategy-game-controls,
+  .notification-item + .notification-item {
+    border-color: #32445f;
+  }
+
+  .notification-item.is-unread {
+    background: linear-gradient(90deg, #1b2b47, #162137);
+  }
+}
+
+@media (max-width: 720px) {
+  .strategy-game-page,
+  .notification-page {
+    width: min(100% - 22px, 1050px);
+    margin-top: 18px;
+  }
+
+  .strategy-game-header,
+  .strategy-game-controls {
+    display: grid;
+  }
+
+  .strategy-game-level {
+    width: fit-content;
+  }
+
+  .strategy-boards {
+    grid-template-columns: 1fr;
+  }
+
+  .strategy-grid {
+    width: min(100%, 390px);
+  }
+
+  .notification-item {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .notification-item > a {
+    grid-column: 2;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button.signal-cell {
+    transition: none;
+  }
+}
 @media (max-width: 620px) {
   .oauth-button-grid {
     grid-template-columns: 1fr;
@@ -6778,5 +7150,154 @@ body {
   .analytics-ledger li {
     display: grid;
     gap: 5px;
+  }
+}
+
+/* Motion primitives: composited transforms only, with a non-animated fallback below. */
+@keyframes border-shimmer {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes pulse-subtle {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(0.99);
+  }
+}
+
+.animate-border-shimmer {
+  background-size: 200% 200%;
+  animation: border-shimmer 6s ease infinite;
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 4s ease-in-out infinite;
+}
+
+.topbar nav a,
+.mobile-nav a,
+.feed-mode button {
+  position: relative;
+  isolation: isolate;
+}
+
+.nav-active-indicator {
+  position: absolute;
+  z-index: 0;
+  inset: 1px 4px 0;
+  border: 1px solid rgb(71 115 211 / 0.18);
+  border-radius: 8px 8px 2px 2px;
+  background: linear-gradient(180deg, rgb(78 117 214 / 0.16), rgb(78 117 214 / 0.02));
+}
+
+.mobile-nav .nav-active-indicator {
+  inset: 2px 3px;
+  border-radius: 8px;
+}
+
+.feed-active-indicator {
+  position: absolute;
+  z-index: 0;
+  inset: 2px;
+  border: 1px solid rgb(62 103 192 / 0.16);
+  border-radius: 5px;
+  background: linear-gradient(135deg, rgb(215 229 255 / 0.9), rgb(235 243 255 / 0.82));
+  box-shadow: 0 1px 3px rgb(35 73 143 / 0.1);
+}
+
+.post-card,
+.suggested-signal-stream article {
+  position: relative;
+  overflow: hidden;
+}
+
+.topbar nav a > svg,
+.topbar nav a > span:not(.nav-active-indicator),
+.mobile-nav a > svg,
+.mobile-nav a > span:not(.nav-active-indicator),
+.feed-mode-label {
+  position: relative;
+  z-index: 1;
+}
+
+.card-hover-shimmer {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle at 16% 0%, rgb(97 136 235 / 0.12), transparent 37%);
+  transition: opacity 150ms ease;
+}
+
+.post-card > :not(.card-hover-shimmer),
+.suggested-signal-stream article > :not(.card-hover-shimmer) {
+  position: relative;
+  z-index: 1;
+}
+
+.post-card:hover .card-hover-shimmer,
+.suggested-signal-stream article:hover .card-hover-shimmer,
+.post-card:focus-within .card-hover-shimmer,
+.suggested-signal-stream article:focus-within .card-hover-shimmer {
+  opacity: 1;
+}
+
+.composer-expanded textarea {
+  min-height: 172px;
+}
+
+.post-signal,
+.suggested-signal-heading > span,
+.emerald-signal {
+  display: inline-flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.post-signal svg,
+.suggested-signal-heading > span svg,
+.emerald-signal svg {
+  flex: 0 0 auto;
+}
+
+@media (prefers-color-scheme: dark) {
+  .nav-active-indicator {
+    border-color: rgb(140 169 255 / 0.22);
+    background: linear-gradient(180deg, rgb(95 133 225 / 0.2), rgb(42 61 105 / 0.06));
+  }
+
+  .feed-active-indicator {
+    border-color: rgb(143 171 255 / 0.2);
+    background: linear-gradient(135deg, rgb(46 69 120 / 0.85), rgb(37 55 96 / 0.85));
+    box-shadow: 0 1px 4px rgb(0 0 0 / 0.22);
+  }
+
+  .card-hover-shimmer {
+    background: radial-gradient(circle at 16% 0%, rgb(104 143 239 / 0.18), transparent 39%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-border-shimmer,
+  .animate-pulse-subtle {
+    animation: none;
+  }
+
+  .card-hover-shimmer {
+    transition: none;
   }
 }

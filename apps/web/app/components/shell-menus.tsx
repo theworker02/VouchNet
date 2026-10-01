@@ -129,6 +129,10 @@ export function WorkMenu() {
           <strong>Showcase projects</strong>
           <span>Bring meaningful work forward</span>
         </Link>
+        <Link href="/games" role="menuitem">
+          <strong>Daily strategy game</strong>
+          <span>One original signal puzzle every day</span>
+        </Link>
         <Link href="/network/discover" role="menuitem">
           <strong>Find people</strong>
           <span>Discover relevant collaborators</span>

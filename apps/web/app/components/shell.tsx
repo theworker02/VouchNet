@@ -5,12 +5,19 @@ import { PrimaryNavigation } from './primary-navigation';
 import { AccountMenu, WorkMenu } from './shell-menus';
 import { ConnectionCooldownNotice } from './connection-cooldown-notice';
 import { getConnectionCooldown } from '../lib/social';
+import { PageTransition } from './motion/page-transition';
+import {
+  ensureDailyStrategyNotification,
+  unreadMemberNotificationCount,
+} from '../lib/daily-strategy';
 export async function Shell({ children }: { children: React.ReactNode }) {
   const actor = await getCurrentActor();
   if (actor === null) redirect('/login');
-  const [profile, connectionCooldown] = await Promise.all([
+  await ensureDailyStrategyNotification(actor.userId).catch(() => undefined);
+  const [profile, connectionCooldown, unreadAlerts] = await Promise.all([
     getProfileSummary(actor.userId),
     getConnectionCooldown(actor.userId).catch(() => null),
+    unreadMemberNotificationCount(actor.userId).catch(() => 0),
   ]);
   const initials = (profile?.fullName ?? 'VouchNet member')
     .split(' ')
@@ -30,15 +37,17 @@ export async function Shell({ children }: { children: React.ReactNode }) {
           </label>
           <input id="global-search" name="q" placeholder="Search people, skills, or companies" />
         </form>
-        <PrimaryNavigation />
+        <PrimaryNavigation unreadAlerts={unreadAlerts} />
         <AccountMenu initials={initials} profileSlug={profile?.slug ?? null} />
         <WorkMenu />
       </header>
-      <PrimaryNavigation mobile />
+      <PrimaryNavigation mobile unreadAlerts={unreadAlerts} />
       {connectionCooldown === null ? null : (
         <ConnectionCooldownNotice resetsAt={connectionCooldown} />
       )}
-      <main className="app-main">{children}</main>
+      <main className="app-main">
+        <PageTransition>{children}</PageTransition>
+      </main>
     </>
   );
 }

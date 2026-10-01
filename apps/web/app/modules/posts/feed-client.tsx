@@ -2,6 +2,10 @@
 
 import Link from 'next/link';
 import { FocusEvent, FormEvent, KeyboardEvent, useEffect, useId, useMemo, useState } from 'react';
+import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
+import { EmeraldVouchBadge, ProofOfWorkBadge, SignalPulseIcon } from '../../components/symbols';
+import { InteractiveCard } from '../../components/motion/interactive-card';
+import { useMotionPreference } from '../../lib/motion';
 import type { FeedPost, PostCategory, PostVisibility, ReactionType } from './service';
 
 const categories: readonly PostCategory[] = ['TECHNICAL', 'PROJECT', 'HIRING', 'STATUS', 'OPINION'];
@@ -47,7 +51,7 @@ function PostCard({
   onReaction: (postId: string, reaction: ReactionType) => void;
 }) {
   return (
-    <article className="post-card">
+    <InteractiveCard className="post-card">
       <header className="post-header">
         <div className="post-avatar" aria-hidden="true">
           {post.authorName
@@ -60,7 +64,7 @@ function PostCard({
           <Link href={`/vouch/${post.authorSlug}`}>{post.authorName}</Link>
           {post.isPlusAuthor ? (
             <span className="emerald-signal" title="VouchNet+ member">
-              Emerald signal
+              <EmeraldVouchBadge size="sm" /> Emerald signal
             </span>
           ) : null}
           <p>
@@ -78,7 +82,8 @@ function PostCard({
         </pre>
       ))}
       <footer className="post-footer">
-        <span>
+        <span className="post-signal">
+          <SignalPulseIcon size="sm" />
           {post.peerSignal} peer signal · {post.commentCount} comments
         </span>
         <div className="reaction-row">
@@ -94,7 +99,7 @@ function PostCard({
           ))}
         </div>
       </footer>
-    </article>
+    </InteractiveCard>
   );
 }
 
@@ -124,16 +129,18 @@ function SuggestedSignalStream() {
   return (
     <section className="suggested-signal-stream" aria-label="Suggested signals">
       <div className="suggested-signal-heading">
-        <span>Suggested signal</span>
+        <span>
+          <ProofOfWorkBadge size="sm" /> Suggested signal
+        </span>
         <p>Platform-curated starting points while you build your network.</p>
       </div>
       {signals.map((signal) => (
-        <article key={signal.title}>
+        <InteractiveCard key={signal.title}>
           <p>{signal.topic}</p>
           <h2>{signal.title}</h2>
           <span>{signal.detail}</span>
           <Link href={signal.href}>Explore this signal</Link>
-        </article>
+        </InteractiveCard>
       ))}
     </section>
   );
@@ -148,6 +155,8 @@ export function FeedClient() {
   const [category, setCategory] = useState<PostCategory>('TECHNICAL');
   const [visibility, setVisibility] = useState<PostVisibility>('PUBLIC');
   const [picker, setPicker] = useState<'category' | 'visibility' | null>(null);
+  const [composerExpanded, setComposerExpanded] = useState(false);
+  const motionPreference = useMotionPreference();
   const categoryPickerId = useId();
   const visibilityPickerId = useId();
   async function load() {
@@ -242,7 +251,12 @@ export function FeedClient() {
   }
   return (
     <section className="feed-experience">
-      <form className="post-composer" onSubmit={(event) => void publish(event)}>
+      <motion.form
+        className={composerExpanded ? 'post-composer composer-expanded' : 'post-composer'}
+        layout
+        transition={motionPreference.spring}
+        onSubmit={(event) => void publish(event)}
+      >
         <div className="composer-heading">
           <div className="composer-avatar" aria-hidden="true">
             +
@@ -252,12 +266,18 @@ export function FeedClient() {
             <span>Technical notes, projects, hiring context, or a considered point of view.</span>
           </div>
         </div>
-        <textarea
+        <motion.textarea
+          layout
+          transition={motionPreference.spring}
           name="bodyMarkdown"
           required
           minLength={1}
           maxLength={12000}
           placeholder="Share useful work, a technical finding, or a project update…"
+          onFocus={() => setComposerExpanded(true)}
+          onBlur={(event) => {
+            if (event.currentTarget.value.trim().length === 0) setComposerExpanded(false);
+          }}
         />
         <div className="composer-controls">
           <input name="category" type="hidden" value={category} />
@@ -278,43 +298,55 @@ export function FeedClient() {
               ⌘ {category[0]}
               {category.slice(1).toLowerCase()} <span>⌄</span>
             </button>
-            {picker === 'category' ? (
-              <div
-                aria-label="Choose a post category"
-                className="composer-picker-menu"
-                id={categoryPickerId}
-                role="menu"
-              >
-                {categories.map((item) => (
-                  <button
-                    aria-checked={category === item}
-                    role="menuitemradio"
-                    type="button"
-                    key={item}
-                    onClick={() => {
-                      setCategory(item);
-                      setPicker(null);
-                    }}
-                  >
-                    <strong>
-                      {item[0]}
-                      {item.slice(1).toLowerCase()}
-                    </strong>
-                    <small>
-                      {item === 'TECHNICAL'
-                        ? 'Engineering and practical insight'
-                        : item === 'PROJECT'
-                          ? 'Work you made or shipped'
-                          : item === 'HIRING'
-                            ? 'A role or opportunity'
-                            : item === 'STATUS'
-                              ? 'A concise professional update'
-                              : 'A considered perspective'}
-                    </small>
-                  </button>
-                ))}
-              </div>
-            ) : null}
+            <AnimatePresence initial={false}>
+              {picker === 'category' ? (
+                <motion.div
+                  aria-label="Choose a post category"
+                  className="composer-picker-menu"
+                  id={categoryPickerId}
+                  role="menu"
+                  initial={
+                    motionPreference.reducedMotion ? false : { opacity: 0, y: -5, scale: 0.98 }
+                  }
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={
+                    motionPreference.reducedMotion
+                      ? { opacity: 0 }
+                      : { opacity: 0, y: -4, scale: 0.98 }
+                  }
+                  transition={motionPreference.spring}
+                >
+                  {categories.map((item) => (
+                    <button
+                      aria-checked={category === item}
+                      role="menuitemradio"
+                      type="button"
+                      key={item}
+                      onClick={() => {
+                        setCategory(item);
+                        setPicker(null);
+                      }}
+                    >
+                      <strong>
+                        {item[0]}
+                        {item.slice(1).toLowerCase()}
+                      </strong>
+                      <small>
+                        {item === 'TECHNICAL'
+                          ? 'Engineering and practical insight'
+                          : item === 'PROJECT'
+                            ? 'Work you made or shipped'
+                            : item === 'HIRING'
+                              ? 'A role or opportunity'
+                              : item === 'STATUS'
+                                ? 'A concise professional update'
+                                : 'A considered perspective'}
+                      </small>
+                    </button>
+                  ))}
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
           </div>
           <div
             className="composer-picker"
@@ -337,66 +369,96 @@ export function FeedClient() {
                   : 'Contacts'}{' '}
               <span>⌄</span>
             </button>
-            {picker === 'visibility' ? (
-              <div
-                aria-label="Choose post visibility"
-                className="composer-picker-menu visibility-menu"
-                id={visibilityPickerId}
-                role="menu"
-              >
-                {(['PUBLIC', 'FOLLOWERS', 'CONTACTS'] as PostVisibility[]).map((item) => (
-                  <button
-                    aria-checked={visibility === item}
-                    role="menuitemradio"
-                    type="button"
-                    key={item}
-                    onClick={() => {
-                      setVisibility(item);
-                      setPicker(null);
-                    }}
-                  >
-                    <strong>
-                      {item === 'PUBLIC'
-                        ? 'Public'
-                        : item === 'FOLLOWERS'
-                          ? 'Followers'
-                          : 'Contacts'}
-                    </strong>
-                    <small>
-                      {item === 'PUBLIC'
-                        ? 'Visible on your public profile'
-                        : item === 'FOLLOWERS'
-                          ? 'Visible to people following you'
-                          : 'Visible to accepted contacts'}
-                    </small>
-                  </button>
-                ))}
-              </div>
-            ) : null}
+            <AnimatePresence initial={false}>
+              {picker === 'visibility' ? (
+                <motion.div
+                  aria-label="Choose post visibility"
+                  className="composer-picker-menu visibility-menu"
+                  id={visibilityPickerId}
+                  role="menu"
+                  initial={
+                    motionPreference.reducedMotion ? false : { opacity: 0, y: -5, scale: 0.98 }
+                  }
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={
+                    motionPreference.reducedMotion
+                      ? { opacity: 0 }
+                      : { opacity: 0, y: -4, scale: 0.98 }
+                  }
+                  transition={motionPreference.spring}
+                >
+                  {(['PUBLIC', 'FOLLOWERS', 'CONTACTS'] as PostVisibility[]).map((item) => (
+                    <button
+                      aria-checked={visibility === item}
+                      role="menuitemradio"
+                      type="button"
+                      key={item}
+                      onClick={() => {
+                        setVisibility(item);
+                        setPicker(null);
+                      }}
+                    >
+                      <strong>
+                        {item === 'PUBLIC'
+                          ? 'Public'
+                          : item === 'FOLLOWERS'
+                            ? 'Followers'
+                            : 'Contacts'}
+                      </strong>
+                      <small>
+                        {item === 'PUBLIC'
+                          ? 'Visible on your public profile'
+                          : item === 'FOLLOWERS'
+                            ? 'Visible to people following you'
+                            : 'Visible to accepted contacts'}
+                      </small>
+                    </button>
+                  ))}
+                </motion.div>
+              ) : null}
+            </AnimatePresence>
           </div>
           <span className="composer-note">Markdown supported</span>
           <button disabled={isSubmitting}>{isSubmitting ? 'Publishing…' : 'Publish'}</button>
         </div>
-      </form>
+      </motion.form>
       <div className="feed-toolbar">
         <div>
           <p className="feed-toolbar-label">Your feed</p>
-          <div className="feed-mode" role="group" aria-label="Feed order">
-            <button
-              className={mode === 'CHRONOLOGICAL' ? 'active-mode' : ''}
-              type="button"
-              onClick={() => setMode('CHRONOLOGICAL')}
-            >
-              Chronological
-            </button>
-            <button
-              className={mode === 'PEER_VERIFIED' ? 'active-mode' : ''}
-              type="button"
-              onClick={() => setMode('PEER_VERIFIED')}
-            >
-              Peer-verified signal
-            </button>
-          </div>
+          <LayoutGroup id="feed-order">
+            <div className="feed-mode" role="group" aria-label="Feed order">
+              <button
+                className={mode === 'CHRONOLOGICAL' ? 'active-mode' : ''}
+                type="button"
+                onClick={() => setMode('CHRONOLOGICAL')}
+              >
+                {mode === 'CHRONOLOGICAL' ? (
+                  <motion.span
+                    aria-hidden="true"
+                    className="feed-active-indicator"
+                    layoutId="active-tab-indicator"
+                    transition={motionPreference.spring}
+                  />
+                ) : null}
+                <span className="feed-mode-label">Chronological</span>
+              </button>
+              <button
+                className={mode === 'PEER_VERIFIED' ? 'active-mode' : ''}
+                type="button"
+                onClick={() => setMode('PEER_VERIFIED')}
+              >
+                {mode === 'PEER_VERIFIED' ? (
+                  <motion.span
+                    aria-hidden="true"
+                    className="feed-active-indicator"
+                    layoutId="active-tab-indicator"
+                    transition={motionPreference.spring}
+                  />
+                ) : null}
+                <span className="feed-mode-label">Peer-verified signal</span>
+              </button>
+            </div>
+          </LayoutGroup>
         </div>
         <details>
           <summary>Filters</summary>

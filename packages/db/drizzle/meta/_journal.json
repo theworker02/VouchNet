@@ -120,6 +120,13 @@
       "when": 1781553600000,
       "tag": "0016_developer_access_subscriptions",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1781640000000,
+      "tag": "0017_daily_strategy_games",
+      "breakpoints": true
     }
   ]
 }

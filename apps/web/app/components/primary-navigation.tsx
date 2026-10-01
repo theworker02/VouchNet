@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
+import { LayoutGroup, motion } from 'framer-motion';
+import { useMotionPreference } from '../lib/motion';
 
 const navigation = [
   { href: '/home', label: 'Home', icon: 'home' },
@@ -49,21 +51,43 @@ function isActive(pathname: string, href: string) {
   return pathname === href || (href === '/mynetwork' && pathname.startsWith('/network'));
 }
 
-export function PrimaryNavigation({ mobile = false }: { mobile?: boolean }) {
+export function PrimaryNavigation({
+  mobile = false,
+  unreadAlerts = 0,
+}: {
+  mobile?: boolean;
+  unreadAlerts?: number;
+}) {
   const pathname = usePathname();
+  const preference = useMotionPreference();
   return (
-    <nav className={mobile ? 'mobile-nav' : 'primary-nav'} aria-label="Primary navigation">
-      {navigation.map((item) => (
-        <Link
-          key={item.href}
-          href={item.href}
-          aria-current={isActive(pathname, item.href) ? 'page' : undefined}
-          className={isActive(pathname, item.href) ? 'is-active' : undefined}
-        >
-          <NavigationIcon name={item.icon} />
-          <span>{item.label}</span>
-        </Link>
-      ))}
-    </nav>
+    <LayoutGroup id={mobile ? 'mobile-navigation' : 'desktop-navigation'}>
+      <nav className={mobile ? 'mobile-nav' : 'primary-nav'} aria-label="Primary navigation">
+        {navigation.map((item) => (
+          <Link
+            key={item.href}
+            href={item.href}
+            aria-current={isActive(pathname, item.href) ? 'page' : undefined}
+            className={isActive(pathname, item.href) ? 'is-active' : undefined}
+          >
+            {isActive(pathname, item.href) ? (
+              <motion.span
+                aria-hidden="true"
+                className="nav-active-indicator"
+                layoutId="active-tab-indicator"
+                transition={preference.spring}
+              />
+            ) : null}
+            <NavigationIcon name={item.icon} />
+            <span>{item.label}</span>
+            {item.href === '/notifications' && unreadAlerts > 0 ? (
+              <span className="nav-notification-count" aria-label={`${unreadAlerts} unread alerts`}>
+                {unreadAlerts > 9 ? '9+' : unreadAlerts}
+              </span>
+            ) : null}
+          </Link>
+        ))}
+      </nav>
+    </LayoutGroup>
   );
 }

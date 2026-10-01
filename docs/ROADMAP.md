@@ -31,3 +31,16 @@ email delivery, and E2E coverage remain incomplete. The matrix in
 - Approved Greenhouse and Lever sources can be refreshed by a signed server-only scheduler route.
 - The initial provider adapters preserve the external source URL and never scrape consumer career
   pages. See [JOBS.md](JOBS.md) for the operating model and release limits.
+
+## Completed: daily strategy foundation
+
+- `/games` now provides **Signal Circuit**, an original daily grid strategy puzzle derived from the
+  UTC date. Difficulty, board size, and move budget scale over time without copying a third-party
+  game template.
+- A completion is accepted only after the server independently replays the member's submitted move
+  history against that day’s target; future and historical completions are rejected.
+- The application materializes one in-app daily-game notification for each signed-in member and
+  displays it in `/notifications`. This is in-app delivery—not an email or push-notification
+  scheduler.
+- Migration `0017_daily_strategy_games` adds completion and notification persistence. It must be
+  applied before this surface is enabled in a deployed environment.
