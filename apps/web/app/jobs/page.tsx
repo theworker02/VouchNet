@@ -104,9 +104,9 @@ export default async function JobsPage({
                   ))}
                 </div>
               </div>
-              <a className="secondary" href={job.sourceUrl} target="_blank" rel="noreferrer">
-                Open source listing ↗
-              </a>
+              <Link className="secondary" href={`/jobs/${job.slug}`}>
+                Review role
+              </Link>
             </article>
           ))
         )}

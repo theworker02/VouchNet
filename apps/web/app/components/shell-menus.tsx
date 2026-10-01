@@ -125,6 +125,14 @@ export function WorkMenu() {
           <strong>Browse jobs</strong>
           <span>Transparent roles and compensation</span>
         </Link>
+        <Link href="/jobs/tracker" role="menuitem">
+          <strong>Application Radar</strong>
+          <span>Track VouchNet-native applications</span>
+        </Link>
+        <Link href="/jobs/post" role="menuitem">
+          <strong>Employer workspace</strong>
+          <span>Submit roles and manage candidates</span>
+        </Link>
         <Link href="/projects" role="menuitem">
           <strong>Showcase projects</strong>
           <span>Bring meaningful work forward</span>

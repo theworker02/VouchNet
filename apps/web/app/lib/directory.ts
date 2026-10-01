@@ -34,6 +34,12 @@ export type JobRecord = {
   organizationSlug: string;
 };
 
+export type JobDetailRecord = JobRecord & {
+  description: string;
+  nativeApplicationEnabled: boolean;
+  publishedAt: Date | null;
+};
+
 export type DailyChallengeRecord = {
   title: string;
   category: 'DEBUGGING' | 'SYSTEMS' | 'ALGORITHMS';
@@ -94,6 +100,27 @@ export async function listPublicJobs(query?: string): Promise<JobRecord[]> {
           OR EXISTS (SELECT 1 FROM unnest(j.skill_tags) tag WHERE tag ILIKE ${pattern}))
       ORDER BY (j.salary_min IS NULL) ASC,j.source_checked_at DESC,j.created_at DESC LIMIT 30
     `;
+  } finally {
+    await client.end({ timeout: 1 });
+  }
+}
+
+/** Public listing details intentionally retain the external source as the application authority. */
+export async function getPublicJob(slug: string): Promise<JobDetailRecord | null> {
+  const client = sql();
+  try {
+    const jobs = await client<JobDetailRecord[]>`
+      SELECT j.slug,j.title,j.summary,j.description,j.location,j.workplace_type AS "workplaceType",
+        j.employment_type AS "employmentType",j.salary_min AS "salaryMin",j.salary_max AS "salaryMax",
+        j.salary_currency AS "salaryCurrency",j.skill_tags AS "skillTags",j.source_url AS "sourceUrl",
+        j.source_checked_at AS "sourceCheckedAt",j.source_status AS "sourceStatus",j.published_at AS "publishedAt",
+        j.native_application_enabled AS "nativeApplicationEnabled",
+        o.name AS "organizationName",o.slug AS "organizationSlug"
+      FROM jobs j JOIN organizations o ON o.id=j.organization_id
+      WHERE j.slug=${slug} AND j.deleted_at IS NULL AND j.source_status IN ('SOURCE_REVIEWED','SOURCE_LIVE')
+      LIMIT 1
+    `;
+    return jobs[0] ?? null;
   } finally {
     await client.end({ timeout: 1 });
   }

@@ -6,7 +6,16 @@ export const postCategories = ['TECHNICAL', 'PROJECT', 'HIRING', 'STATUS', 'OPIN
 export type PostCategory = (typeof postCategories)[number];
 export const postVisibilities = ['PUBLIC', 'MEMBERS', 'FOLLOWERS', 'CONTACTS', 'PRIVATE'] as const;
 export type PostVisibility = (typeof postVisibilities)[number];
-export const reactionTypes = ['UPVOTE', 'VERIFY', 'INSIGHTFUL', 'BENCHMARK'] as const;
+export const reactionTypes = [
+  'LIKE',
+  'LOVE',
+  'JOY',
+  'SURPRISED',
+  'UPVOTE',
+  'VERIFY',
+  'INSIGHTFUL',
+  'BENCHMARK',
+] as const;
 export type ReactionType = (typeof reactionTypes)[number];
 
 export interface CodeSnippet {
@@ -102,7 +111,16 @@ export async function getFeed(
         COALESCE((SELECT sum(CASE r.reaction_type WHEN 'VERIFY' THEN 4 WHEN 'BENCHMARK' THEN 3 WHEN 'INSIGHTFUL' THEN 2 ELSE 1 END)::int FROM post_reactions r JOIN connections c ON c.state='ACCEPTED' AND ((c.requester_id=r.user_id AND c.recipient_id=p.author_id) OR (c.recipient_id=r.user_id AND c.requester_id=p.author_id)) WHERE r.post_id=p.id),0) AS "peerSignal",
         (SELECT count(*)::int FROM post_comments pc WHERE pc.post_id=p.id AND pc.deleted_at IS NULL) AS "commentCount",
         (SELECT reaction_type FROM post_reactions vr WHERE vr.post_id=p.id AND vr.user_id=${viewerId}) AS "viewerReaction",
-        jsonb_build_object('UPVOTE',(SELECT count(*)::int FROM post_reactions rr WHERE rr.post_id=p.id AND rr.reaction_type='UPVOTE'),'VERIFY',(SELECT count(*)::int FROM post_reactions rr WHERE rr.post_id=p.id AND rr.reaction_type='VERIFY'),'INSIGHTFUL',(SELECT count(*)::int FROM post_reactions rr WHERE rr.post_id=p.id AND rr.reaction_type='INSIGHTFUL'),'BENCHMARK',(SELECT count(*)::int FROM post_reactions rr WHERE rr.post_id=p.id AND rr.reaction_type='BENCHMARK')) AS "reactionCounts"
+        jsonb_build_object(
+          'LIKE',(SELECT count(*)::int FROM post_reactions rr WHERE rr.post_id=p.id AND rr.reaction_type='LIKE'),
+          'LOVE',(SELECT count(*)::int FROM post_reactions rr WHERE rr.post_id=p.id AND rr.reaction_type='LOVE'),
+          'JOY',(SELECT count(*)::int FROM post_reactions rr WHERE rr.post_id=p.id AND rr.reaction_type='JOY'),
+          'SURPRISED',(SELECT count(*)::int FROM post_reactions rr WHERE rr.post_id=p.id AND rr.reaction_type='SURPRISED'),
+          'UPVOTE',(SELECT count(*)::int FROM post_reactions rr WHERE rr.post_id=p.id AND rr.reaction_type='UPVOTE'),
+          'VERIFY',(SELECT count(*)::int FROM post_reactions rr WHERE rr.post_id=p.id AND rr.reaction_type='VERIFY'),
+          'INSIGHTFUL',(SELECT count(*)::int FROM post_reactions rr WHERE rr.post_id=p.id AND rr.reaction_type='INSIGHTFUL'),
+          'BENCHMARK',(SELECT count(*)::int FROM post_reactions rr WHERE rr.post_id=p.id AND rr.reaction_type='BENCHMARK')
+        ) AS "reactionCounts"
       FROM posts p JOIN profiles pr ON pr.user_id=p.author_id
       WHERE p.status='PUBLISHED' AND p.deleted_at IS NULL
         AND NOT EXISTS (SELECT 1 FROM blocks b WHERE (b.blocker_id=${viewerId} AND b.blocked_id=p.author_id) OR (b.blocker_id=p.author_id AND b.blocked_id=${viewerId}))

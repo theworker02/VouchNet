@@ -16,6 +16,7 @@ type Dashboard = {
     employerReviewStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
     freeUntil: string | null;
     id: string;
+    slug: string;
     organizationName: string;
     title: string;
   }>;
@@ -394,7 +395,12 @@ export function JobPostingClient({ initialDashboard }: { initialDashboard: Dashb
                     <strong>{submission.title}</strong>
                     <small>{submission.organizationName}</small>
                   </span>
-                  <em>{submission.employerReviewStatus.toLowerCase().replace('_', ' ')}</em>
+                  <span className="employer-submission-actions">
+                    <em>{submission.employerReviewStatus.toLowerCase().replace('_', ' ')}</em>
+                    {submission.employerReviewStatus === 'APPROVED' ? (
+                      <a href={`/org/jobs/${submission.slug}/candidates`}>Candidate pipeline</a>
+                    ) : null}
+                  </span>
                 </li>
               ))}
             </ul>

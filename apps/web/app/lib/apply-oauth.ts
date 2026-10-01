@@ -1,3 +1,4 @@
+import 'server-only';
 import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { createSqlClient } from '@nexus/db';
 

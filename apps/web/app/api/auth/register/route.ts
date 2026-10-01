@@ -5,6 +5,9 @@ import { IdentityError, registerHuman } from '../../../lib/identity';
 import { sendVerificationEmail } from '../../../lib/email';
 import { logger } from '@nexus/observability';
 import { publicUrl } from '../../../lib/app-url';
+import { hasSameOrigin } from '../../../lib/request-security';
+import { enforceRateLimit } from '../../../lib/security/rate-limit';
+import { rateLimitResponse } from '../../../lib/security/rate-limit-response';
 
 export const runtime = 'nodejs';
 
@@ -21,6 +24,9 @@ function failureResponse(request: NextRequest, error: RegistrationError): NextRe
 export async function POST(request: NextRequest) {
   const requestId = request.headers.get('x-request-id') ?? crypto.randomUUID();
   try {
+    if (!hasSameOrigin(request)) return failureResponse(request, 'INVALID_INPUT');
+    const rateLimit = await enforceRateLimit(request, 'auth');
+    if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
     const form = await request.formData();
     const input = registrationSchema.parse({
       firstName: form.get('firstName'),

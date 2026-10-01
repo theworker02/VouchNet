@@ -1,3 +1,4 @@
+import 'server-only';
 import { createSqlClient } from '@nexus/db';
 
 export const jobSourceProviders = ['GREENHOUSE', 'LEVER'] as const;
@@ -8,6 +9,7 @@ export type EmployerSubmission = {
   employerReviewStatus: 'PENDING' | 'APPROVED' | 'REJECTED';
   freeUntil: Date | null;
   id: string;
+  slug: string;
   organizationName: string;
   title: string;
 };
@@ -127,13 +129,13 @@ export async function submitEmployerJob(
         INSERT INTO jobs (
           organization_id,slug,title,summary,description,location,workplace_type,employment_type,
           salary_min,salary_max,salary_currency,skill_tags,source_url,source_checked_at,source_status,
-          origin,employer_review_status,posting_owner_user_id,launch_waiver_expires_at
+          origin,employer_review_status,posting_owner_user_id,launch_waiver_expires_at,native_application_enabled
         ) VALUES (
           ${organizationId},
           ${`${slugify(input.organizationName, 30)}-${slugify(input.title, 50)}-${crypto.randomUUID().slice(0, 6)}`},
           ${input.title},${input.summary},${input.description},${input.location},${input.workplaceType},${input.employmentType},
           ${input.salaryMin},${input.salaryMax},${input.salaryCurrency},${input.skillTags},${input.applicationUrl},now(),'PENDING_REVIEW',
-          'EMPLOYER_SUBMISSION','PENDING',${userId},${freeUntil}
+          'EMPLOYER_SUBMISSION','PENDING',${userId},${freeUntil},true
         ) RETURNING id
       `;
       const job = jobRows[0];
@@ -211,7 +213,7 @@ export async function getEmployerLaunchDashboard(userId: string): Promise<Employ
         SELECT ends_at FROM employer_launch_trials WHERE user_id=${userId} LIMIT 1
       `,
       client<EmployerSubmission[]>`
-        SELECT j.id,j.title,j.created_at AS "createdAt",j.employer_review_status AS "employerReviewStatus",
+        SELECT j.id,j.slug,j.title,j.created_at AS "createdAt",j.employer_review_status AS "employerReviewStatus",
           j.launch_waiver_expires_at AS "freeUntil",o.name AS "organizationName"
         FROM jobs j JOIN organizations o ON o.id=j.organization_id
         WHERE j.posting_owner_user_id=${userId} AND j.deleted_at IS NULL

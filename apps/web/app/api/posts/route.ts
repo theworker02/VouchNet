@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { actorFromRequest } from '../../lib/identity';
 import { hasSameOrigin } from '../../lib/request-security';
 import { createPost, postCategories, postVisibilities } from '../../modules/posts/service';
+import { enforceRateLimit } from '../../lib/security/rate-limit';
+import { rateLimitResponse } from '../../lib/security/rate-limit-response';
 
 const createPostSchema = z
   .object({
@@ -22,6 +24,7 @@ const createPostSchema = z
     quotePostId: z.string().uuid().optional(),
     mentionedUserIds: z.array(z.string().uuid()).max(20).default([]),
   })
+  .strict()
   .superRefine((value, context) => {
     if (value.quotePostId !== undefined && value.bodyMarkdown.length < 80)
       context.addIssue({
@@ -37,6 +40,8 @@ export async function POST(request: NextRequest) {
   try {
     const actor = await actorFromRequest(request);
     if (actor === null) return NextResponse.json({ error: 'UNAUTHENTICATED' }, { status: 401 });
+    const rateLimit = await enforceRateLimit(request, 'socialWrite', actor.userId);
+    if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
     const post = await createPost(actor.userId, createPostSchema.parse(await request.json()));
     return NextResponse.json({ post }, { status: 201 });
   } catch (error) {

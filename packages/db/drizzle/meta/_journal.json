@@ -127,6 +127,34 @@
       "when": 1781640000000,
       "tag": "0017_daily_strategy_games",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1781726400000,
+      "tag": "0018_expanded_post_reactions",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1781812800000,
+      "tag": "0019_error_telemetry",
+      "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1781899200000,
+      "tag": "0020_native_job_applications",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1781985600000,
+      "tag": "0021_application_stage_notifications",
+      "breakpoints": true
     }
   ]
 }

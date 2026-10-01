@@ -6,6 +6,7 @@ import { AccountMenu, WorkMenu } from './shell-menus';
 import { ConnectionCooldownNotice } from './connection-cooldown-notice';
 import { getConnectionCooldown } from '../lib/social';
 import { PageTransition } from './motion/page-transition';
+import { VouchNetLogo } from './brand';
 import {
   ensureDailyStrategyNotification,
   unreadMemberNotificationCount,
@@ -29,7 +30,7 @@ export async function Shell({ children }: { children: React.ReactNode }) {
     <>
       <header className="topbar">
         <Link className="brand" href="/home">
-          VouchNet
+          <VouchNetLogo className="topbar-brand-logo" />
         </Link>
         <form className="topbar-search" action="/search" role="search">
           <label className="sr-only" htmlFor="global-search">

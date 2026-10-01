@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { VerifiedWorkBadge } from './components/verified-work-badge';
 import { ButtonLink } from './components/ui/button';
 
@@ -144,6 +145,40 @@ export default function HomePage() {
             Apply with VouchNet lets you share a consented professional profile when it matters.
           </p>
         </article>
+      </section>
+
+      <section className="landing-product-visuals" aria-label="VouchNet product previews">
+        <div className="landing-photo-card">
+          <Image
+            alt="A modern software workspace"
+            height={700}
+            priority={false}
+            sizes="(max-width: 800px) 100vw, 52vw"
+            src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80"
+            width={1200}
+          />
+          <div>
+            <span>SHOW THE WORK</span>
+            <strong>Context that survives the handoff.</strong>
+          </div>
+        </div>
+        <div className="landing-live-previews">
+          <Link href="/feed">
+            <span>01 · Feed</span>
+            <strong>Chronological when you need it. Peer signal when you don’t.</strong>
+            <small>Read real member posts and choose the ordering.</small>
+          </Link>
+          <Link href="/jobs">
+            <span>02 · Jobs</span>
+            <strong>Compensation context before an application handoff.</strong>
+            <small>Source-linked roles with public salary disclosure.</small>
+          </Link>
+          <Link href="/developers">
+            <span>03 · Apply with VouchNet</span>
+            <strong>Consent-based professional data sharing for trusted integrations.</strong>
+            <small>Explore the developer portal and scoped OAuth flow.</small>
+          </Link>
+        </div>
       </section>
 
       <section className="landing-close landing-close--refined">

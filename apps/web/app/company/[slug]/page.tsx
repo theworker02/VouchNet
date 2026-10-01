@@ -131,9 +131,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ slug: 
                   <h3>{job.title}</h3>
                   <p>{job.summary}</p>
                 </div>
-                <a href={job.sourceUrl} target="_blank" rel="noreferrer">
-                  View source ↗
-                </a>
+                <Link href={`/jobs/${job.slug}`}>Review role</Link>
               </article>
             ))}
           </div>

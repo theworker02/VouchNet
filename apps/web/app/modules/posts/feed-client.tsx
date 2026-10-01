@@ -4,12 +4,12 @@ import Link from 'next/link';
 import { FocusEvent, FormEvent, KeyboardEvent, useEffect, useId, useMemo, useState } from 'react';
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import { EmeraldVouchBadge, ProofOfWorkBadge, SignalPulseIcon } from '../../components/symbols';
+import { ReactionBar } from '../../components/feed/reaction-bar';
 import { InteractiveCard } from '../../components/motion/interactive-card';
 import { useMotionPreference } from '../../lib/motion';
 import type { FeedPost, PostCategory, PostVisibility, ReactionType } from './service';
 
 const categories: readonly PostCategory[] = ['TECHNICAL', 'PROJECT', 'HIRING', 'STATUS', 'OPINION'];
-const reactions: readonly ReactionType[] = ['UPVOTE', 'VERIFY', 'INSIGHTFUL', 'BENCHMARK'];
 
 async function requestFeed(
   mode: 'CHRONOLOGICAL' | 'PEER_VERIFIED',
@@ -86,18 +86,11 @@ function PostCard({
           <SignalPulseIcon size="sm" />
           {post.peerSignal} peer signal · {post.commentCount} comments
         </span>
-        <div className="reaction-row">
-          {reactions.map((reaction) => (
-            <button
-              className={post.viewerReaction === reaction ? 'reaction active-reaction' : 'reaction'}
-              key={reaction}
-              type="button"
-              onClick={() => onReaction(post.id, reaction)}
-            >
-              {reaction.toLowerCase()} {post.reactionCounts[reaction] || 0}
-            </button>
-          ))}
-        </div>
+        <ReactionBar
+          counts={post.reactionCounts}
+          onReact={(reaction) => onReaction(post.id, reaction)}
+          value={post.viewerReaction}
+        />
       </footer>
     </InteractiveCard>
   );
@@ -217,6 +210,19 @@ export function FeedClient() {
     }
   }
   async function react(postId: string, reactionType: ReactionType) {
+    const previousPosts = posts;
+    setPosts(
+      (current) =>
+        current?.map((post) => {
+          if (post.id !== postId) return post;
+          const nextCounts = { ...post.reactionCounts };
+          if (post.viewerReaction !== null) {
+            nextCounts[post.viewerReaction] = Math.max(0, nextCounts[post.viewerReaction] - 1);
+          }
+          nextCounts[reactionType] += 1;
+          return { ...post, viewerReaction: reactionType, reactionCounts: nextCounts };
+        }) ?? null,
+    );
     try {
       const response = await fetch(`/api/posts/${postId}/reactions`, {
         method: 'POST',
@@ -224,11 +230,12 @@ export function FeedClient() {
         body: JSON.stringify({ reactionType }),
       });
       if (!response.ok) {
+        setPosts(previousPosts);
         setStatus('That reaction could not be saved.');
         return;
       }
-      await load();
     } catch {
+      setPosts(previousPosts);
       setStatus('That reaction could not be saved.');
     }
   }

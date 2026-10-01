@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import Script from 'next/script';
 import { SiteMaintenanceBanner } from './components/site-maintenance-banner';
+import { ClientErrorCapture } from './components/telemetry/client-error-capture';
+import { ComponentDiagnosticBoundary } from './components/telemetry/error-boundary';
 import './globals.css';
 
 const siteUrl = new URL(process.env.APP_URL?.trim() || 'https://vouchnet.dev');
@@ -15,8 +17,12 @@ export const metadata: Metadata = {
     'Build a credible professional identity around your work, trusted peer signals, and transparent opportunities.',
   applicationName: 'VouchNet',
   icons: {
-    icon: [{ url: '/brand/vouchnet-mark.png', type: 'image/png' }],
-    shortcut: '/brand/vouchnet-mark.png',
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/brand/vouchnet-mark.png', type: 'image/png' },
+    ],
+    shortcut: '/favicon.svg',
+    apple: '/brand/vouchnet-mark.png',
   },
   keywords: [
     'professional network',
@@ -65,7 +71,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en">
       <body>
         <SiteMaintenanceBanner />
-        {children}
+        <ClientErrorCapture />
+        <ComponentDiagnosticBoundary>{children}</ComponentDiagnosticBoundary>
         <Script
           id="vouch-net-organization-schema"
           type="application/ld+json"

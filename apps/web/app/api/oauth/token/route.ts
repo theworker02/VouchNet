@@ -4,6 +4,8 @@ import {
   hasValidPkceVerifier,
   ApplyOAuthError,
 } from '../../../lib/apply-oauth';
+import { enforceRateLimit } from '../../../lib/security/rate-limit';
+import { rateLimitResponse } from '../../../lib/security/rate-limit-response';
 
 export const runtime = 'nodejs';
 
@@ -22,6 +24,8 @@ function basicCredentials(value: string | null): { clientId: string; clientSecre
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimit = await enforceRateLimit(request, 'auth');
+    if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
     const input = await request.formData();
     const credentials = basicCredentials(request.headers.get('authorization'));
     const clientId = credentials?.clientId ?? String(input.get('client_id') ?? '');

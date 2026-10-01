@@ -3,6 +3,58 @@
 All notable changes to VouchNet are documented here. This project follows
 [Semantic Versioning](https://semver.org/).
 
+## [0.9.0] - 2026-10-01
+
+### Highlights
+
+- VouchNet now has production-oriented resilience, application workflows, telemetry, and security
+  boundaries around its existing professional-network foundation.
+
+### Added
+
+- Native job application pages, a candidate Application Radar, and employer-owned candidate-stage
+  management with audited stage events and in-app status notifications.
+- Expanded persisted post reactions, accessible reaction controls, and optimistic UI rollback when
+  a write cannot be saved.
+- A redacted client-error telemetry intake with an administrator-only diagnostic queue.
+- OAuth candidate-profile compatibility endpoint and a dependency-free Apply with VouchNet web
+  component SDK for registered partner applications.
+- Route-level error, loading, and not-found recovery surfaces; original VouchNet brand and favicon
+  assets; and public RFC 9116 security contact and policy routes.
+- Redis-backed sliding-window limits for high-risk authentication/OAuth routes and selected social
+  writes, with fail-closed production behavior when the rate-limit dependency is unavailable.
+
+### Changed
+
+- Browser security headers and Content Security Policy are more explicit, and database-backed
+  services are marked server-only to prevent accidental client imports.
+- Input schemas on the new and hardened routes reject unknown fields, and sensitive OAuth flows
+  continue to require exact redirect URI matching and S256 PKCE.
+- Job cards now link to shareable VouchNet role pages; approved employer roles can open their
+  candidate pipeline from the posting workspace.
+
+### Database migrations
+
+- `0018_expanded_post_reactions` extends persisted reaction types.
+- `0019_error_telemetry` adds the protected error-event queue.
+- `0020_native_job_applications` adds native applications and application history.
+- `0021_application_stage_notifications` adds job-stage notification support.
+
+### Important deployment step
+
+- Apply database migrations through `0021` before deploying this release. Set a production
+  `REDIS_URL`; rate-limited production endpoints intentionally return a safe unavailable response
+  when Redis cannot be reached.
+
+### Known limitations
+
+- Database migrations have not been applied by this repository release process.
+- The OAuth SDK establishes the authorization flow but partner-side callbacks and applicant data
+  exports remain limited to profile fields that are already persisted and authorized.
+- Turnstile, member MFA/passkeys, real-time delivery, secure resume downloads, and full employer
+  messaging remain separate implementation and configuration work; no placeholder implementation
+  represents them as complete.
+
 ## [0.8.0] - 2026-09-30
 
 ### Highlights
@@ -97,3 +149,4 @@ All notable changes to VouchNet are documented here. This project follows
 
 [0.1.0]: https://github.com/theworker02/VouchNet/releases/tag/v0.1.0
 [0.8.0]: https://github.com/theworker02/VouchNet/releases/tag/v0.8.0
+[0.9.0]: https://github.com/theworker02/VouchNet/releases/tag/v0.9.0

@@ -1,3 +1,4 @@
+import 'server-only';
 import {
   createSecretToken,
   createVerificationCode,

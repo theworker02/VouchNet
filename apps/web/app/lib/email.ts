@@ -1,3 +1,5 @@
+import 'server-only';
+
 const resendEndpoint = 'https://api.resend.com/emails';
 
 function appUrl(): string {

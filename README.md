@@ -57,7 +57,8 @@ Visitors can explore useful professional context without creating an account:
 - **Organizations** — `/company/[slug]` presents source-reviewed directory records with clear status
   disclosure and public technology references.
 - **Jobs** — `/jobs` provides source-linked technical roles with transparent salary disclosure when
-  it is supplied, clear external application links, and an employer launch workspace at `/jobs/post`.
+  it is supplied, shareable role detail pages at `/jobs/[slug]`, clear external application links,
+  and an employer launch workspace at `/jobs/post`.
 - **Daily challenge** — `/games` is a short platform-owned technical self-check, never a simulated
   member post.
 
@@ -68,7 +69,7 @@ VouchNet is an active early-stage product. The current vertical slices include:
 - Email/password sign-up, login, server-side sessions, email verification, and password reset
 - Professional profile onboarding, owner editing, and privacy-aware profile views
 - People discovery, search, follows, Contact requests, blocks, and network management
-- Early high-signal post/feed and functional-reaction foundations
+- High-signal posts/feed with persisted, keyboard-accessible reactions and optimistic failure rollback
 - Account settings, session controls, and production Resend/Netlify configuration paths
 - A responsive Signal Desk application shell with a unified home, network, feed, and credential flow
 - Public, SEO-ready profile and project pages; project publishing; copyable, dynamic SVG profile badges
@@ -77,6 +78,8 @@ VouchNet is an active early-stage product. The current vertical slices include:
   no-card two-calendar-month founding employer window
 - A platform-owned daily technical challenge, published by an explicit system actor rather than a fake member
 - PostgreSQL migrations, Docker-based local PostgreSQL + Redis, and typed API boundaries
+- Redacted client-error telemetry with an administrator-only diagnostic queue
+- Native applications and an Application Radar for reviewed employer-submitted roles
 
 Incomplete routes intentionally show unavailable states rather than pretend the feature works.
 Messaging, internal job applications, organization administration, full notifications, moderation,
@@ -167,7 +170,7 @@ All configuration is server-side. Never commit a real `.env` file.
 | Variable          | Local development            | Production                                   |
 | ----------------- | ---------------------------- | -------------------------------------------- |
 | `DATABASE_URL`    | Docker PostgreSQL connection | Hosted PostgreSQL connection                 |
-| `REDIS_URL`       | Docker Redis connection      | Hosted Redis connection                      |
+| `REDIS_URL`       | Docker Redis connection      | Required for production abuse-rate limiting  |
 | `SESSION_SECRET`  | Unique 32+ character value   | Unique production-only secret                |
 | `RESEND_API_KEY`  | Optional for local delivery  | Required for transactional email             |
 | `EMAIL_FROM`      | Test or verified sender      | Sender on a Resend-verified domain           |
@@ -193,7 +196,7 @@ Before treating a deployment as ready, verify:
 ### Required production migration step
 
 Deploy application code only after the database has received the matching migrations. This release
-includes migrations `0006` through `0008`; run `pnpm db:migrate` with the production
+includes migrations through `0021`; run `pnpm db:migrate` with the production
 `DATABASE_URL` available to the migration process. Never place the connection string in Git or a
 client-side environment variable.
 

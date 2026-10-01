@@ -44,3 +44,39 @@ email delivery, and E2E coverage remain incomplete. The matrix in
   scheduler.
 - Migration `0017_daily_strategy_games` adds completion and notification persistence. It must be
   applied before this surface is enabled in a deployed environment.
+
+## In progress: production resilience and richer feed interactions
+
+- Major application surfaces now provide local loading skeletons and branded recovery states instead
+  of default framework errors or blank rendering: feed, jobs, messaging, settings, games, profiles,
+  organizations, and developer resources.
+- VouchNet’s custom logo components and responsive SVG favicon are now shared assets rather than
+  repeated marks. Error views deliberately reveal no internal exception details.
+- The persisted reaction model is expanding from four professional signals to include Like,
+  Appreciate, Joy, and Surprised while retaining Upvote, Verify, Insightful, and Benchmark.
+  A Radix popover gives people a compact, keyboard-accessible picker, and optimistic UI rolls back
+  when the server rejects a write.
+- Migration `0018_expanded_post_reactions` must be applied before the new reactions are enabled on
+  a deployed PostgreSQL database.
+- Public roles now have SEO-ready, shareable detail pages at `/jobs/[slug]`; VouchNet preserves
+  the source organization as application authority and links out rather than simulating an ATS.
+
+## In progress: internal diagnostic telemetry
+
+- Migration `0019_error_telemetry` adds a restricted PostgreSQL queue for redacted browser error
+  diagnostics. Unhandled browser errors, promise rejections, and client component-boundary failures
+  are sent to the same-origin telemetry endpoint without exposing stack traces to ordinary members.
+- `/admin/errors` is available only to authenticated `ADMIN` users and supports triage status
+  changes. It must not be linked in normal member navigation.
+
+## In progress: native hiring workflow
+
+- Migration `0020_native_job_applications` introduces one application per candidate/job, immutable
+  application events, and candidate-owned Application Radar records. Native apply is available only
+  for approved employer-submitted roles; imported source listings remain external and transparent.
+- The public SDK is available at `/sdk/v1/apply.js` and launches the existing exact-redirect,
+  PKCE-based OAuth consent flow. It must not be used to send browser sessions or unapproved data.
+- Migration `0021_application_stage_notifications` adds candidate-visible in-app notifications for
+  a posting owner’s persisted application-stage changes. `/org/jobs/[slug]/candidates` is an
+  authenticated owner-only candidate pipeline; every transition is audited and recorded before a
+  notification is attempted.

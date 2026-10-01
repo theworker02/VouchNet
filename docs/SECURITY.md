@@ -12,6 +12,14 @@ Production browser and server source maps are explicitly disabled to avoid expos
 deployment metadata. Secrets, private configuration, database access, trust policy execution, and
 authorization decisions must remain server-side and must never be committed to the repository.
 
+## Vulnerability reporting
+
+VouchNet publishes an RFC 9116 discovery file at
+[`/.well-known/security.txt`](https://vouchnet.dev/.well-known/security.txt). Security researchers
+should use the linked private GitHub vulnerability-reporting flow rather than a public issue. The
+policy is available at [`/security`](https://vouchnet.dev/security). A public issue must never be
+used to report a suspected account, authorization, credential, or data-exposure issue.
+
 ## Browser and deployment boundaries
 
 - The web response sends CSP, HSTS, `nosniff`, anti-framing, cross-origin isolation, referrer,
@@ -24,6 +32,24 @@ authorization decisions must remain server-side and must never be committed to t
   from the public domain. A request from any other origin is rejected.
 - These controls are defense in depth. They do not replace endpoint-specific authentication,
   authorization, schema validation, rate limits, trust decisions, or audit writes.
+
+## Server boundary and rate limits
+
+- The database package and credential-bearing server modules import `server-only`; Next.js rejects
+  a client component import path that crosses into them. Browser-safe rules and DTO types are kept
+  separately from database-backed services.
+- High-risk authentication/OAuth operations use a Redis-backed atomic sliding window (5 per minute
+  per hashed request subject). Social writes use 20 per minute. Production fails closed with a 503
+  if Redis is unavailable; development permits local work without Redis. A rejected quota returns
+  a JSON error envelope, HTTP 429, and `Retry-After`.
+- The implementation stores only a hash of the actor-or-anonymous subject, IP address, and a
+  bounded user-agent portion in the Redis key. It does not collect TLS JA3/JA4 fingerprints because
+  those are not reliably exposed to a Netlify application runtime. Cloudflare is the appropriate
+  boundary for that signal.
+- OAuth authorization codes require S256 PKCE and exact registered redirect URI equality. OAuth
+  client access tokens are deliberately returned only to the confidential client’s token exchange;
+  they are not browser-session cookies. Human browser sessions remain opaque, server-hashed,
+  host-only `HttpOnly` cookies with `SameSite=Lax` so external OAuth callbacks can complete.
 
 All future writes are required to authenticate, authorize, validate input, rate limit, evaluate trust as applicable, and audit sensitive decisions. This baseline does not claim that later feature-specific controls are already implemented.
 

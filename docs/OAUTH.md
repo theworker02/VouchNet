@@ -11,6 +11,7 @@ Client secrets are shown once and retained only as HMAC hashes. Use the followin
 - Token: `POST /api/oauth/token` with HTTP Basic client authentication (or form credentials),
   `grant_type=authorization_code`, `code`, exact `redirect_uri`, and `code_verifier`.
 - User info: `GET /api/oauth/userinfo` with `Authorization: Bearer <access token>`.
+- Candidate profile: `GET /api/v1/oauth/candidate-profile` with `Authorization: Bearer <access token>`.
 
 Supported scopes are `profile:read` (profile URL, name, and headline) and `profile:email`
 (verified email). Each member sees and approves the exact requested access before VouchNet sends a
@@ -79,3 +80,24 @@ The issuer and signing key prepare the future VouchNet OAuth/OIDC server. Extern
 sites must be registered individually with exact redirect URIs and requested scopes. A member will
 review and approve every profile, project, and resume disclosure; a third party never receives
 profile data merely because it displays a button.
+
+## Embeddable button
+
+Load the dependency-free SDK from the VouchNet origin, then register an exact callback URL in the
+Developer Center before embedding it. The SDK generates a PKCE verifier and challenge in the
+visitor’s browser; your callback must retain the verifier and perform the token exchange server-side.
+
+```html
+<script async src="https://vouchnet.dev/sdk/v1/apply.js"></script>
+<vouch-apply-button
+  client-id="vn_example"
+  redirect-uri="https://careers.example.com/auth/vouchnet/callback"
+  scope="profile:read profile:email"
+  theme="dark"
+  size="medium"
+>
+</vouch-apply-button>
+```
+
+The button dispatches `vouch-apply-open` with its generated state when it starts a consent flow.
+It does not expose authorization codes or access tokens to browser JavaScript.

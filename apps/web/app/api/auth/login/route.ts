@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { attachSession, login } from '../../../lib/identity';
 import { logger } from '@nexus/observability';
 import { publicUrl } from '../../../lib/app-url';
+import { hasSameOrigin } from '../../../lib/request-security';
+import { enforceRateLimit } from '../../../lib/security/rate-limit';
+import { rateLimitResponse } from '../../../lib/security/rate-limit-response';
 
 export const runtime = 'nodejs';
 
@@ -15,6 +18,9 @@ function failureResponse(
 }
 
 export async function POST(request: NextRequest) {
+  if (!hasSameOrigin(request)) return failureResponse(request, 'INVALID_CREDENTIALS');
+  const rateLimit = await enforceRateLimit(request, 'auth');
+  if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
   const form = await request.formData();
   const requestedNext = String(form.get('next') ?? '');
   const next =
