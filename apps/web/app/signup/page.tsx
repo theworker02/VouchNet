@@ -43,16 +43,22 @@ export default async function Signup({
         <div className="two">
           <label>
             First name
-            <input name="firstName" required autoComplete="given-name" />
+            <input name="firstName" placeholder="First name" required autoComplete="given-name" />
           </label>
           <label>
             Last name
-            <input name="lastName" required autoComplete="family-name" />
+            <input name="lastName" placeholder="Last name" required autoComplete="family-name" />
           </label>
         </div>
         <label>
           Email
-          <input name="email" type="email" required autoComplete="email" />
+          <input
+            name="email"
+            type="email"
+            placeholder="you@company.com"
+            required
+            autoComplete="email"
+          />
         </label>
         <label>
           Password <small>12 characters minimum</small>
@@ -62,6 +68,7 @@ export default async function Signup({
             minLength={12}
             required
             autoComplete="new-password"
+            placeholder="Choose a secure password"
           />
         </label>
         <div className="auth-agreements">

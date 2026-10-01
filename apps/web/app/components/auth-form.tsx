@@ -44,12 +44,32 @@ export function AuthForm({ action, children }: AuthFormProps) {
     if (nextField !== undefined) {
       event.preventDefault();
       nextField.focus();
+      return;
+    }
+
+    const pendingRequiredCheck = Array.from(event.currentTarget.elements).find(
+      (element): element is HTMLInputElement =>
+        element instanceof HTMLInputElement &&
+        element.type === 'checkbox' &&
+        element.required &&
+        !element.checked,
+    );
+    if (pendingRequiredCheck !== undefined) {
+      event.preventDefault();
+      pendingRequiredCheck.focus();
     }
   }
 
   return (
     <form action={action} method="post" onKeyDown={handleKeyDown}>
       {children}
+      <p className="auth-enter-hint">
+        <kbd aria-hidden="true">↵</kbd>
+        <span>
+          Press <strong>Enter</strong> to continue. Your final credential field submits when
+          you&apos;re ready.
+        </span>
+      </p>
     </form>
   );
 }

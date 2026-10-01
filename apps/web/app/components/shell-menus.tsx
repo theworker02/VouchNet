@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useMotionPreference } from '../lib/motion';
 
 type ShellMenuProps = {
   children: ReactNode;
@@ -12,6 +14,7 @@ type ShellMenuProps = {
 
 function ShellMenu({ children, label, trigger, wide = false }: ShellMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const motionPreference = useMotionPreference();
   const menuId = useId();
   const menuRef = useRef<HTMLDivElement>(null);
 
@@ -47,11 +50,26 @@ function ShellMenu({ children, label, trigger, wide = false }: ShellMenuProps) {
           <path d="m4 6 4 4 4-4" />
         </svg>
       </button>
-      {isOpen ? (
-        <div aria-label={label} className="shell-menu-popover" id={menuId} role="menu">
-          {children}
-        </div>
-      ) : null}
+      <AnimatePresence initial={false}>
+        {isOpen ? (
+          <motion.div
+            aria-label={label}
+            className="shell-menu-popover"
+            id={menuId}
+            role="menu"
+            initial={motionPreference.reducedMotion ? false : { opacity: 0, y: -6, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={
+              motionPreference.reducedMotion ? { opacity: 1 } : { opacity: 0, y: -4, scale: 0.98 }
+            }
+            transition={
+              motionPreference.reducedMotion ? { duration: 0 } : { duration: 0.16, ease: 'easeOut' }
+            }
+          >
+            {children}
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </div>
   );
 }

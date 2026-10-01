@@ -155,6 +155,20 @@
       "when": 1781985600000,
       "tag": "0021_application_stage_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1782072000000,
+      "tag": "0022_security_audit_logs",
+      "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1782158400000,
+      "tag": "0023_session_idle_expiration",
+      "breakpoints": true
     }
   ]
 }

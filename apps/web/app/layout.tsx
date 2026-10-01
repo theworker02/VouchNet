@@ -2,6 +2,8 @@ import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import Script from 'next/script';
 import { SiteMaintenanceBanner } from './components/site-maintenance-banner';
+import { ProjectFeedback } from './components/project-feedback';
+import { PageTransition } from './components/motion/page-transition';
 import { ClientErrorCapture } from './components/telemetry/client-error-capture';
 import { ComponentDiagnosticBoundary } from './components/telemetry/error-boundary';
 import './globals.css';
@@ -73,8 +75,11 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     <html lang="en">
       <body>
         <SiteMaintenanceBanner />
+        <ProjectFeedback />
         <ClientErrorCapture />
-        <ComponentDiagnosticBoundary>{children}</ComponentDiagnosticBoundary>
+        <ComponentDiagnosticBoundary>
+          <PageTransition>{children}</PageTransition>
+        </ComponentDiagnosticBoundary>
         <Script
           id="vouch-net-organization-schema"
           type="application/ld+json"

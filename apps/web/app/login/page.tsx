@@ -47,11 +47,23 @@ export default async function Login({
         {safeNext !== null ? <input name="next" type="hidden" value={safeNext} /> : null}
         <label>
           Work email
-          <input name="email" type="email" autoComplete="email" required />
+          <input
+            name="email"
+            type="email"
+            autoComplete="email"
+            placeholder="you@company.com"
+            required
+          />
         </label>
         <label>
           Password
-          <input name="password" type="password" autoComplete="current-password" required />
+          <input
+            name="password"
+            type="password"
+            autoComplete="current-password"
+            placeholder="Enter your password"
+            required
+          />
         </label>
         <button className="auth-submit">Sign in to VouchNet</button>
       </AuthForm>

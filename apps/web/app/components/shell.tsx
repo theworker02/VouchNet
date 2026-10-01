@@ -5,7 +5,6 @@ import { PrimaryNavigation } from './primary-navigation';
 import { AccountMenu, WorkMenu } from './shell-menus';
 import { ConnectionCooldownNotice } from './connection-cooldown-notice';
 import { getConnectionCooldown } from '../lib/social';
-import { PageTransition } from './motion/page-transition';
 import { VouchNetLogo } from './brand';
 import { syncDailyStrategyNotificationAndGetUnreadCount } from '../lib/daily-strategy';
 export async function Shell({ children }: { children: React.ReactNode }) {
@@ -46,7 +45,7 @@ export async function Shell({ children }: { children: React.ReactNode }) {
         <ConnectionCooldownNotice resetsAt={connectionCooldown} />
       )}
       <main className="app-main" id="main-content" tabIndex={-1}>
-        <PageTransition>{children}</PageTransition>
+        {children}
       </main>
     </>
   );

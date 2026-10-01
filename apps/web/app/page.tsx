@@ -1,12 +1,28 @@
+'use client';
+
 import Link from 'next/link';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
 import { VerifiedWorkBadge } from './components/verified-work-badge';
 import { ButtonLink } from './components/ui/button';
+import { useMotionPreference } from './lib/motion';
+
+function reveal(reducedMotion: boolean, delay = 0) {
+  if (reducedMotion) return {};
+  return {
+    initial: { opacity: 0, y: 14 },
+    whileInView: { opacity: 1, y: 0 },
+    viewport: { once: true, amount: 0.18 },
+    transition: { duration: 0.48, delay, ease: [0.16, 1, 0.3, 1] as const },
+  };
+}
 
 export default function HomePage() {
+  const motionPreference = useMotionPreference();
+  const reducedMotion = motionPreference.reducedMotion;
   return (
     <main className="landing landing--refined">
-      <header className="public-nav public-nav--refined">
+      <motion.header className="public-nav public-nav--refined" {...reveal(reducedMotion)}>
         <Link className="brand" href="/">
           VouchNet
         </Link>
@@ -26,10 +42,10 @@ export default function HomePage() {
             Build your profile
           </ButtonLink>
         </div>
-      </header>
+      </motion.header>
 
       <section className="landing-hero landing-hero--refined">
-        <div className="landing-copy landing-copy--refined">
+        <motion.div className="landing-copy landing-copy--refined" {...reveal(reducedMotion, 0.04)}>
           <p className="eyebrow">Professional context, not professional noise</p>
           <h1>
             Proof that travels <em>with your work.</em>
@@ -60,9 +76,18 @@ export default function HomePage() {
               <dd>Vouches add context, not vanity metrics.</dd>
             </div>
           </dl>
-        </div>
+        </motion.div>
 
-        <div className="landing-workspace" aria-label="VouchNet profile workspace preview">
+        <motion.div
+          className="landing-workspace"
+          aria-label="VouchNet profile workspace preview"
+          {...reveal(reducedMotion, 0.12)}
+          {...(reducedMotion
+            ? {}
+            : {
+                whileHover: { y: -3, transition: { duration: 0.18 } },
+              })}
+        >
           <div className="workspace-topline">
             <span className="workspace-brand-mark" aria-hidden="true">
               V
@@ -124,31 +149,38 @@ export default function HomePage() {
             </div>
             <span className="workspace-application-state">Approved</span>
           </div>
-        </div>
+        </motion.div>
       </section>
 
       <section className="landing-directives" aria-label="VouchNet principles">
-        <article>
+        <motion.article {...reveal(reducedMotion)}>
           <span>01</span>
           <h2>Build a living profile</h2>
           <p>Bring projects, skills, experience, and the decisions behind your work together.</p>
-        </article>
-        <article>
+        </motion.article>
+        <motion.article {...reveal(reducedMotion, 0.07)}>
           <span>02</span>
           <h2>Earn useful signal</h2>
           <p>Peer Vouches are specific to how you showed up—not generic reaction inflation.</p>
-        </article>
-        <article>
+        </motion.article>
+        <motion.article {...reveal(reducedMotion, 0.14)}>
           <span>03</span>
           <h2>Carry it forward</h2>
           <p>
             Apply with VouchNet lets you share a consented professional profile when it matters.
           </p>
-        </article>
+        </motion.article>
       </section>
 
-      <section className="landing-product-visuals" aria-label="VouchNet product previews">
-        <div className="landing-photo-card">
+      <motion.section
+        className="landing-product-visuals"
+        aria-label="VouchNet product previews"
+        {...reveal(reducedMotion)}
+      >
+        <motion.div
+          className="landing-photo-card"
+          {...(reducedMotion ? {} : { whileHover: { y: -3, transition: { duration: 0.18 } } })}
+        >
           <Image
             alt="A modern software workspace"
             height={700}
@@ -161,8 +193,8 @@ export default function HomePage() {
             <span>SHOW THE WORK</span>
             <strong>Context that survives the handoff.</strong>
           </div>
-        </div>
-        <div className="landing-live-previews">
+        </motion.div>
+        <motion.div className="landing-live-previews" {...reveal(reducedMotion, 0.09)}>
           <Link href="/feed">
             <span>01 · Feed</span>
             <strong>Chronological when you need it. Peer signal when you don’t.</strong>
@@ -178,10 +210,10 @@ export default function HomePage() {
             <strong>Consent-based professional data sharing for trusted integrations.</strong>
             <small>Explore the developer portal and scoped OAuth flow.</small>
           </Link>
-        </div>
-      </section>
+        </motion.div>
+      </motion.section>
 
-      <section className="landing-close landing-close--refined">
+      <motion.section className="landing-close landing-close--refined" {...reveal(reducedMotion)}>
         <div>
           <p className="eyebrow">A more credible next step</p>
           <h2>Make your professional context worth opening.</h2>
@@ -189,7 +221,7 @@ export default function HomePage() {
         <ButtonLink href="/signup" size="lg">
           Create your profile
         </ButtonLink>
-      </section>
+      </motion.section>
     </main>
   );
 }
