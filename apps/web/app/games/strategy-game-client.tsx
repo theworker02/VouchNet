@@ -1,9 +1,11 @@
 'use client';
 
 import { useMemo, useState, type CSSProperties } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { toggleSignalCell, type DailyStrategyGame } from '../lib/daily-strategy-game';
 import type { DailyStrategyProgress } from '../lib/daily-strategy';
-import { SignalPulseIcon } from '../components/symbols';
+import { ProofOfWorkBadge, SignalPulseIcon } from '../components/symbols';
+import { useMotionPreference } from '../lib/motion';
 
 type GameState = 'READY' | 'SAVING' | 'COMPLETE' | 'ERROR';
 
@@ -25,6 +27,8 @@ export function StrategyGameClient({
   const [board, setBoard] = useState(emptyBoard);
   const [moves, setMoves] = useState<number[]>([]);
   const [state, setState] = useState<GameState>(progress === null ? 'READY' : 'COMPLETE');
+  const [celebrationVisible, setCelebrationVisible] = useState(false);
+  const motionPreference = useMotionPreference();
   const [message, setMessage] = useState<string | null>(
     progress === null
       ? null
@@ -48,6 +52,7 @@ export function StrategyGameClient({
       });
       if (!response.ok) throw new Error('DAILY_GAME_SAVE_FAILED');
       setState('COMPLETE');
+      setCelebrationVisible(true);
       setMessage(
         `Signal restored in ${nextMoves.length} moves. Tomorrow’s board will be ready at midnight UTC.`,
       );
@@ -157,6 +162,32 @@ export function StrategyGameClient({
           Reset board
         </button>
       </footer>
+      <AnimatePresence>
+        {celebrationVisible ? (
+          <motion.aside
+            aria-labelledby="daily-game-complete-title"
+            aria-live="polite"
+            className="strategy-game-complete"
+            initial={motionPreference.reducedMotion ? false : { opacity: 0, scale: 0.96, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={
+              motionPreference.reducedMotion ? { opacity: 0 } : { opacity: 0, scale: 0.98, y: 6 }
+            }
+            role="status"
+            transition={motionPreference.spring}
+          >
+            <ProofOfWorkBadge glowing size="lg" />
+            <div>
+              <p className="eyebrow">Signal restored</p>
+              <h2 id="daily-game-complete-title">Today’s strategy puzzle is complete.</h2>
+              <p>Your verified result is saved. A harder board arrives tomorrow.</p>
+            </div>
+            <button type="button" onClick={() => setCelebrationVisible(false)}>
+              Continue
+            </button>
+          </motion.aside>
+        ) : null}
+      </AnimatePresence>
     </section>
   );
 }

@@ -2,11 +2,15 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import type { MemberNotification } from '../lib/daily-strategy';
 
 export function NotificationInbox({ notifications }: { notifications: MemberNotification[] }) {
   const [items, setItems] = useState(notifications);
-  async function markRead(id: string) {
+  const router = useRouter();
+  async function markRead(id: string): Promise<boolean> {
+    const original = items.find((notification) => notification.id === id);
+    if (original === undefined || original.readAt !== null) return true;
     setItems((current) =>
       current.map((notification) =>
         notification.id === id && notification.readAt === null
@@ -14,7 +18,20 @@ export function NotificationInbox({ notifications }: { notifications: MemberNoti
           : notification,
       ),
     );
-    await fetch(`/api/notifications/${id}/read`, { method: 'POST' }).catch(() => undefined);
+    try {
+      const response = await fetch(`/api/notifications/${id}/read`, { method: 'POST' });
+      if (!response.ok) throw new Error('NOTIFICATION_READ_FAILED');
+      return true;
+    } catch {
+      setItems((current) =>
+        current.map((notification) => (notification.id === id ? original : notification)),
+      );
+      return false;
+    }
+  }
+  async function openNotification(notification: MemberNotification) {
+    await markRead(notification.id);
+    router.push(notification.href);
   }
   return (
     <section className="notification-inbox" aria-label="Your notifications">
@@ -37,7 +54,13 @@ export function NotificationInbox({ notifications }: { notifications: MemberNoti
               )}
             </time>
           </div>
-          <Link href={notification.href} onClick={() => void markRead(notification.id)}>
+          <Link
+            href={notification.href}
+            onClick={(event) => {
+              event.preventDefault();
+              void openNotification(notification);
+            }}
+          >
             Open
           </Link>
         </article>

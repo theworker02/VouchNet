@@ -91,6 +91,13 @@ export function getDailyStrategyGame(
   for (const position of positions.slice(0, pressCount)) {
     target = toggleSignalCell(target, boardSize, position);
   }
+  // A generated sequence can theoretically cancel itself on a Lights Out-style board. A daily
+  // challenge must always require an intentional move, never accept an empty submission.
+  if (target.every((cell) => !cell)) {
+    const fallbackPosition = positions[0];
+    if (fallbackPosition === undefined) throw new Error('DAILY_GAME_SEED_FAILED');
+    target = toggleSignalCell(target, boardSize, fallbackPosition);
+  }
   return {
     date,
     title: gameNames[day % gameNames.length] ?? 'Signal Circuit',

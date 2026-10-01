@@ -6,6 +6,15 @@ describe('daily strategy game', () => {
     expect(getDailyStrategyGame('2026-10-13')).toEqual(getDailyStrategyGame('2026-10-13'));
   });
 
+  it('never creates a board that can be completed without a move', () => {
+    for (let day = 1; day <= 60; day += 1) {
+      const date = new Date(Date.UTC(2026, 9, day)).toISOString().slice(0, 10);
+      const game = getDailyStrategyGame(date);
+      expect(game.target.some(Boolean)).toBe(true);
+      expect(isSuccessfulDailyStrategyRun(game, [])).toBe(false);
+    }
+  });
+
   it('accepts a real solved board but rejects a fabricated empty move list', () => {
     const game = getDailyStrategyGame('2026-10-01');
     let solution: number[] | null = null;

@@ -1850,6 +1850,55 @@ button.signal-cell:focus-visible {
   opacity: 0.72;
 }
 
+.strategy-game-complete {
+  position: fixed;
+  z-index: 30;
+  right: 24px;
+  bottom: 24px;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  width: min(calc(100% - 32px), 510px);
+  padding: 17px;
+  color: #eafcf5;
+  border: 1px solid #319878;
+  border-radius: 15px;
+  background: linear-gradient(135deg, #104c3e, #172a4b);
+  box-shadow: 0 22px 55px rgb(7 43 35 / 0.3);
+}
+
+.strategy-game-complete .eyebrow {
+  margin-bottom: 3px;
+  color: #8ff0c9;
+}
+
+.strategy-game-complete h2,
+.strategy-game-complete p {
+  margin: 0;
+}
+
+.strategy-game-complete h2 {
+  font-size: 1rem;
+}
+
+.strategy-game-complete div > p:last-child {
+  margin-top: 4px;
+  color: #c1d9d1;
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.strategy-game-complete button {
+  padding: 8px 10px;
+  color: #104c3e;
+  border: 0;
+  border-radius: 7px;
+  background: #e3fff4;
+  font-weight: 800;
+  cursor: pointer;
+}
+
 .notification-heading {
   margin-bottom: 20px;
 }
@@ -2028,6 +2077,17 @@ button.signal-cell:focus-visible {
 
   .notification-item > a {
     grid-column: 2;
+  }
+
+  .strategy-game-complete {
+    right: 11px;
+    bottom: 11px;
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .strategy-game-complete button {
+    grid-column: 2;
+    justify-self: start;
   }
 }
 
