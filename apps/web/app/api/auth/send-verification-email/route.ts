@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { sendVerificationLinkEmail } from '../../../lib/email';
 import { actorFromRequest, beginEmailVerificationLink, IdentityError } from '../../../lib/identity';
 import { hasSameOrigin } from '../../../lib/request-security';
+import { enforceRateLimit } from '../../../lib/security/rate-limit';
+import { rateLimitResponse } from '../../../lib/security/rate-limit-response';
 
 export const runtime = 'nodejs';
 
@@ -11,6 +13,8 @@ export async function POST(request: NextRequest) {
   const actor = await actorFromRequest(request);
   if (actor === null) return NextResponse.json({ error: 'UNAUTHENTICATED' }, { status: 401 });
   try {
+    const rateLimit = await enforceRateLimit(request, 'auth', actor.userId);
+    if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
     const verification = await beginEmailVerificationLink(actor.userId);
     await sendVerificationLinkEmail(verification);
     return NextResponse.json({ sent: true, cooldownSeconds: 60 });

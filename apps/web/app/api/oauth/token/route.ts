@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import {
   exchangeAuthorizationCode,
   hasValidPkceVerifier,
@@ -6,6 +7,7 @@ import {
 } from '../../../lib/apply-oauth';
 import { enforceRateLimit } from '../../../lib/security/rate-limit';
 import { rateLimitResponse } from '../../../lib/security/rate-limit-response';
+import { strictFormDataRecord } from '../../../lib/validation/strict-form-data';
 
 export const runtime = 'nodejs';
 
@@ -22,23 +24,48 @@ function basicCredentials(value: string | null): { clientId: string; clientSecre
   }
 }
 
+const tokenRequestSchema = z
+  .object({
+    grant_type: z.literal('authorization_code'),
+    client_id: z.string().trim().min(3).max(256).optional(),
+    client_secret: z.string().min(32).max(512).optional(),
+    code: z.string().min(20).max(512),
+    redirect_uri: z.string().min(1).max(2048),
+    code_verifier: z.string().min(43).max(128),
+  })
+  .strict();
+
 export async function POST(request: NextRequest) {
   try {
     const rateLimit = await enforceRateLimit(request, 'auth');
     if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
-    const input = await request.formData();
+    const input = tokenRequestSchema.parse(
+      strictFormDataRecord(await request.formData(), [
+        'grant_type',
+        'client_id',
+        'client_secret',
+        'code',
+        'redirect_uri',
+        'code_verifier',
+      ]),
+    );
     const credentials = basicCredentials(request.headers.get('authorization'));
-    const clientId = credentials?.clientId ?? String(input.get('client_id') ?? '');
-    const clientSecret = credentials?.clientSecret ?? String(input.get('client_secret') ?? '');
-    const codeVerifier = String(input.get('code_verifier') ?? '');
-    if (input.get('grant_type') !== 'authorization_code' || !hasValidPkceVerifier(codeVerifier))
+    if (
+      credentials !== null &&
+      ((input.client_id !== undefined && input.client_id !== credentials.clientId) ||
+        (input.client_secret !== undefined && input.client_secret !== credentials.clientSecret))
+    )
+      return NextResponse.json({ error: 'invalid_request' }, { status: 400 });
+    const clientId = credentials?.clientId ?? input.client_id ?? '';
+    const clientSecret = credentials?.clientSecret ?? input.client_secret ?? '';
+    if (!hasValidPkceVerifier(input.code_verifier))
       return NextResponse.json({ error: 'invalid_request' }, { status: 400 });
     const token = await exchangeAuthorizationCode({
       clientId,
       clientSecret,
-      code: String(input.get('code') ?? ''),
-      redirectUri: String(input.get('redirect_uri') ?? ''),
-      codeVerifier,
+      code: input.code,
+      redirectUri: input.redirect_uri,
+      codeVerifier: input.code_verifier,
     });
     return NextResponse.json(
       {

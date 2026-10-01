@@ -1,3 +1,4 @@
+import 'server-only';
 import { createSqlClient } from '@nexus/db';
 import { getUserSettings } from '../../lib/settings';
 import { hasVouchNetPlus } from '../../lib/subscription';

@@ -15,6 +15,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const sessionName = 'nexus_session';
 const sessionDays = 30;
+const sessionIdleHours = 24;
 
 export class IdentityError extends Error {
   constructor(readonly code: 'ACCOUNT_ALREADY_ACTIVE' | 'VERIFICATION_RECENTLY_SENT') {
@@ -244,8 +245,9 @@ export async function getPrimaryEmailStatus(userId: string): Promise<{
 export async function createUserSession(userId: string): Promise<{ token: string }> {
   const sql = client();
   const token = createSecretToken(sessionDays * 24 * 60 * 60 * 1000);
+  const idleExpiresAt = new Date(Date.now() + sessionIdleHours * 60 * 60 * 1000);
   try {
-    await sql`INSERT INTO sessions (user_id,token_hash,expires_at) VALUES (${userId},${token.tokenHash},${token.expiresAt})`;
+    await sql`INSERT INTO sessions (user_id,token_hash,expires_at,idle_expires_at) VALUES (${userId},${token.tokenHash},${token.expiresAt},${idleExpiresAt})`;
     return { token: token.token };
   } finally {
     await sql.end({ timeout: 1 });
@@ -266,7 +268,8 @@ export async function login(emailInput: string, password: string) {
     )
       return null;
     const token = createSecretToken(sessionDays * 24 * 60 * 60 * 1000);
-    await sql`INSERT INTO sessions (user_id,token_hash,expires_at) VALUES (${user.id},${token.tokenHash},${token.expiresAt})`;
+    const idleExpiresAt = new Date(Date.now() + sessionIdleHours * 60 * 60 * 1000);
+    await sql`INSERT INTO sessions (user_id,token_hash,expires_at,idle_expires_at) VALUES (${user.id},${token.tokenHash},${token.expiresAt},${idleExpiresAt})`;
     return { userId: user.id, token: token.token };
   } finally {
     await sql.end({ timeout: 1 });
@@ -332,10 +335,10 @@ export async function actorFromSessionToken(
   try {
     const rows = await sql<
       { user_id: string; id: string }[]
-    >`SELECT user_id,id FROM sessions WHERE token_hash=${hashOpaqueToken(token)} AND revoked_at IS NULL AND expires_at > now()`;
+    >`SELECT user_id,id FROM sessions WHERE token_hash=${hashOpaqueToken(token)} AND revoked_at IS NULL AND expires_at > now() AND idle_expires_at > now()`;
     const session = rows[0];
     if (session === undefined) return null;
-    await sql`UPDATE sessions SET last_active_at=now() WHERE id=${session.id}`;
+    await sql`UPDATE sessions SET last_active_at=now(),idle_expires_at=LEAST(expires_at,now() + interval '24 hours') WHERE id=${session.id}`;
     return { userId: session.user_id, sessionId: session.id };
   } finally {
     await sql.end({ timeout: 1 });
@@ -430,7 +433,7 @@ export async function listSessions(userId: string) {
   try {
     return await sql<
       { id: string; created_at: Date; last_active_at: Date; user_agent: string | null }[]
-    >`SELECT id,created_at,last_active_at,user_agent FROM sessions WHERE user_id=${userId} AND revoked_at IS NULL AND expires_at>now() ORDER BY last_active_at DESC`;
+    >`SELECT id,created_at,last_active_at,user_agent FROM sessions WHERE user_id=${userId} AND revoked_at IS NULL AND expires_at>now() AND idle_expires_at>now() ORDER BY last_active_at DESC`;
   } finally {
     await sql.end({ timeout: 1 });
   }
@@ -462,6 +465,9 @@ export function attachSession(response: NextResponse, token: string) {
   return response;
 }
 export function clearSession(response: NextResponse) {
-  response.headers.set('set-cookie', `${sessionName}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`);
+  response.headers.set(
+    'set-cookie',
+    `${sessionName}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0`,
+  );
   return response;
 }

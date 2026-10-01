@@ -1,6 +1,8 @@
-# Security baseline
+# Security architecture
 
-The web app sends a restrictive baseline CSP, denies framing, disables unneeded browser permissions, and adds content-type and referrer protections. Production deployment must terminate TLS and set secure cookies.
+The web app sends a per-request nonce Content Security Policy, denies framing, disables unneeded
+browser permissions, and adds content-type and referrer protections. Production deployment must
+terminate TLS and provide the configured database, Redis, and secret values.
 
 ## Source visibility
 
@@ -22,9 +24,11 @@ used to report a suspected account, authorization, credential, or data-exposure 
 
 ## Browser and deployment boundaries
 
-- The web response sends CSP, HSTS, `nosniff`, anti-framing, cross-origin isolation, referrer,
-  and permissions headers. Cloudflare Web Analytics is the only currently permitted third-party
-  script/connect origin.
+- The page response receives a new cryptographic CSP nonce and server-generated request ID from
+  Next.js Proxy. `strict-dynamic` limits executable scripts to VouchNet scripts carrying that
+  nonce; Cloudflare Web Analytics is the only currently permitted third-party script/connect
+  origin. HSTS, `nosniff`, anti-framing, cross-origin isolation, referrer, and permissions headers
+  are applied to every response.
 - API responses are marked `no-store` and `noindex` to reduce accidental browser/proxy retention
   and search indexing of authenticated or operational responses.
 - Cookie-authenticated mutations compare the browser `Origin` with the canonical `APP_URL` when
@@ -46,22 +50,33 @@ used to report a suspected account, authorization, credential, or data-exposure 
   bounded user-agent portion in the Redis key. It does not collect TLS JA3/JA4 fingerprints because
   those are not reliably exposed to a Netlify application runtime. Cloudflare is the appropriate
   boundary for that signal.
-- OAuth authorization codes require S256 PKCE and exact registered redirect URI equality. OAuth
+- OAuth authorization codes require a correctly-shaped S256 PKCE challenge and verifier, have a
+  five-minute lifetime, are single-use under a database lock, and require exact registered redirect
+  URI equality. OAuth
   client access tokens are deliberately returned only to the confidential client’s token exchange;
   they are not browser-session cookies. Human browser sessions remain opaque, server-hashed,
-  host-only `HttpOnly` cookies with `SameSite=Lax` so external OAuth callbacks can complete.
+  host-only `HttpOnly` cookies with `SameSite=Strict`. A session has a 24-hour sliding inactivity
+  deadline and a 30-day absolute lifetime; a successful password login rotates out the prior
+  browser session.
+- `security_audit_logs` is an append-only database table. It stores a salted HMAC of the source IP,
+  bounded user agent, action, outcome, actor/session when known, and request ID. It intentionally
+  never stores passwords, session values, OAuth bearer tokens, email bodies, or request payloads.
 
 All future writes are required to authenticate, authorize, validate input, rate limit, evaluate trust as applicable, and audit sensitive decisions. This baseline does not claim that later feature-specific controls are already implemented.
 
-## Implemented partial controls
+## Current controls and limits
 
-- Passwords use Argon2id and sessions are opaque, hashed server-side, expiring, and revocable.
+- Passwords use Argon2id and sessions are opaque, 256-bit random, hashed server-side, idle-expiring,
+  revocable, and host-only.
 - Protected server-rendered routes validate the session record rather than trusting cookie presence.
 - Browser-authenticated profile and graph mutations require a same-origin request in addition to
   session authentication. Dedicated API and MCP clients must not use browser sessions.
 - Profile reads and people search exclude blocks and apply the currently implemented public/member/
   owner visibility rules.
 
-Rate-limit enforcement, runtime trust policy evaluation, sensitive-action audit writes, production
-email delivery, and all MCP approval enforcement are **MISSING** at runtime and must be added before
-production deployment.
+Redis rate limiting, runtime trust policy evaluation, and audit support are implemented for the
+currently protected authentication, OAuth, developer-client, and social-write flows. The remaining
+product surface must be brought through the same server-only DAL and policy gates before a general
+availability launch. JA3/JA4 TLS fingerprints are intentionally not fabricated at application level:
+they must be evaluated by the CDN/WAF that terminates TLS. Passkeys/WebAuthn and refresh-token
+rotation are not yet implemented; VouchNet currently does not issue browser refresh tokens.

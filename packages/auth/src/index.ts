@@ -1,15 +1,18 @@
+import 'server-only';
 import { createHash, randomBytes, randomInt } from 'node:crypto';
 import argon2 from 'argon2';
 import { z } from 'zod';
 
-export const registrationSchema = z.object({
-  firstName: z.string().trim().min(1).max(80),
-  lastName: z.string().trim().min(1).max(80),
-  email: z.string().trim().email().max(254),
-  password: z.string().min(12).max(256),
-  acceptsTerms: z.literal(true),
-  acceptsPrivacy: z.literal(true),
-});
+export const registrationSchema = z
+  .object({
+    firstName: z.string().trim().min(1).max(80),
+    lastName: z.string().trim().min(1).max(80),
+    email: z.string().trim().email().max(254),
+    password: z.string().min(12).max(256),
+    acceptsTerms: z.literal(true),
+    acceptsPrivacy: z.literal(true),
+  })
+  .strict();
 
 export function normalizeEmail(email: string): string {
   return email.trim().toLocaleLowerCase('en-US');
@@ -56,7 +59,9 @@ export function createVerificationCode(): VerificationCode {
   return { code, codeHash: hashOpaqueToken(code) };
 }
 export function sessionCookie(name: string, token: string, secure: boolean): string {
-  return `${name}=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000${secure ? '; Secure' : ''}`;
+  // Deliberately omit Domain: browsers then make this a host-only cookie, which is stricter than
+  // sharing a credential with every subdomain. SameSite=Strict protects browser session writes.
+  return `${name}=${token}; Path=/; HttpOnly; SameSite=Strict; Max-Age=2592000${secure ? '; Secure' : ''}`;
 }
 
 export type RegistrationRiskDecision = 'ALLOW' | 'CHALLENGE' | 'REVIEW' | 'BLOCK';

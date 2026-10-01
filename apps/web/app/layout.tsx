@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import Script from 'next/script';
 import { SiteMaintenanceBanner } from './components/site-maintenance-banner';
 import { ClientErrorCapture } from './components/telemetry/client-error-capture';
@@ -65,8 +66,9 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const analyticsToken = process.env.NEXT_PUBLIC_CLOUDFLARE_WEB_ANALYTICS_TOKEN;
+  const nonce = (await headers()).get('x-vouchnet-csp-nonce') ?? undefined;
   return (
     <html lang="en">
       <body>
@@ -77,6 +79,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           id="vouch-net-organization-schema"
           type="application/ld+json"
           strategy="beforeInteractive"
+          nonce={nonce}
         >
           {JSON.stringify({
             '@context': 'https://schema.org',
@@ -103,6 +106,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
             strategy="afterInteractive"
             src="https://static.cloudflareinsights.com/beacon.min.js"
             data-cf-beacon={JSON.stringify({ token: analyticsToken, spa: true })}
+            nonce={nonce}
           />
         )}
       </body>

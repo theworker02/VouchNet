@@ -3,8 +3,24 @@ import { actorFromRequest } from '../../../lib/identity';
 import { issueAuthorizationCode, resolveAuthorization } from '../../../lib/apply-oauth';
 import { publicUrl } from '../../../lib/app-url';
 import { hasSameOrigin } from '../../../lib/request-security';
+import { enforceRateLimit } from '../../../lib/security/rate-limit';
+import { rateLimitResponse } from '../../../lib/security/rate-limit-response';
+import { strictFormDataRecord } from '../../../lib/validation/strict-form-data';
+import { z } from 'zod';
 
 export const runtime = 'nodejs';
+
+const authorizationDecisionSchema = z
+  .object({
+    client_id: z.string().trim().min(3).max(256),
+    redirect_uri: z.string().trim().min(1).max(2048),
+    scope: z.string().trim().max(512).optional(),
+    state: z.string().max(512).optional(),
+    code_challenge: z.string().min(43).max(128),
+    code_challenge_method: z.literal('S256'),
+    approved: z.enum(['yes', 'no']),
+  })
+  .strict();
 
 export async function POST(request: NextRequest) {
   if (!hasSameOrigin(request))
@@ -12,20 +28,28 @@ export async function POST(request: NextRequest) {
   const actor = await actorFromRequest(request);
   if (actor === null) return NextResponse.redirect(publicUrl('/login', request.url), 303);
   try {
-    const form = await request.formData();
+    const rateLimit = await enforceRateLimit(request, 'auth', actor.userId);
+    if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
+    const form = authorizationDecisionSchema.parse(
+      strictFormDataRecord(await request.formData(), [
+        'client_id',
+        'redirect_uri',
+        'scope',
+        'state',
+        'code_challenge',
+        'code_challenge_method',
+        'approved',
+      ]),
+    );
     const authorization = await resolveAuthorization({
-      clientId: String(form.get('client_id') ?? ''),
-      redirectUri: String(form.get('redirect_uri') ?? ''),
-      scope: typeof form.get('scope') === 'string' ? String(form.get('scope')) : null,
-      state: typeof form.get('state') === 'string' ? String(form.get('state')) : null,
-      codeChallenge:
-        typeof form.get('code_challenge') === 'string' ? String(form.get('code_challenge')) : null,
-      codeChallengeMethod:
-        typeof form.get('code_challenge_method') === 'string'
-          ? String(form.get('code_challenge_method'))
-          : null,
+      clientId: form.client_id,
+      redirectUri: form.redirect_uri,
+      scope: form.scope ?? null,
+      state: form.state ?? null,
+      codeChallenge: form.code_challenge,
+      codeChallengeMethod: form.code_challenge_method,
     });
-    if (form.get('approved') !== 'yes') {
+    if (form.approved !== 'yes') {
       const callback = new URL(authorization.redirectUri);
       callback.searchParams.set('error', 'access_denied');
       if (authorization.state !== null) callback.searchParams.set('state', authorization.state);

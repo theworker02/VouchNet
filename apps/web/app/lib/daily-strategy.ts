@@ -1,3 +1,4 @@
+import 'server-only';
 import { createSqlClient } from '@nexus/db';
 import { getDailyStrategyGame, isSuccessfulDailyStrategyRun } from './daily-strategy-game';
 

@@ -5,8 +5,16 @@ import { NextRequest } from 'next/server';
 export function hasSameOrigin(request: NextRequest): boolean {
   const origin = request.headers.get('origin');
   const configuredAppUrl = process.env.APP_URL?.trim();
-  const expectedOrigin = configuredAppUrl
-    ? new URL(configuredAppUrl).origin
-    : request.nextUrl.origin;
+  let expectedOrigin = request.nextUrl.origin;
+  if (configuredAppUrl !== undefined && configuredAppUrl.length > 0) {
+    try {
+      expectedOrigin = new URL(configuredAppUrl).origin;
+    } catch {
+      // A malformed deployment setting must fail closed rather than silently trusting a request.
+      return false;
+    }
+  }
+  const fetchSite = request.headers.get('sec-fetch-site');
+  if (fetchSite !== null && !['same-origin', 'same-site', 'none'].includes(fetchSite)) return false;
   return origin !== null && origin === expectedOrigin;
 }

@@ -3,6 +3,37 @@
 All notable changes to VouchNet are documented here. This project follows
 [Semantic Versioning](https://semver.org/).
 
+## 0.9.2 - 2026-10-01
+
+### Security hardening
+
+- Added a request-bound CSP nonce, `strict-dynamic` script policy, and server-generated request
+  ID through the Next.js Proxy boundary. The header policy continues to deny framing, object
+  execution, unneeded browser permissions, and unsafe content types.
+- Marked database-backed and credential-bearing modules as `server-only`, including the shared
+  authentication and Stripe boundaries, so a client import fails at build time.
+- Tightened OAuth authorization-code processing: strict form payloads reject duplicate/unknown
+  fields, S256 PKCE challenges and verifiers are validated, and exact redirect matching remains
+  mandatory.
+- Hardened password reset, verification-link, developer-client, and session-revocation mutations
+  with strict validation, same-origin enforcement, and rate limits.
+- Added append-only `security_audit_logs` migration and privacy-minimized records for login and
+  OAuth client lifecycle events. IP values are HMAC-hashed before persistence.
+- Updated Drizzle ORM to `^0.45.2`, resolving the high-severity identifier-escaping advisory.
+
+### Sessions
+
+- Browser sessions are now host-only, `HttpOnly`, `SameSite=Strict` cookies with a 24-hour sliding
+  inactivity deadline and a 30-day maximum lifetime. Successful password login revokes a prior
+  browser session before setting a new one.
+
+### CI and release contents
+
+- CI now runs for both `main` and the repository's `master` branch. Added scheduled dependency
+  integrity/audit, pull-request dependency review, and CodeQL scanning workflows.
+- This is a source-only patch release. It contains no compiled binaries, installer packages, or
+  downloadable artifacts. See [`docs/releases/v0.9.2.md`](docs/releases/v0.9.2.md).
+
 ## 0.9.1 - 2026-10-01
 
 ### Stability and resilience
@@ -170,3 +201,5 @@ All notable changes to VouchNet are documented here. This project follows
 [0.1.0]: https://github.com/theworker02/VouchNet/releases/tag/v0.1.0
 [0.8.0]: https://github.com/theworker02/VouchNet/releases/tag/v0.8.0
 [0.9.0]: https://github.com/theworker02/VouchNet/releases/tag/v0.9.0
+[0.9.1]: https://github.com/theworker02/VouchNet/releases/tag/v0.9.1
+[0.9.2]: https://github.com/theworker02/VouchNet/releases/tag/v0.9.2

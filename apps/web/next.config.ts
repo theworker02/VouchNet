@@ -33,11 +33,6 @@ const nextConfig: NextConfig = {
           key: 'Strict-Transport-Security',
           value: 'max-age=63072000; includeSubDomains; preload',
         },
-        {
-          key: 'Content-Security-Policy',
-          value:
-            "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; img-src 'self' data: blob: https:; object-src 'none'; media-src 'self' blob:; font-src 'self' data:; manifest-src 'self'; worker-src 'self' blob:; script-src 'self' https://static.cloudflareinsights.com; style-src 'self' 'unsafe-inline'; connect-src 'self' https://cloudflareinsights.com",
-        },
       ],
     },
     {

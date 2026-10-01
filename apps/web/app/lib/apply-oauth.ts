@@ -198,7 +198,11 @@ export async function resolveAuthorization(input: {
   codeChallenge: string | null;
   codeChallengeMethod: string | null;
 }) {
-  if (input.codeChallenge === null || input.codeChallengeMethod !== 'S256')
+  if (
+    input.codeChallenge === null ||
+    !hasValidPkceChallenge(input.codeChallenge) ||
+    input.codeChallengeMethod !== 'S256'
+  )
     throw new ApplyOAuthError('INVALID_REQUEST');
   const client = await findClient(input.clientId);
   const redirectUri = validateRedirectUri(input.redirectUri);
@@ -254,6 +258,7 @@ export async function exchangeAuthorizationCode(input: {
   redirectUri: string;
   codeVerifier: string;
 }) {
+  if (!hasValidPkceVerifier(input.codeVerifier)) throw new ApplyOAuthError('INVALID_REQUEST');
   const sql = database();
   const redirectUri = validateRedirectUri(input.redirectUri);
   try {
@@ -351,4 +356,9 @@ export async function profileForAccessToken(token: string) {
 
 export function hasValidPkceVerifier(value: string): boolean {
   return value.length >= 43 && value.length <= 128 && /^[A-Za-z0-9\-._~]+$/.test(value);
+}
+
+/** S256 is base64url(SHA-256(verifier)): exactly 43 characters with no padding. */
+export function hasValidPkceChallenge(value: string): boolean {
+  return value.length === 43 && /^[A-Za-z0-9_-]+$/.test(value);
 }

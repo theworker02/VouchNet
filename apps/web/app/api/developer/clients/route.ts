@@ -7,15 +7,20 @@ import {
   listDeveloperClients,
   validateRedirectUri,
 } from '../../../lib/apply-oauth';
+import { recordSecurityAuditEvent } from '../../../lib/security/audit';
+import { enforceRateLimit } from '../../../lib/security/rate-limit';
+import { rateLimitResponse } from '../../../lib/security/rate-limit-response';
 
-const clientSchema = z.object({
-  name: z.string().trim().min(2).max(120),
-  redirectUris: z.array(z.string().max(2048)).min(1).max(10),
-  scopes: z
-    .array(z.enum(['profile:read', 'profile:email', 'resume:read', 'skills:verify']))
-    .min(1)
-    .max(4),
-});
+const clientSchema = z
+  .object({
+    name: z.string().trim().min(2).max(120),
+    redirectUris: z.array(z.string().max(2048)).min(1).max(10),
+    scopes: z
+      .array(z.enum(['profile:read', 'profile:email', 'resume:read', 'skills:verify']))
+      .min(1)
+      .max(4),
+  })
+  .strict();
 
 export async function GET(request: NextRequest) {
   const actor = await actorFromRequest(request);
@@ -29,9 +34,18 @@ export async function POST(request: NextRequest) {
   try {
     const actor = await actorFromRequest(request);
     if (actor === null) return NextResponse.json({ error: 'UNAUTHENTICATED' }, { status: 401 });
+    const rateLimit = await enforceRateLimit(request, 'auth', actor.userId);
+    if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
     const input = clientSchema.parse(await request.json());
     const redirectUris = [...new Set(input.redirectUris.map(validateRedirectUri))];
     const client = await createDeveloperClient({ ...input, redirectUris, ownerId: actor.userId });
+    await recordSecurityAuditEvent({
+      request,
+      action: 'OAUTH_APP_CREATED',
+      status: 'SUCCESS',
+      actorId: actor.userId,
+      sessionId: actor.sessionId,
+    });
     return NextResponse.json({ client }, { status: 201 });
   } catch (error) {
     return NextResponse.json(

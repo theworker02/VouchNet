@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { attachSession, login } from '../../../lib/identity';
+import { attachSession, login, logout } from '../../../lib/identity';
 import { logger } from '@nexus/observability';
 import { publicUrl } from '../../../lib/app-url';
 import { hasSameOrigin } from '../../../lib/request-security';
 import { enforceRateLimit } from '../../../lib/security/rate-limit';
 import { rateLimitResponse } from '../../../lib/security/rate-limit-response';
+import { recordSecurityAuditEvent } from '../../../lib/security/audit';
 
 export const runtime = 'nodejs';
 
@@ -27,7 +28,22 @@ export async function POST(request: NextRequest) {
     requestedNext.startsWith('/') && !requestedNext.startsWith('//') ? requestedNext : '/home';
   try {
     const result = await login(String(form.get('email') ?? ''), String(form.get('password') ?? ''));
-    if (result === null) return failureResponse(request, 'INVALID_CREDENTIALS');
+    if (result === null) {
+      await recordSecurityAuditEvent({
+        request,
+        action: 'FAILED_LOGIN_ATTEMPT',
+        status: 'FAILURE',
+      });
+      return failureResponse(request, 'INVALID_CREDENTIALS');
+    }
+    // A successful password login replaces any prior cookie-backed session to limit session fixation.
+    await logout(request);
+    await recordSecurityAuditEvent({
+      request,
+      action: 'LOGIN_SUCCEEDED',
+      status: 'SUCCESS',
+      actorId: result.userId,
+    });
     return attachSession(NextResponse.redirect(publicUrl(next, request.url), 303), result.token);
   } catch {
     logger.error({

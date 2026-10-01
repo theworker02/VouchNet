@@ -1,3 +1,4 @@
+import 'server-only';
 import { createSqlClient } from '@nexus/db';
 
 type ProfileViewSource = 'DIRECT' | 'SEARCH' | 'NETWORK';
