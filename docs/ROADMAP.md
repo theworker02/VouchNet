@@ -69,6 +69,19 @@ email delivery, and E2E coverage remain incomplete. The matrix in
 - `/admin/errors` is available only to authenticated `ADMIN` users and supports triage status
   changes. It must not be linked in normal member navigation.
 
+## In progress: volunteer moderation baseline
+
+- Migration `0024_volunteer_moderation` introduces member report intake, volunteer applications,
+  bounded moderator-role assignments, and an auditable human review queue.
+- Members can apply at `/moderation/apply` and report a VouchNet path at `/moderation/report`.
+  An active administrator assigns or revokes roles from `/admin/moderators`; members cannot grant
+  themselves moderator authority.
+- `TRIAGE` can route a report into review. `CONTENT_REVIEWER` and `COMMUNITY_STEWARD` can record a
+  documented queue outcome. `APPEALS_REVIEWER` is reserved until the appeals workflow exists.
+- This is intentionally not a claim of automatic penalties, content removal, or a paid moderation
+  workforce. Those workflows need their own policy, evidence, notice, appeal, and audit designs.
+  See [MODERATION.md](MODERATION.md) for the operating guide.
+
 ## In progress: native hiring workflow
 
 - Migration `0020_native_job_applications` introduces one application per candidate/job, immutable

@@ -29,7 +29,7 @@ service, authorization, API, UI, error/empty states, and tests form a usable ver
 | Saved content                   | MISSING                | MISSING            | MISSING             | MISSING                                   | MISSING                 | honest unavailable state        | MISSING              | MISSING |
 | Settings/security UI            | partial session schema | partial            | partial             | partial                                   | sessions API exists     | partial                         | partial              | PARTIAL |
 | Privacy editor                  | partial schema         | MISSING            | partial policy      | partial read enforcement                  | MISSING                 | MISSING                         | partial policy tests | MISSING |
-| Moderation                      | MISSING                | MISSING            | MISSING             | MISSING                                   | MISSING                 | MISSING                         | MISSING              | MISSING |
+| Volunteer moderation baseline   | migration `0024`       | inline SQL         | role/report service | admin assignment; scoped reviewer queue   | applications/reports    | apply, report, queue, admin     | MISSING              | PARTIAL |
 | MCP gateway/approval protocol   | partial contracts      | MISSING            | partial contracts   | partial contracts                         | MISSING                 | MISSING                         | partial unit tests   | MISSING |
 | Audit/trust/rate-limit runtime  | partial schema         | MISSING            | partial contracts   | MISSING                                   | MISSING                 | MISSING                         | partial unit tests   | MISSING |
 

@@ -37,6 +37,7 @@ export async function GET(
     return issueOAuthRegistration(
       applyOAuthStateClear(NextResponse.redirect(publicUrl('/oauth/complete', request.url), 303)),
       result.userId,
+      result.importPreview,
     );
   } catch (error) {
     const code = error instanceof OAuthError ? error.code : 'OAUTH_EXCHANGE_FAILED';

@@ -169,6 +169,13 @@
       "when": 1782158400000,
       "tag": "0023_session_idle_expiration",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1782244800000,
+      "tag": "0024_volunteer_moderation",
+      "breakpoints": true
     }
   ]
 }

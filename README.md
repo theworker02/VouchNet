@@ -15,6 +15,7 @@
   <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/PostgreSQL-17-4169E1?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL" />
   <img src="https://img.shields.io/badge/Deployment-Netlify-00C7B7?style=flat-square&logo=netlify&logoColor=white" alt="Netlify" />
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-2ea44f?style=flat-square" alt="MIT License" /></a>
 </p>
 
 ## Purpose
@@ -36,6 +37,17 @@ engagement loops or automated participation.
 
 The platform is deliberately original. It does not use LinkedIn code, branding, assets, or APIs,
 and it does not attempt to make software agents appear to be ordinary members.
+
+## Open source and VouchNet+
+
+The VouchNet source in this repository is available under the [MIT License](LICENSE). You are
+welcome to inspect, learn from, adapt, and contribute to the core platform.
+
+**VouchNet+ is coming soon and remains in active development.** It will be an optional hosted
+subscription for advanced member capabilities. The public MIT grant covers the code committed to
+this repository; it does not grant access to VouchNet-operated infrastructure, private service
+configuration, payment credentials, or future service-only VouchNet+ components that are not
+published here. The VouchNet name and visual identity are not licensed as trademarks.
 
 ### Product principles
 
@@ -234,7 +246,9 @@ where applicable, and audit handling without exposing secrets or unnecessary per
 - [Brand guidance](docs/BRAND.md)
 - [Analytics](docs/ANALYTICS.md)
 - [Job sourcing and employer launch](docs/JOBS.md)
+- [Volunteer moderation](docs/MODERATION.md)
 - [Release notes](CHANGELOG.md)
+- [MIT License](LICENSE)
 
 ## Contributing
 

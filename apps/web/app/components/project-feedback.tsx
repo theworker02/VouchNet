@@ -3,6 +3,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 
 const repositoryUrl = 'https://github.com/theworker02/VouchNet';
+const personalPortfolioUrl = 'https://theworker02-personal.netlify.app';
 
 /**
  * A persistent support affordance deliberately mounted outside dismissible notices and
@@ -93,6 +94,16 @@ export function ProjectFeedback() {
               View repository
             </a>
           </div>
+          <section className="project-feedback__sites" aria-label="More work from Matthew">
+            <p>More from Matthew</p>
+            <a href={personalPortfolioUrl} rel="noreferrer" target="_blank">
+              <span>
+                <strong>Personal portfolio</strong>
+                <small>Independent work, experiments, and projects</small>
+              </span>
+              <span aria-hidden="true">↗</span>
+            </a>
+          </section>
         </section>
       ) : null}
     </aside>

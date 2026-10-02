@@ -14,8 +14,11 @@ export function AuthShell({ eyebrow, title, description, children, footer }: Aut
   return (
     <main className="auth-shell">
       <section className="auth-story" aria-label="About VouchNet">
-        <Link className="brand" href="/">
-          VouchNet
+        <Link className="auth-brand" href="/" aria-label="VouchNet home">
+          <span aria-hidden="true" className="auth-brand-mark">
+            V
+          </span>
+          <span>VouchNet</span>
         </Link>
         <div className="auth-story-copy">
           <p className="eyebrow">A better professional starting point</p>
@@ -51,6 +54,13 @@ export function AuthShell({ eyebrow, title, description, children, footer }: Aut
           <p className="eyebrow">{eyebrow}</p>
           <h2>{title}</h2>
           <p className="auth-description">{description}</p>
+          <div className="auth-card-assurance" aria-label="Sign-in protections">
+            <span>
+              <i aria-hidden="true" />
+              Secure session
+            </span>
+            <span>Private by default</span>
+          </div>
           {children}
           <div className="auth-footer">{footer}</div>
         </div>

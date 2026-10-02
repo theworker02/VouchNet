@@ -2,6 +2,7 @@ import 'server-only';
 import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { hashPassword, normalizeEmail } from '@nexus/auth';
 import { createSqlClient } from '@nexus/db';
+import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { createUserSession } from './identity';
 
@@ -16,12 +17,23 @@ type OAuthCookieState = {
   returnTo: string | null;
   expiresAt: number;
 };
-type OAuthRegistration = { userId: string; expiresAt: number };
+export type OAuthImportPreview = {
+  provider: OAuthProvider;
+  fields: string[];
+  about?: string;
+  location?: string;
+};
+type OAuthRegistration = {
+  userId: string;
+  expiresAt: number;
+  importPreview?: OAuthImportPreview;
+};
 type ProviderIdentity = {
   subject: string;
   email: string;
   firstName: string;
   lastName: string;
+  importPreview?: OAuthImportPreview;
 };
 
 const stateCookieName = 'vouch_oauth_state';
@@ -204,6 +216,12 @@ function identityName(name: unknown, fallback: string): { firstName: string; las
   return { firstName: first.slice(0, 80), lastName: (rest.join(' ') || 'Member').slice(0, 80) };
 }
 
+function optionalProfileText(value: unknown, maximumLength: number): string | undefined {
+  if (typeof value !== 'string') return undefined;
+  const normalized = value.replace(/\u0000/g, '').trim();
+  return normalized.length > 0 ? normalized.slice(0, maximumLength) : undefined;
+}
+
 async function responseJson(url: string, token: string): Promise<unknown> {
   const response = await fetch(url, {
     headers: {
@@ -241,7 +259,27 @@ async function identityForToken(provider: OAuthProvider, token: string): Promise
     if (subject === null || primaryEmail === undefined)
       throw new OAuthError('OAUTH_IDENTITY_INVALID');
     const name = identityName(user.name, login);
-    return { subject, email: primaryEmail.email as string, ...name };
+    const about = optionalProfileText(user.bio, 2_000);
+    const location = optionalProfileText(user.location, 180);
+    const fields = [
+      ...(about === undefined ? [] : ['public bio']),
+      ...(location === undefined ? [] : ['public location']),
+    ];
+    const importPreview =
+      fields.length === 0
+        ? undefined
+        : {
+            provider,
+            fields,
+            ...(about === undefined ? {} : { about }),
+            ...(location === undefined ? {} : { location }),
+          };
+    return {
+      subject,
+      email: primaryEmail.email as string,
+      ...name,
+      ...(importPreview === undefined ? {} : { importPreview }),
+    };
   }
   const user = (await responseJson(
     provider === 'google'
@@ -311,6 +349,7 @@ export async function resolveOAuthCallback(request: NextRequest, provider: OAuth
           type: 'registration' as const,
           userId: existing[0].user_id,
           returnTo: savedState.returnTo,
+          importPreview: undefined,
         };
       throw new OAuthError('OAUTH_IDENTITY_INVALID');
     }
@@ -336,7 +375,12 @@ export async function resolveOAuthCallback(request: NextRequest, provider: OAuth
       await transaction`INSERT INTO audit_events (actor_type,actor_id,user_id,operation,resource_type,resource_id,request_id,result,policy_decision) VALUES ('HUMAN',${user.id},${user.id},'OAUTH_IDENTITY_CREATED','OAUTH_IDENTITY',NULL,${randomUUID()},'SUCCESS','REQUIRE_TERMS_ACCEPTANCE')`;
       return user;
     });
-    return { type: 'registration' as const, userId: created.id, returnTo: savedState.returnTo };
+    return {
+      type: 'registration' as const,
+      userId: created.id,
+      returnTo: savedState.returnTo,
+      importPreview: identity.importPreview,
+    };
   } finally {
     await sql.end({ timeout: 1 });
   }
@@ -347,10 +391,18 @@ export function applyOAuthStateClear(response: NextResponse) {
   return response;
 }
 
-export function issueOAuthRegistration(response: NextResponse, userId: string) {
+export function issueOAuthRegistration(
+  response: NextResponse,
+  userId: string,
+  importPreview?: OAuthImportPreview,
+) {
   response.cookies.set({
     name: registrationCookieName,
-    value: serialize({ userId, expiresAt: Date.now() + stateLifetimeSeconds * 1000 }),
+    value: serialize({
+      userId,
+      expiresAt: Date.now() + stateLifetimeSeconds * 1000,
+      ...(importPreview === undefined ? {} : { importPreview }),
+    }),
     httpOnly: true,
     sameSite: 'lax',
     secure: process.env.NEXUS_ENV === 'production',
@@ -360,7 +412,21 @@ export function issueOAuthRegistration(response: NextResponse, userId: string) {
   return response;
 }
 
-export async function completeOAuthRegistration(request: NextRequest) {
+/** Returns labels only; raw import values remain in the signed, HttpOnly registration cookie. */
+export async function getOAuthRegistrationImportPreview(): Promise<
+  Pick<OAuthImportPreview, 'provider' | 'fields'> | null
+> {
+  const registration = deserialize<OAuthRegistration>(
+    (await cookies()).get(registrationCookieName)?.value,
+  );
+  if (registration?.importPreview === undefined) return null;
+  return {
+    provider: registration.importPreview.provider,
+    fields: registration.importPreview.fields,
+  };
+}
+
+export async function completeOAuthRegistration(request: NextRequest, importProfile: boolean) {
   const registration = deserialize<OAuthRegistration>(
     request.cookies.get(registrationCookieName)?.value,
   );
@@ -376,6 +442,15 @@ export async function completeOAuthRegistration(request: NextRequest) {
       `;
       if (user[0] === undefined) throw new OAuthError('OAUTH_REGISTRATION_INVALID');
       await transaction`INSERT INTO terms_acceptances (user_id,document_type,document_version) VALUES (${registration.userId},'TERMS','2026-09'),(${registration.userId},'PRIVACY','2026-09') ON CONFLICT DO NOTHING`;
+      if (importProfile && registration.importPreview !== undefined) {
+        if (registration.importPreview.about !== undefined) {
+          await transaction`UPDATE profiles SET about=${registration.importPreview.about},updated_at=now() WHERE user_id=${registration.userId} AND about IS NULL`;
+        }
+        if (registration.importPreview.location !== undefined) {
+          await transaction`UPDATE profiles SET location=${registration.importPreview.location},updated_at=now() WHERE user_id=${registration.userId} AND location IS NULL`;
+        }
+        await transaction`INSERT INTO audit_events (actor_type,actor_id,user_id,operation,resource_type,resource_id,request_id,result,policy_decision) VALUES ('HUMAN',${registration.userId},${registration.userId},'OAUTH_PROFILE_IMPORT','PROFILE',${registration.userId},${randomUUID()},'SUCCESS','EXPLICIT_MEMBER_CONSENT')`;
+      }
       await transaction`UPDATE users SET status='ACTIVE',updated_at=now() WHERE id=${registration.userId}`;
       await transaction`INSERT INTO audit_events (actor_type,actor_id,user_id,operation,resource_type,resource_id,request_id,result,policy_decision) VALUES ('HUMAN',${registration.userId},${registration.userId},'OAUTH_SIGNUP_COMPLETED','USER',${registration.userId},${randomUUID()},'SUCCESS','TERMS_ACCEPTED_BY_HUMAN')`;
     });

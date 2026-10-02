@@ -167,6 +167,10 @@ export function WorkMenu() {
           <strong>Developer portal</strong>
           <span>Apply with VouchNet integrations</span>
         </Link>
+        <Link href="/moderation" role="menuitem">
+          <strong>Volunteer moderation</strong>
+          <span>Help shape accountable community safety</span>
+        </Link>
       </div>
       <div className="shell-menu-support" aria-label="Project support">
         <a

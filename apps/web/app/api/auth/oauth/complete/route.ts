@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       303,
     );
   try {
-    const session = await completeOAuthRegistration(request);
+    const session = await completeOAuthRegistration(request, form.get('importProfile') === 'on');
     return clearOAuthRegistration(
       attachSession(
         NextResponse.redirect(publicUrl('/onboarding', request.url), 303),

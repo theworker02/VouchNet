@@ -1,5 +1,9 @@
 # VouchNet+
 
+> **Status: coming soon.** VouchNet+ is in active development and is not represented as a
+> generally available subscription product. The implementation below documents the current
+> server-side foundation and the boundaries required before a public launch.
+
 VouchNet+ is modeled as an active server-side `PLUS` entitlement at **$4.55/month**. Client
 components must never grant a paid capability; server-side checks use `requireVouchNetPlus`.
 

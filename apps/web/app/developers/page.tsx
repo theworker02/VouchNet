@@ -29,6 +29,10 @@ export default function DeveloperPage() {
           <strong>Brand kit</strong>
           <span>Official logo files and usage principles.</span>
         </Link>
+        <Link href="/developers/moderation">
+          <strong>Safety operations</strong>
+          <span>Volunteer moderation roles, review boundaries, and operating guidance.</span>
+        </Link>
       </div>
       <p className="developer-footnote">
         Machine-readable discovery:{' '}

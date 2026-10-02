@@ -58,6 +58,15 @@ Request only identity scopes: Google `openid email profile`, GitHub `read:user u
 LinkedIn `openid profile email`. VouchNet will not request repository, posting, or connection
 permissions for sign-in.
 
+## First-time profile import
+
+After a first-time provider sign-in, VouchNet asks the member to explicitly approve any available
+profile enrichment before activation. With the scopes above, GitHub may offer a member's public bio
+and public location. Google and LinkedIn OpenID Connect establish a verified name and email for the
+initial account but do not provide a general-purpose import of experience, connections, posts,
+résumés, or private profile data. VouchNet does not scrape any provider or claim to transfer data a
+provider has not returned to the member-authorized OAuth flow.
+
 ## First sign-in behavior
 
 Provider sign-in establishes identity but does not silently accept VouchNet terms. A first-time
