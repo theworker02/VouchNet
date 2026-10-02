@@ -13,7 +13,10 @@ export function proxy(request: NextRequest): NextResponse {
   requestHeaders.set('x-request-id', requestId);
 
   const response = NextResponse.next({ request: { headers: requestHeaders } });
-  response.headers.set('Content-Security-Policy', createContentSecurityPolicy(nonce));
+  // Next's development runtime uses eval for client-side diagnostics and hot updates. Keep the
+  // production nonce policy strict, while allowing local client components to hydrate normally.
+  if (process.env.NODE_ENV !== 'development')
+    response.headers.set('Content-Security-Policy', createContentSecurityPolicy(nonce));
   response.headers.set('X-Request-Id', requestId);
   return response;
 }

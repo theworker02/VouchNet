@@ -13,7 +13,7 @@ import { cache } from 'react';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 
-const sessionName = 'nexus_session';
+export const sessionCookieName = 'nexus_session';
 const sessionDays = 30;
 const sessionIdleHours = 24;
 
@@ -254,7 +254,7 @@ export async function createUserSession(userId: string): Promise<{ token: string
   }
 }
 
-export async function login(emailInput: string, password: string) {
+export async function login(emailInput: string, password: string, priorSessionToken?: string) {
   const sql = client();
   try {
     const rows = await sql<
@@ -269,7 +269,20 @@ export async function login(emailInput: string, password: string) {
       return null;
     const token = createSecretToken(sessionDays * 24 * 60 * 60 * 1000);
     const idleExpiresAt = new Date(Date.now() + sessionIdleHours * 60 * 60 * 1000);
-    await sql`INSERT INTO sessions (user_id,token_hash,expires_at,idle_expires_at) VALUES (${user.id},${token.tokenHash},${token.expiresAt},${idleExpiresAt})`;
+    // Create the replacement session and invalidate the prior browser session through the same
+    // short-lived SQL client. This preserves the session-fixation invariant without adding a
+    // second database connection to the critical login path.
+    await sql.begin(async (transaction) => {
+      if (priorSessionToken !== undefined)
+        await transaction`
+          UPDATE sessions SET revoked_at=now()
+          WHERE token_hash=${hashOpaqueToken(priorSessionToken)} AND revoked_at IS NULL
+        `;
+      await transaction`
+        INSERT INTO sessions (user_id,token_hash,expires_at,idle_expires_at)
+        VALUES (${user.id},${token.tokenHash},${token.expiresAt},${idleExpiresAt})
+      `;
+    });
     return { userId: user.id, token: token.token };
   } finally {
     await sql.end({ timeout: 1 });
@@ -319,7 +332,7 @@ export async function resetPassword(token: string, password: string) {
 export async function actorFromRequest(
   request: NextRequest,
 ): Promise<{ userId: string; sessionId: string } | null> {
-  const token = request.cookies.get(sessionName)?.value;
+  const token = request.cookies.get(sessionCookieName)?.value;
   return actorFromSessionToken(token);
 }
 
@@ -349,7 +362,7 @@ export async function actorFromSessionToken(
  * ensures a page tree does not independently validate the same session several times. */
 export const getCurrentActor = cache(async () => {
   const cookieStore = await cookies();
-  return actorFromSessionToken(cookieStore.get(sessionName)?.value);
+  return actorFromSessionToken(cookieStore.get(sessionCookieName)?.value);
 });
 
 export async function getProfileSummary(userId: string): Promise<{
@@ -418,7 +431,7 @@ export async function updateOwnProfile(
 }
 
 export async function logout(request: NextRequest) {
-  const token = request.cookies.get(sessionName)?.value;
+  const token = request.cookies.get(sessionCookieName)?.value;
   if (token !== undefined) {
     const sql = client();
     try {
@@ -460,14 +473,14 @@ export async function revokeOtherSessions(userId: string, currentSessionId: stri
 export function attachSession(response: NextResponse, token: string) {
   response.headers.set(
     'set-cookie',
-    sessionCookie(sessionName, token, process.env.NEXUS_ENV === 'production'),
+    sessionCookie(sessionCookieName, token, process.env.NEXUS_ENV === 'production'),
   );
   return response;
 }
 export function clearSession(response: NextResponse) {
   response.headers.set(
     'set-cookie',
-    `${sessionName}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0`,
+    `${sessionCookieName}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0`,
   );
   return response;
 }

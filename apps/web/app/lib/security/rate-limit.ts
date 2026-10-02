@@ -44,8 +44,17 @@ async function redis(): Promise<RedisConnection> {
   if (connection !== null) return connection;
   const url = process.env.REDIS_URL;
   if (url === undefined) throw new Error('REDIS_UNAVAILABLE');
-  const client = createClient({ url });
+  const client = createClient({
+    url,
+    socket: {
+      // A rate-limiter dependency must never leave an authentication request waiting until the
+      // hosting edge emits a gateway timeout. Production remains fail-closed after this bound.
+      connectTimeout: 5_000,
+      reconnectStrategy: false,
+    },
+  });
   client.on('error', () => {
+    connection = null;
     logger.error({ operation: 'rate_limit_redis', outcome: 'failure', errorCode: 'REDIS_ERROR' });
   });
   connection = (async () => {
