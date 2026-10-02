@@ -14,12 +14,25 @@ const categories: readonly PostCategory[] = ['TECHNICAL', 'PROJECT', 'HIRING', '
 async function requestFeed(
   mode: 'CHRONOLOGICAL' | 'PEER_VERIFIED',
   hidden: readonly PostCategory[],
+  signal?: AbortSignal,
 ) {
   const parameters = new URLSearchParams({ mode });
   hidden.forEach((category) => parameters.append('hide', category));
-  const response = await fetch(`/api/feed?${parameters.toString()}`);
-  if (!response.ok) throw new Error('FEED_UNAVAILABLE');
-  return (await response.json()) as { posts: FeedPost[] };
+  const controller = new AbortController();
+  const abort = () => controller.abort();
+  signal?.addEventListener('abort', abort, { once: true });
+  const timeout = window.setTimeout(() => controller.abort(), 8_000);
+  try {
+    const response = await fetch(`/api/feed?${parameters.toString()}`, {
+      cache: 'no-store',
+      signal: controller.signal,
+    });
+    if (!response.ok) throw new Error('FEED_UNAVAILABLE');
+    return (await response.json()) as { posts: FeedPost[] };
+  } finally {
+    window.clearTimeout(timeout);
+    signal?.removeEventListener('abort', abort);
+  }
 }
 
 function MarkdownBody({ body }: { body: string }) {
@@ -163,8 +176,9 @@ export function FeedClient() {
   }
   useEffect(() => {
     let active = true;
+    const controller = new AbortController();
     const timer = window.setTimeout(() => {
-      void requestFeed(mode, hidden)
+      void requestFeed(mode, hidden, controller.signal)
         .then((data) => {
           if (active) {
             setPosts(data.posts);
@@ -180,6 +194,7 @@ export function FeedClient() {
     }, 0);
     return () => {
       active = false;
+      controller.abort();
       window.clearTimeout(timer);
     };
   }, [mode, hidden]);
@@ -489,7 +504,16 @@ export function FeedClient() {
           </div>
         </details>
       </div>
-      {status === null ? null : <p className="form-error">{status}</p>}
+      {status === null ? null : (
+        <div className="feed-status" role="status">
+          <p className="form-error">{status}</p>
+          {posts !== null ? (
+            <button type="button" className="secondary feed-retry" onClick={() => void load()}>
+              Retry feed
+            </button>
+          ) : null}
+        </div>
+      )}
       {posts === null ? (
         <section className="feed-empty">
           <p>Loading your eligible feed…</p>

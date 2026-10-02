@@ -126,7 +126,9 @@ export async function getFeed(
       WHERE p.status='PUBLISHED' AND p.deleted_at IS NULL
         AND NOT EXISTS (SELECT 1 FROM blocks b WHERE (b.blocker_id=${viewerId} AND b.blocked_id=p.author_id) OR (b.blocker_id=p.author_id AND b.blocked_id=${viewerId}))
         AND (p.author_id=${viewerId} OR p.visibility IN ('PUBLIC','MEMBERS') OR (p.visibility='FOLLOWERS' AND EXISTS (SELECT 1 FROM follows f WHERE f.follower_id=${viewerId} AND f.followed_id=p.author_id)) OR (p.visibility='CONTACTS' AND EXISTS (SELECT 1 FROM connections c WHERE c.state='ACCEPTED' AND ((c.requester_id=${viewerId} AND c.recipient_id=p.author_id) OR (c.recipient_id=${viewerId} AND c.requester_id=p.author_id)))))
-      ORDER BY p.created_at DESC LIMIT 100
+      -- Rendering a first feed page should remain bounded even for members with a large graph.
+      -- Cursor pagination can extend this window without making initial navigation pay for it.
+      ORDER BY p.created_at DESC LIMIT 40
     `;
     const visible = rows.filter(
       (post) =>

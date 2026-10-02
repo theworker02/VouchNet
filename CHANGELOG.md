@@ -3,6 +3,23 @@
 All notable changes to VouchNet are documented here. This project follows
 [Semantic Versioning](https://semver.org/).
 
+## 0.9.3 - 2026-10-02
+
+### Reliability and performance
+
+- Deduplicated profile-summary reads within a single authenticated server render, avoiding
+  unnecessary database work when the application shell and page both need the same member data.
+- Bounded the initial feed window to 40 recent eligible posts. This preserves a useful first view
+  while avoiding an unbounded collection of reaction and visibility calculations during navigation.
+- Added an eight-second abort boundary to feed refreshes and a visible retry action. A delayed
+  dependency now resolves into a recoverable state instead of leaving the feed indefinitely on its
+  loading message.
+
+### Release contents
+
+- This is a source-only patch release. It contains no compiled binaries, installer packages, or
+  downloadable artifacts. See [`docs/releases/v0.9.3.md`](docs/releases/v0.9.3.md).
+
 ## 0.9.2 - 2026-10-01
 
 ### Security hardening
@@ -203,3 +220,4 @@ All notable changes to VouchNet are documented here. This project follows
 [0.9.0]: https://github.com/theworker02/VouchNet/releases/tag/v0.9.0
 [0.9.1]: https://github.com/theworker02/VouchNet/releases/tag/v0.9.1
 [0.9.2]: https://github.com/theworker02/VouchNet/releases/tag/v0.9.2
+[0.9.3]: https://github.com/theworker02/VouchNet/releases/tag/v0.9.3

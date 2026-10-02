@@ -365,48 +365,55 @@ export const getCurrentActor = cache(async () => {
   return actorFromSessionToken(cookieStore.get(sessionCookieName)?.value);
 });
 
-export async function getProfileSummary(userId: string): Promise<{
-  fullName: string;
-  headline: string | null;
-  slug: string;
-  location: string | null;
-  about: string | null;
-  avatarKey: string | null;
-  onboardingStep: number;
-} | null> {
-  const sql = client();
-  try {
-    const rows = await sql<
-      {
-        first_name: string;
-        last_name: string;
-        headline: string | null;
-        slug: string;
-        location: string | null;
-        about: string | null;
-        avatar_key: string | null;
-        onboarding_step: number;
-      }[]
-    >`
+// Multiple authenticated surfaces (for example, Shell and Home) can need the same profile during
+// one server render. React request caching prevents duplicate database round trips without
+// retaining profile data beyond that request.
+export const getProfileSummary = cache(
+  async (
+    userId: string,
+  ): Promise<{
+    fullName: string;
+    headline: string | null;
+    slug: string;
+    location: string | null;
+    about: string | null;
+    avatarKey: string | null;
+    onboardingStep: number;
+  } | null> => {
+    const sql = client();
+    try {
+      const rows = await sql<
+        {
+          first_name: string;
+          last_name: string;
+          headline: string | null;
+          slug: string;
+          location: string | null;
+          about: string | null;
+          avatar_key: string | null;
+          onboarding_step: number;
+        }[]
+      >`
       SELECT first_name,last_name,headline,slug,location,about,avatar_key,onboarding_step
       FROM profiles
       WHERE user_id=${userId}
     `;
-    const profile = rows[0];
-    if (profile === undefined) return null;
-    return {
-      fullName: `${profile.first_name} ${profile.last_name}`,
-      headline: profile.headline,
-      slug: profile.slug,
-      location: profile.location,
-      about: profile.about,
-      avatarKey: profile.avatar_key,
-      onboardingStep: profile.onboarding_step,
-    };
-  } finally {
-    await sql.end({ timeout: 1 });
-  }
-}
+      const profile = rows[0];
+      if (profile === undefined) return null;
+      return {
+        fullName: `${profile.first_name} ${profile.last_name}`,
+        headline: profile.headline,
+        slug: profile.slug,
+        location: profile.location,
+        about: profile.about,
+        avatarKey: profile.avatar_key,
+        onboardingStep: profile.onboarding_step,
+      };
+    } finally {
+      await sql.end({ timeout: 1 });
+    }
+  },
+);
 
 export async function updateOwnProfile(
   userId: string,
