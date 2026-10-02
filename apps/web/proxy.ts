@@ -9,14 +9,21 @@ export function proxy(request: NextRequest): NextResponse {
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
   const requestId = crypto.randomUUID();
   const requestHeaders = new Headers(request.headers);
+  const contentSecurityPolicy =
+    process.env.NODE_ENV === 'production' ? createContentSecurityPolicy(nonce) : null;
   requestHeaders.set('x-vouchnet-csp-nonce', nonce);
   requestHeaders.set('x-request-id', requestId);
+  // Next only assigns its framework scripts the nonce when it can see the policy on the incoming
+  // request. Setting it on the response alone serves a valid-looking CSP that blocks hydration
+  // and silently leaves every Client Component button inert.
+  if (contentSecurityPolicy !== null)
+    requestHeaders.set('Content-Security-Policy', contentSecurityPolicy);
 
   const response = NextResponse.next({ request: { headers: requestHeaders } });
   // Next's development runtime uses eval for client-side diagnostics and hot updates. Keep the
   // production nonce policy strict, while allowing local client components to hydrate normally.
-  if (process.env.NODE_ENV !== 'development')
-    response.headers.set('Content-Security-Policy', createContentSecurityPolicy(nonce));
+  if (contentSecurityPolicy !== null)
+    response.headers.set('Content-Security-Policy', contentSecurityPolicy);
   response.headers.set('X-Request-Id', requestId);
   return response;
 }
