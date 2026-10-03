@@ -54,8 +54,8 @@ export default async function CompleteOAuthSignup({
             <span>
               <strong>Import available details from {providerName}</strong>
               <small>
-                Add your {importPreview.fields.join(' and ')} to your new VouchNet profile. You
-                can edit or remove these details at any time.
+                Add your {importPreview.fields.join(' and ')} to your new VouchNet profile. You can
+                edit or remove these details at any time.
               </small>
             </span>
           </label>

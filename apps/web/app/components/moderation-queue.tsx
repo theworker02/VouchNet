@@ -31,13 +31,16 @@ export function ModerationQueue({
         setMessage('That report could not be updated. Your role may only allow triage.');
         return;
       }
-      setReports((current) => current.map((report) => (report.id === reportId ? { ...report, status } : report)));
+      setReports((current) =>
+        current.map((report) => (report.id === reportId ? { ...report, status } : report)),
+      );
     } catch {
       setMessage('The network is unavailable. The report was not changed.');
     }
   }
 
-  if (reports.length === 0) return <p className="moderation-empty">No member reports are waiting.</p>;
+  if (reports.length === 0)
+    return <p className="moderation-empty">No member reports are waiting.</p>;
   return (
     <div className="moderation-queue">
       {message !== null ? <p role="status">{message}</p> : null}
@@ -47,18 +50,26 @@ export function ModerationQueue({
             <span className={`moderation-status moderation-status-${report.status.toLowerCase()}`}>
               {report.status.replace('_', ' ')}
             </span>
-            <time dateTime={report.createdAt.toISOString()}>{report.createdAt.toLocaleDateString()}</time>
+            <time dateTime={report.createdAt.toISOString()}>
+              {report.createdAt.toLocaleDateString()}
+            </time>
           </header>
           <strong>{report.category.replace('_', ' ')}</strong>
           <a href={report.subjectPath}>{report.subjectPath}</a>
           <p>{report.details}</p>
           <small>Submitted by {report.reporterName}</small>
           <div>
-            {statuses.filter((option) => allowedStatuses.includes(option.value)).map((option) => (
-              <button key={option.value} onClick={() => update(report.id, option.value)} type="button">
-                {option.label}
-              </button>
-            ))}
+            {statuses
+              .filter((option) => allowedStatuses.includes(option.value))
+              .map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => update(report.id, option.value)}
+                  type="button"
+                >
+                  {option.label}
+                </button>
+              ))}
           </div>
         </article>
       ))}

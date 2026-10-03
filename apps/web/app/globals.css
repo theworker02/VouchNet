@@ -1676,7 +1676,10 @@ button:hover {
   font-size: 0.875rem;
   font-weight: 650;
   text-decoration: none;
-  transition: background 150ms ease, border-color 150ms ease, box-shadow 150ms ease,
+  transition:
+    background 150ms ease,
+    border-color 150ms ease,
+    box-shadow 150ms ease,
     transform 150ms ease;
 }
 .oauth-button-google {
@@ -5116,7 +5119,9 @@ button {
   border-radius: 9px;
   color: #fff;
   background: linear-gradient(145deg, #5688f5, #315bc8);
-  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.3), 0 7px 16px rgb(2 14 48 / 0.2);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.3),
+    0 7px 16px rgb(2 14 48 / 0.2);
   font-size: 1rem;
   font-weight: 900;
   line-height: 1;

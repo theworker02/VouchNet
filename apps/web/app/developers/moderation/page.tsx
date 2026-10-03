@@ -9,16 +9,24 @@ export default function ModerationGuidePage() {
       <p className="eyebrow">Trust &amp; safety</p>
       <h1>Volunteer moderation operating guide</h1>
       <p className="developer-intro">
-        VouchNet&apos;s first safety operation is human and accountable. Volunteer access is assigned
-        by an administrator, limited by role, and recorded in the audit ledger.
+        VouchNet&apos;s first safety operation is human and accountable. Volunteer access is
+        assigned by an administrator, limited by role, and recorded in the audit ledger.
       </p>
       <section className="developer-doc-section">
         <h2>Role boundaries</h2>
         <ul>
-          <li><strong>Triage volunteer:</strong> acknowledges and routes reports into review.</li>
-          <li><strong>Content reviewer:</strong> records a documented report outcome.</li>
-          <li><strong>Appeals reviewer:</strong> reserved for an independently reviewed appeals flow.</li>
-          <li><strong>Community steward:</strong> records safety outcomes and escalation context.</li>
+          <li>
+            <strong>Triage volunteer:</strong> acknowledges and routes reports into review.
+          </li>
+          <li>
+            <strong>Content reviewer:</strong> records a documented report outcome.
+          </li>
+          <li>
+            <strong>Appeals reviewer:</strong> reserved for an independently reviewed appeals flow.
+          </li>
+          <li>
+            <strong>Community steward:</strong> records safety outcomes and escalation context.
+          </li>
         </ul>
       </section>
       <section className="developer-doc-section">

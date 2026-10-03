@@ -6,6 +6,7 @@ import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import { EmeraldVouchBadge, ProofOfWorkBadge, SignalPulseIcon } from '../../components/symbols';
 import { ReactionBar } from '../../components/feed/reaction-bar';
 import { InteractiveCard } from '../../components/motion/interactive-card';
+import type { FeedDiscovery } from '../../lib/feed-discovery-model';
 import { useMotionPreference } from '../../lib/motion';
 import type { FeedPost, PostCategory, PostVisibility, ReactionType } from './service';
 
@@ -28,7 +29,7 @@ async function requestFeed(
       signal: controller.signal,
     });
     if (!response.ok) throw new Error('FEED_UNAVAILABLE');
-    return (await response.json()) as { posts: FeedPost[] };
+    return (await response.json()) as { posts: FeedPost[]; discovery: FeedDiscovery };
   } finally {
     window.clearTimeout(timeout);
     signal?.removeEventListener('abort', abort);
@@ -109,51 +110,73 @@ function PostCard({
   );
 }
 
-function SuggestedSignalStream() {
-  const signals = [
-    {
-      topic: 'Systems note',
-      title: 'How to make a migration plan that survives production reality',
-      detail:
-        'A practical starting point for schema changes, rollback boundaries, and operational ownership.',
-      href: '/search?q=postgres%20migration',
-    },
-    {
-      topic: 'Architecture discussion',
-      title: 'Where compute-shader pipelines earn their complexity',
-      detail:
-        'Explore public profiles and project context around graphics, systems, and performance work.',
-      href: '/search?q=compute%20shaders',
-    },
-    {
-      topic: 'Career signal',
-      title: 'Transparent technical roles with compensation context',
-      detail: 'Browse currently sourced roles without leaving an empty feed behind.',
-      href: '/jobs',
-    },
-  ] as const;
+function money(value: number, currency: string) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function SuggestedSignalStream({ discovery }: { discovery: FeedDiscovery | null }) {
+  const jobs = discovery?.jobs ?? [];
+  const organizations = discovery?.organizations ?? [];
+  const challenge = discovery?.dailyChallenge;
   return (
     <section className="suggested-signal-stream" aria-label="Suggested signals">
       <div className="suggested-signal-heading">
         <span>
           <ProofOfWorkBadge size="sm" /> Suggested signal
         </span>
-        <p>Platform-curated starting points while you build your network.</p>
+        <p>
+          Source-reviewed public records and original VouchNet activities while your member feed
+          takes shape. These are not member posts.
+        </p>
       </div>
-      {signals.map((signal) => (
-        <InteractiveCard key={signal.title}>
-          <p>{signal.topic}</p>
-          <h2>{signal.title}</h2>
-          <span>{signal.detail}</span>
-          <Link href={signal.href}>Explore this signal</Link>
+      {jobs.map((job) => (
+        <InteractiveCard key={job.slug}>
+          <p>Source-reviewed opportunity · {job.organizationName}</p>
+          <h2>{job.title}</h2>
+          <span>
+            {job.location}
+            {job.salaryMin === null || job.salaryMax === null
+              ? ' · Salary not disclosed'
+              : ` · ${money(job.salaryMin, job.salaryCurrency)}–${money(job.salaryMax, job.salaryCurrency)}`}
+          </span>
+          <Link href={`/jobs/${job.slug}`}>Review role</Link>
         </InteractiveCard>
       ))}
+      {organizations.map((organization) => (
+        <InteractiveCard key={organization.slug}>
+          <p>Source-reviewed organization</p>
+          <h2>{organization.name}</h2>
+          <span>
+            {organization.openRoleCount} open role{organization.openRoleCount === 1 ? '' : 's'}
+            {organization.technologies.length > 0
+              ? ` · ${organization.technologies.slice(0, 2).join(' · ')}`
+              : ''}
+          </span>
+          <Link href={`/company/${organization.slug}`}>Explore organization</Link>
+        </InteractiveCard>
+      ))}
+      {challenge === undefined ? null : (
+        <InteractiveCard>
+          <p>Original VouchNet daily challenge</p>
+          <h2>{challenge.title}</h2>
+          <span>
+            {challenge.difficultyLabel} difficulty · solve it in {challenge.moveBudget} moves or
+            fewer.
+          </span>
+          <Link href="/games">Play today&apos;s challenge</Link>
+        </InteractiveCard>
+      )}
     </section>
   );
 }
 
 export function FeedClient() {
   const [posts, setPosts] = useState<FeedPost[] | null>(null);
+  const [discovery, setDiscovery] = useState<FeedDiscovery | null>(null);
   const [mode, setMode] = useState<'CHRONOLOGICAL' | 'PEER_VERIFIED'>('CHRONOLOGICAL');
   const [hidden, setHidden] = useState<PostCategory[]>([]);
   const [status, setStatus] = useState<string | null>(null);
@@ -169,6 +192,7 @@ export function FeedClient() {
     try {
       const data = await requestFeed(mode, hidden);
       setPosts(data.posts);
+      setDiscovery(data.discovery);
       setStatus(null);
     } catch {
       setStatus('The feed is unavailable right now.');
@@ -182,6 +206,7 @@ export function FeedClient() {
         .then((data) => {
           if (active) {
             setPosts(data.posts);
+            setDiscovery(data.discovery);
             setStatus(null);
           }
         })
@@ -534,7 +559,7 @@ export function FeedClient() {
               </Link>
             </div>
           </section>
-          <SuggestedSignalStream />
+          <SuggestedSignalStream discovery={discovery} />
         </>
       ) : (
         <div className="post-list">

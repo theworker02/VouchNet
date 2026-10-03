@@ -85,10 +85,11 @@ export async function getOrganization(slug: string): Promise<OrganizationRecord 
   }
 }
 
-export async function listPublicJobs(query?: string): Promise<JobRecord[]> {
+export async function listPublicJobs(query?: string, limit = 30): Promise<JobRecord[]> {
   const client = sql();
   try {
     const pattern = `%${query?.trim() ?? ''}%`;
+    const safeLimit = Math.min(Math.max(Math.floor(limit), 1), 30);
     return await client<JobRecord[]>`
       SELECT j.slug,j.title,j.summary,j.location,j.workplace_type AS "workplaceType",
         j.employment_type AS "employmentType",j.salary_min AS "salaryMin",j.salary_max AS "salaryMax",
@@ -99,7 +100,7 @@ export async function listPublicJobs(query?: string): Promise<JobRecord[]> {
       WHERE j.deleted_at IS NULL AND j.source_status IN ('SOURCE_REVIEWED','SOURCE_LIVE')
         AND (j.title ILIKE ${pattern} OR o.name ILIKE ${pattern} OR j.location ILIKE ${pattern}
           OR EXISTS (SELECT 1 FROM unnest(j.skill_tags) tag WHERE tag ILIKE ${pattern}))
-      ORDER BY (j.salary_min IS NULL) ASC,j.source_checked_at DESC,j.created_at DESC LIMIT 30
+      ORDER BY (j.salary_min IS NULL) ASC,j.source_checked_at DESC,j.created_at DESC LIMIT ${safeLimit}
     `;
   } finally {
     await client.end({ timeout: 1 });

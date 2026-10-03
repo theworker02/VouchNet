@@ -32,9 +32,13 @@ export function ModerationApplicationForm() {
         return;
       }
       event.currentTarget.reset();
-      setStatus('Application received. A VouchNet administrator will review it before any role is assigned.');
+      setStatus(
+        'Application received. A VouchNet administrator will review it before any role is assigned.',
+      );
     } catch {
-      setStatus('The network is unavailable. Your application was not submitted. Please try again.');
+      setStatus(
+        'The network is unavailable. Your application was not submitted. Please try again.',
+      );
     } finally {
       setSubmitting(false);
     }
@@ -52,7 +56,12 @@ export function ModerationApplicationForm() {
       </label>
       <label>
         Typical weekly availability
-        <input name="weeklyAvailability" maxLength={280} placeholder="For example: 2–4 hours, evenings ET" required />
+        <input
+          name="weeklyAvailability"
+          maxLength={280}
+          placeholder="For example: 2–4 hours, evenings ET"
+          required
+        />
       </label>
       <label className="moderation-check">
         <input name="agreesToCode" required type="checkbox" />

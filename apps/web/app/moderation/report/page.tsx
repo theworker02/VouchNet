@@ -13,9 +13,9 @@ export default async function ModerationReportPage() {
         <p className="eyebrow">Report a concern</p>
         <h1>Ask a human reviewer to take a look.</h1>
         <p className="moderation-intro">
-          Give the VouchNet path and enough factual context for a reviewer. Do not include passwords,
-          private message bodies, or other people&apos;s sensitive information unless it is necessary to
-          explain the concern.
+          Give the VouchNet path and enough factual context for a reviewer. Do not include
+          passwords, private message bodies, or other people&apos;s sensitive information unless it
+          is necessary to explain the concern.
         </p>
         <ModerationReportForm />
       </main>

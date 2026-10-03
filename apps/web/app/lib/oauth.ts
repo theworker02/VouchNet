@@ -413,9 +413,10 @@ export function issueOAuthRegistration(
 }
 
 /** Returns labels only; raw import values remain in the signed, HttpOnly registration cookie. */
-export async function getOAuthRegistrationImportPreview(): Promise<
-  Pick<OAuthImportPreview, 'provider' | 'fields'> | null
-> {
+export async function getOAuthRegistrationImportPreview(): Promise<Pick<
+  OAuthImportPreview,
+  'provider' | 'fields'
+> | null> {
   const registration = deserialize<OAuthRegistration>(
     (await cookies()).get(registrationCookieName)?.value,
   );

@@ -170,8 +170,7 @@ export async function reviewModeratorApplication(input: {
       const administrators = await transaction<{ id: string }[]>`
         SELECT id FROM users WHERE id=${input.actorId} AND role='ADMIN' AND status='ACTIVE' LIMIT 1
       `;
-      if (administrators[0] === undefined)
-        throw new ModerationError('NOT_AUTHORIZED');
+      if (administrators[0] === undefined) throw new ModerationError('NOT_AUTHORIZED');
       const applications = await transaction<{ user_id: string; status: string }[]>`
         SELECT user_id,status FROM moderator_applications WHERE id=${input.applicationId} FOR UPDATE
       `;

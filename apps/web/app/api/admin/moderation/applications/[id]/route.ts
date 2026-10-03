@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { actorFromRequest } from '../../../../../lib/identity';
-import { ModerationError, moderatorRoles, reviewModeratorApplication } from '../../../../../lib/moderation';
+import {
+  ModerationError,
+  moderatorRoles,
+  reviewModeratorApplication,
+} from '../../../../../lib/moderation';
 import { hasSameOrigin } from '../../../../../lib/request-security';
 
 const reviewSchema = z
@@ -12,10 +16,7 @@ const reviewSchema = z
   })
   .strict();
 
-export async function POST(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> },
-) {
+export async function POST(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   if (!hasSameOrigin(request))
     return NextResponse.json({ error: 'CSRF_REJECTED' }, { status: 403 });
   const actor = await actorFromRequest(request);

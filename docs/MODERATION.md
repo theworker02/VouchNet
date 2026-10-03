@@ -19,12 +19,12 @@ their account. Do not expose a public endpoint or client-side flag for administr
 
 ## Roles
 
-| Role | Current capability | Intended boundary |
-| --- | --- | --- |
-| `TRIAGE` | Mark a member report as under review | No final outcome or account enforcement |
-| `CONTENT_REVIEWER` | Record a report outcome | Human evidence review; no hidden automation |
-| `APPEALS_REVIEWER` | Reserved assignment | Use only after an appeals workflow exists |
-| `COMMUNITY_STEWARD` | Record a report outcome | Escalate safety and policy concerns |
+| Role                | Current capability                   | Intended boundary                           |
+| ------------------- | ------------------------------------ | ------------------------------------------- |
+| `TRIAGE`            | Mark a member report as under review | No final outcome or account enforcement     |
+| `CONTENT_REVIEWER`  | Record a report outcome              | Human evidence review; no hidden automation |
+| `APPEALS_REVIEWER`  | Reserved assignment                  | Use only after an appeals workflow exists   |
+| `COMMUNITY_STEWARD` | Record a report outcome              | Escalate safety and policy concerns         |
 
 Administrators retain operational authority to approve/revoke assignments. All application,
 assignment, report, and queue decisions create append-oriented audit events.

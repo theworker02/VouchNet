@@ -3,6 +3,23 @@
 All notable changes to VouchNet are documented here. This project follows
 [Semantic Versioning](https://semver.org/).
 
+## 0.9.4 - 2026-10-03
+
+### Honest network density
+
+- The empty member feed now hydrates with source-reviewed organizations and technical roles from
+  VouchNet's existing public directory, plus the original daily strategy challenge.
+- Every fallback item is explicitly identified as a source-reviewed record or platform-created
+  activity. VouchNet does not fabricate member profiles, member posts, or engagement to make the
+  network appear busier.
+- Public-directory reads are independently resilient: an unavailable directory source does not
+  prevent the daily challenge from giving a new member a useful first action.
+
+### Release contents
+
+- This is a source-only patch release. It contains no compiled binaries, installer packages, or
+  downloadable artifacts. See [`docs/releases/v0.9.4.md`](docs/releases/v0.9.4.md).
+
 ## 0.9.3 - 2026-10-02
 
 ### Reliability and performance

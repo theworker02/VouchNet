@@ -4,7 +4,10 @@ import { getCurrentActor } from '../../lib/identity';
 import { listModeratorApplications, moderatorRoles } from '../../lib/moderation';
 import { isAdministrator } from '../../lib/telemetry-server';
 
-export const metadata = { title: 'Volunteer moderation administration | VouchNet', robots: { index: false } };
+export const metadata = {
+  title: 'Volunteer moderation administration | VouchNet',
+  robots: { index: false },
+};
 
 export default async function ModeratorAdministrationPage({
   searchParams,
@@ -27,7 +30,9 @@ export default async function ModeratorAdministrationPage({
           assignment and is recorded in the audit ledger.
         </p>
         {updated === 'true' ? <p className="moderation-success">Role decision saved.</p> : null}
-        {error !== undefined ? <p className="form-error">The role decision was not applied: {error}.</p> : null}
+        {error !== undefined ? (
+          <p className="form-error">The role decision was not applied: {error}.</p>
+        ) : null}
         <div className="moderation-admin-list">
           {applications.length === 0 ? <p>No volunteer applications yet.</p> : null}
           {applications.map((application) => (
@@ -42,7 +47,9 @@ export default async function ModeratorAdministrationPage({
                 </time>
               </header>
               <p>{application.motivation}</p>
-              {application.relevantExperience !== null ? <p>{application.relevantExperience}</p> : null}
+              {application.relevantExperience !== null ? (
+                <p>{application.relevantExperience}</p>
+              ) : null}
               <small>Availability: {application.weeklyAvailability}</small>
               {application.status === 'PENDING' ? (
                 <form action={`/api/admin/moderation/applications/${application.id}`} method="post">
@@ -57,7 +64,12 @@ export default async function ModeratorAdministrationPage({
                   <button className="primary-button" name="decision" value="APPROVE" type="submit">
                     Approve and assign
                   </button>
-                  <button className="secondary-button" name="decision" value="DECLINE" type="submit">
+                  <button
+                    className="secondary-button"
+                    name="decision"
+                    value="DECLINE"
+                    type="submit"
+                  >
                     Decline
                   </button>
                 </form>

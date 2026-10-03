@@ -7,9 +7,15 @@ export const metadata = {
 };
 
 const roles = [
-  ['Triage volunteer', 'Acknowledges reports, adds context, and routes urgent concerns for review.'],
+  [
+    'Triage volunteer',
+    'Acknowledges reports, adds context, and routes urgent concerns for review.',
+  ],
   ['Content reviewer', 'Reviews reports and records non-automated moderation outcomes.'],
-  ['Appeals reviewer', 'Reviews documented decisions independently when an appeals workflow is introduced.'],
+  [
+    'Appeals reviewer',
+    'Reviews documented decisions independently when an appeals workflow is introduced.',
+  ],
   ['Community steward', 'Helps uphold clear participation norms and escalates safety concerns.'],
 ] as const;
 
@@ -35,15 +41,21 @@ export default function ModerationPage() {
         <section className="moderation-principles">
           <article>
             <strong>People decide</strong>
-            <span>Reports enter a human queue; automated signals may prioritize, never quietly punish.</span>
+            <span>
+              Reports enter a human queue; automated signals may prioritize, never quietly punish.
+            </span>
           </article>
           <article>
             <strong>Least authority</strong>
-            <span>Roles are assigned by an administrator and can be revoked. Access is auditable.</span>
+            <span>
+              Roles are assigned by an administrator and can be revoked. Access is auditable.
+            </span>
           </article>
           <article>
             <strong>Evidence, not popularity</strong>
-            <span>Reviewer decisions should record policy context, not reward engagement or status.</span>
+            <span>
+              Reviewer decisions should record policy context, not reward engagement or status.
+            </span>
           </article>
         </section>
         <section className="moderation-role-grid">

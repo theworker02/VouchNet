@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { actorFromRequest } from '../../../../lib/identity';
-import { ModerationError, reportStatuses, updateModerationReport } from '../../../../lib/moderation';
+import {
+  ModerationError,
+  reportStatuses,
+  updateModerationReport,
+} from '../../../../lib/moderation';
 import { hasSameOrigin } from '../../../../lib/request-security';
 
 const updateSchema = z
   .object({ status: z.enum(reportStatuses), note: z.string().trim().max(1_200).optional() })
   .strict();
 
-export async function PATCH(
-  request: NextRequest,
-  context: { params: Promise<{ id: string }> },
-) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   if (!hasSameOrigin(request))
     return NextResponse.json({ error: 'CSRF_REJECTED' }, { status: 403 });
   const actor = await actorFromRequest(request);
@@ -19,7 +20,12 @@ export async function PATCH(
   try {
     const id = z.uuid().parse((await context.params).id);
     const input = updateSchema.parse(await request.json());
-    await updateModerationReport({ actorId: actor.userId, reportId: id, ...input, note: input.note || null });
+    await updateModerationReport({
+      actorId: actor.userId,
+      reportId: id,
+      ...input,
+      note: input.note || null,
+    });
     return NextResponse.json({ ok: true }, { headers: { 'cache-control': 'no-store' } });
   } catch (error) {
     const code =

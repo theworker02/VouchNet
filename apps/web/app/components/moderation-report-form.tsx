@@ -31,11 +31,15 @@ export function ModerationReportForm() {
         }),
       });
       if (!response.ok) {
-        setStatus('Your report could not be submitted. Use a VouchNet path and include enough context.');
+        setStatus(
+          'Your report could not be submitted. Use a VouchNet path and include enough context.',
+        );
         return;
       }
       event.currentTarget.reset();
-      setStatus('Report received. A human reviewer will evaluate it; submitting a report does not automatically remove content.');
+      setStatus(
+        'Report received. A human reviewer will evaluate it; submitting a report does not automatically remove content.',
+      );
     } catch {
       setStatus('The network is unavailable. Your report was not submitted. Please try again.');
     } finally {
@@ -47,7 +51,12 @@ export function ModerationReportForm() {
     <form className="moderation-form" onSubmit={submit}>
       <label>
         VouchNet page or content path
-        <input name="subjectPath" pattern="/[^\s]*" placeholder="/vouch/member-name or /feed" required />
+        <input
+          name="subjectPath"
+          pattern="/[^\s]*"
+          placeholder="/vouch/member-name or /feed"
+          required
+        />
       </label>
       <label>
         Concern category

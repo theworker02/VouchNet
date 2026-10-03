@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { actorFromRequest } from '../../lib/identity';
+import { getFeedDiscovery } from '../../lib/feed-discovery';
 import { getFeed, postCategories } from '../../modules/posts/service';
 
 const feedQuerySchema = z.object({
@@ -15,7 +16,11 @@ export async function GET(request: NextRequest) {
       mode: request.nextUrl.searchParams.get('mode') ?? undefined,
       hide: request.nextUrl.searchParams.getAll('hide'),
     });
-    return NextResponse.json({ posts: await getFeed(actor.userId, query.mode, query.hide) });
+    const [posts, discovery] = await Promise.all([
+      getFeed(actor.userId, query.mode, query.hide),
+      getFeedDiscovery(),
+    ]);
+    return NextResponse.json({ posts, discovery });
   } catch {
     return NextResponse.json({ error: 'FEED_UNAVAILABLE' }, { status: 503 });
   }
