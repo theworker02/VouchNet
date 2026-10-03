@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 jobs:
-  dependency-integrity:
+  runtime-dependency-integrity:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,9 +21,10 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-      # Scripts are intentionally disabled for this dependency-only verification pass.
-      - run: pnpm install --frozen-lockfile --ignore-scripts
-      - run: pnpm audit --audit-level=high
+      # This job gates dependencies that can ship with the application. Install scripts remain
+      # disabled because no package lifecycle code needs to run for an audit-only verification.
+      - run: pnpm install --frozen-lockfile --prod --ignore-scripts
+      - run: pnpm audit --prod --audit-level=high
 
   dependency-review:
     if: github.event_name == 'pull_request'

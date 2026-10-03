@@ -80,3 +80,17 @@ product surface must be brought through the same server-only DAL and policy gate
 availability launch. JA3/JA4 TLS fingerprints are intentionally not fabricated at application level:
 they must be evaluated by the CDN/WAF that terminates TLS. Passkeys/WebAuthn and refresh-token
 rotation are not yet implemented; VouchNet currently does not issue browser refresh tokens.
+
+## Dependency security automation
+
+The GitHub Security workflow treats runtime dependencies as a release gate: it installs only the
+lockfile-pinned production dependency graph with lifecycle scripts disabled, then fails on any
+high-or-higher production advisory. CodeQL scans the repository on every protected branch push and
+GitHub Dependency Review evaluates all dependency changes in pull requests.
+
+Development tooling is not silently ignored. In October 2026, the advisory registry reports
+`GHSA-vfj7-8cjw-p6xm` for `braces@3.0.3` through the development-only ESLint chain, but its stated
+patched version (`3.0.4`) is not published to npm. VouchNet does not pin a nonexistent package or
+claim that the advisory is fixed. The development-only install remains script-disabled in CI and is
+covered by pull-request dependency review and CodeQL; the runtime audit remains a blocking release
+gate. Reassess this exception immediately when an upstream patched release becomes available.

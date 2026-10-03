@@ -3,6 +3,22 @@
 All notable changes to VouchNet are documented here. This project follows
 [Semantic Versioning](https://semver.org/).
 
+## 0.9.5 - 2026-10-03
+
+### Security automation
+
+- Repaired the Security workflow’s dependency gate after the registry reported an unpatchable
+  advisory in development-only ESLint tooling. The runtime dependency audit stays strict at high
+  severity while installing production dependencies without lifecycle scripts.
+- CodeQL continues to scan the repository, and GitHub Dependency Review continues to review all
+  dependency changes in pull requests. The workflow no longer misreports an unshippable dev-tool
+  advisory as a production dependency failure.
+
+### Release contents
+
+- This is a source-only patch release. It contains no compiled binaries, installer packages, or
+  downloadable artifacts. See [`docs/releases/v0.9.5.md`](docs/releases/v0.9.5.md).
+
 ## 0.9.4 - 2026-10-03
 
 ### Honest network density
