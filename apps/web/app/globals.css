@@ -118,6 +118,7 @@ a {
 .site-maintenance-banner__dismiss {
   display: grid;
   position: absolute;
+  top: 50%;
   right: max(12px, calc((100vw - 1216px) / 2));
   width: 32px;
   height: 32px;
@@ -129,6 +130,7 @@ a {
   background: transparent;
   box-shadow: none !important;
   cursor: pointer;
+  transform: translateY(-50%);
   transition:
     background-color 120ms ease,
     color 120ms ease;
@@ -383,6 +385,7 @@ a {
   .site-maintenance-banner__dismiss {
     right: 9px;
     top: 8px;
+    transform: none;
   }
   .project-feedback {
     right: 12px;
@@ -9508,6 +9511,34 @@ body {
   color: #687791;
   font-size: 0.84rem;
 }
+.message-log-loading {
+  display: grid;
+  width: min(100%, 430px);
+  gap: 10px;
+  margin: auto 0;
+}
+.message-loading-bubble {
+  width: 68%;
+  height: 52px;
+  border: 1px solid #e2e9f3;
+  border-radius: 13px 13px 13px 3px;
+  background: linear-gradient(105deg, #eef2f8 8%, #f8faff 18%, #eef2f8 33%);
+  background-size: 220% 100%;
+  animation: message-loading-shimmer 1.4s ease-in-out infinite;
+}
+.message-loading-bubble--short {
+  width: 45%;
+}
+.message-loading-bubble--own {
+  width: 56%;
+  justify-self: end;
+  border-radius: 13px 13px 3px;
+}
+@keyframes message-loading-shimmer {
+  to {
+    background-position: -120% 0;
+  }
+}
 .message-bubble {
   max-width: min(82%, 540px);
   padding: 10px 13px;
@@ -9656,6 +9687,11 @@ body {
   .message-first-note {
     color: #a9b8ce;
   }
+  .message-loading-bubble {
+    border-color: #33455f;
+    background: linear-gradient(105deg, #18263b 8%, #263b5a 18%, #18263b 33%);
+    background-size: 220% 100%;
+  }
   .message-bubble {
     border-color: #354967;
     color: #dce7f8;
@@ -9663,6 +9699,12 @@ body {
   }
   .message-composer {
     background: #121d30;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .message-loading-bubble {
+    animation: none;
   }
 }
 

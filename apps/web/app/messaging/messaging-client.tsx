@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import type { ConversationMessage, ConversationSummary, MessageAttachment } from '../lib/messaging';
 
 type Props = { currentUserId: string; initialConversations: ConversationSummary[] };
@@ -20,50 +20,92 @@ export function MessagingClient({ currentUserId, initialConversations }: Props) 
   const [attachmentUrl, setAttachmentUrl] = useState('');
   const [attachmentKind, setAttachmentKind] = useState<MessageAttachment['kind']>('LINK');
   const [status, setStatus] = useState<string | null>(null);
+  const [isLoadingMessages, setIsLoadingMessages] = useState(selectedId !== null);
+  const [isSending, setIsSending] = useState(false);
+  const selectedIdRef = useRef(selectedId);
   const selected = useMemo(
     () => conversations.find((conversation) => conversation.id === selectedId) ?? null,
     [conversations, selectedId],
   );
 
+  function selectConversation(id: string) {
+    if (id === selectedId) return;
+    // Clear before changing recipients so no previous thread can render under the new name.
+    setMessages([]);
+    setStatus(null);
+    setIsLoadingMessages(true);
+    selectedIdRef.current = id;
+    setSelectedId(id);
+  }
+
   useEffect(() => {
-    if (selectedId === null) {
-      return;
-    }
+    if (selectedId === null) return;
+
     const controller = new AbortController();
+    let isCurrentConversation = true;
+    let timedOut = false;
+    const timeoutId = window.setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, 8_000);
     void fetch(`/api/messages/${selectedId}`, { signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) throw new Error('CONVERSATION_UNAVAILABLE');
         return (await response.json()) as { messages: ConversationMessage[] };
       })
       .then((payload) => {
+        if (!isCurrentConversation) return;
+        window.clearTimeout(timeoutId);
         setMessages(payload.messages);
         setStatus(null);
+        setIsLoadingMessages(false);
       })
       .catch(() => {
-        if (!controller.signal.aborted) setStatus('This conversation could not be loaded.');
+        if (!isCurrentConversation) return;
+        window.clearTimeout(timeoutId);
+        if (timedOut) {
+          setStatus('This conversation took too long to load. Select it again to retry.');
+          setIsLoadingMessages(false);
+        } else if (!controller.signal.aborted) {
+          setStatus('This conversation could not be loaded.');
+          setIsLoadingMessages(false);
+        }
       });
-    return () => controller.abort();
+    return () => {
+      isCurrentConversation = false;
+      window.clearTimeout(timeoutId);
+      controller.abort();
+    };
   }, [selectedId]);
 
   async function send(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (selectedId === null || (composer.trim() === '' && attachments.length === 0)) return;
+    if (selectedId === null || isSending || (composer.trim() === '' && attachments.length === 0)) {
+      return;
+    }
+    const conversationId = selectedId;
     const body = composer.trim();
     const pendingAttachments = attachments;
     setComposer('');
     setAttachments([]);
+    setIsSending(true);
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 10_000);
     try {
-      const response = await fetch(`/api/messages/${selectedId}/messages`, {
+      const response = await fetch(`/api/messages/${conversationId}/messages`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ body, attachments: pendingAttachments }),
+        signal: controller.signal,
       });
       if (!response.ok) throw new Error('MESSAGE_SEND_FAILED');
       const payload = (await response.json()) as { message: ConversationMessage };
-      setMessages((current) => [...current, payload.message]);
+      if (selectedIdRef.current === conversationId) {
+        setMessages((current) => [...current, payload.message]);
+      }
       setConversations((current) =>
         current.map((conversation) =>
-          conversation.id === selectedId
+          conversation.id === conversationId
             ? {
                 ...conversation,
                 lastMessage: {
@@ -77,9 +119,14 @@ export function MessagingClient({ currentUserId, initialConversations }: Props) 
       );
       setStatus(null);
     } catch {
-      setComposer(body);
-      setAttachments(pendingAttachments);
+      if (selectedIdRef.current === conversationId) {
+        setComposer(body);
+        setAttachments(pendingAttachments);
+      }
       setStatus('Your message was not sent. Check your connection and try again.');
+    } finally {
+      window.clearTimeout(timeoutId);
+      setIsSending(false);
     }
   }
 
@@ -121,7 +168,7 @@ export function MessagingClient({ currentUserId, initialConversations }: Props) 
                   conversation.id === selectedId ? 'message-thread active-thread' : 'message-thread'
                 }
                 key={conversation.id}
-                onClick={() => setSelectedId(conversation.id)}
+                onClick={() => selectConversation(conversation.id)}
                 type="button"
               >
                 <span className="message-avatar" aria-hidden="true">
@@ -147,7 +194,7 @@ export function MessagingClient({ currentUserId, initialConversations }: Props) 
           </div>
         )}
       </aside>
-      <article className="messaging-thread" aria-live="polite">
+      <article className="messaging-thread">
         {selected === null ? (
           <div className="messaging-thread-empty">
             <h2>Select a conversation</h2>
@@ -162,8 +209,17 @@ export function MessagingClient({ currentUserId, initialConversations }: Props) 
               </div>
               <a href={`/vouch/${selected.counterpart.slug}`}>View profile</a>
             </header>
-            <div className="message-log">
-              {messages.length === 0 ? (
+            <div aria-busy={isLoadingMessages} className="message-log">
+              {isLoadingMessages ? (
+                <div className="message-log-loading" role="status">
+                  <span className="message-loading-bubble" />
+                  <span className="message-loading-bubble message-loading-bubble--short" />
+                  <span className="message-loading-bubble message-loading-bubble--own" />
+                  <span className="sr-only">
+                    Loading conversation with {selected.counterpart.fullName}
+                  </span>
+                </div>
+              ) : messages.length === 0 ? (
                 <p className="message-first-note">Start a useful, respectful conversation.</p>
               ) : (
                 messages.map((message) => (
@@ -222,12 +278,17 @@ export function MessagingClient({ currentUserId, initialConversations }: Props) 
                 ))
               )}
             </div>
-            <form className="message-composer" onSubmit={(event) => void send(event)}>
+            <form
+              aria-busy={isSending}
+              className="message-composer"
+              onSubmit={(event) => void send(event)}
+            >
               <label className="sr-only" htmlFor="message-body">
                 Message {selected.counterpart.fullName}
               </label>
               <textarea
                 id="message-body"
+                disabled={isLoadingMessages || isSending}
                 maxLength={12000}
                 onChange={(event) => setComposer(event.target.value)}
                 placeholder={`Message ${selected.counterpart.fullName}…`}
@@ -237,6 +298,7 @@ export function MessagingClient({ currentUserId, initialConversations }: Props) 
                 <div className="message-attachment-input">
                   <select
                     aria-label="Attachment type"
+                    disabled={isLoadingMessages || isSending}
                     onChange={(event) =>
                       setAttachmentKind(event.target.value as MessageAttachment['kind'])
                     }
@@ -249,12 +311,17 @@ export function MessagingClient({ currentUserId, initialConversations }: Props) 
                   </select>
                   <input
                     aria-label="HTTPS attachment URL"
+                    disabled={isLoadingMessages || isSending}
                     onChange={(event) => setAttachmentUrl(event.target.value)}
                     placeholder="https://…"
                     type="url"
                     value={attachmentUrl}
                   />
-                  <button onClick={addAttachment} type="button">
+                  <button
+                    disabled={isLoadingMessages || isSending}
+                    onClick={addAttachment}
+                    type="button"
+                  >
                     Add
                   </button>
                 </div>
@@ -274,7 +341,15 @@ export function MessagingClient({ currentUserId, initialConversations }: Props) 
                   </div>
                 )}
               </div>
-              <button disabled={composer.trim() === '' && attachments.length === 0}>Send</button>
+              <button
+                disabled={
+                  isLoadingMessages ||
+                  isSending ||
+                  (composer.trim() === '' && attachments.length === 0)
+                }
+              >
+                {isSending ? 'Sending…' : 'Send'}
+              </button>
             </form>
           </>
         )}
