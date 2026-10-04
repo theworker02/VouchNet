@@ -4,3 +4,5 @@ dist
 coverage
 pnpm-lock.yaml
 apps/web/next-env.d.ts
+apps/desktop/src-tauri/target
+apps/desktop/src-tauri/gen

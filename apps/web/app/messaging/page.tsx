@@ -1,13 +1,15 @@
-import { ProductArea } from '../components/product-area';
 import { Shell } from '../components/shell';
-export default function MessagingPage() {
+import { getCurrentActor } from '../lib/identity';
+import { listConversations } from '../lib/messaging';
+import { MessagingClient } from './messaging-client';
+
+export default async function MessagingPage() {
+  const actor = await getCurrentActor();
+  if (actor === null) return null;
+  const conversations = await listConversations(actor.userId);
   return (
     <Shell>
-      <ProductArea
-        eyebrow="Messaging"
-        title="Messages are not available yet."
-        detail="No demonstration conversations are displayed. Conversation persistence, delivery, message permissions, and abuse controls are still missing."
-      />
+      <MessagingClient currentUserId={actor.userId} initialConversations={conversations} />
     </Shell>
   );
 }

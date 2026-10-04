@@ -29,6 +29,7 @@ export default function HomePage() {
         <nav aria-label="Public navigation" className="public-nav-links">
           <Link href="/explore">Explore</Link>
           <Link href="/jobs">Jobs</Link>
+          <Link href="/download">Download</Link>
           <Link href="/developers">Developers</Link>
           <a href="https://github.com/theworker02/VouchNet" rel="noreferrer" target="_blank">
             Repository

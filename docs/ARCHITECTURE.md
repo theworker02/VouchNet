@@ -11,8 +11,23 @@ trees. Its initial PostgreSQL people-search adapter is intentionally behind the 
 contract so it can be replaced later. Public project and directory adapters live in
 `apps/web/app/lib/projects.ts` and `apps/web/app/lib/directory.ts`. This remains a **PARTIAL**
 application architecture: inline SQL adapters still need dedicated repository modules, and
-organization administration, internal applications, messaging, notifications, and MCP runtime
-boundaries do not exist end-to-end.
+organization administration, internal applications, notifications, and MCP runtime boundaries do
+not exist end-to-end. Direct messaging now has an authenticated persistence and delivery boundary;
+its real-time transport and broader group/organization thread support remain future work.
+
+## Web and Desktop clients
+
+VouchNet Web and VouchNet Desktop are clients of the same VouchNet service and account system.
+`apps/desktop` is a Tauri 2/Rust/React shell, not an embedded website. Its browser authorization
+uses an S256 PKCE verifier, a five-minute one-time code, and a fixed `vouchnet://auth/callback`
+deep link. Desktop access/refresh tokens are distinct from `nexus_session`; only their hashes are
+stored in PostgreSQL. Refresh-token rotation invalidates the token family if a previous refresh is
+replayed. The native client stores its refresh credential using the platform credential vault, keeps
+the access credential in memory, and makes service calls from Rust rather than exposing them to
+untrusted web content.
+
+The interactive Experience iframe remains an opaque-origin sandbox and has no Tauri command,
+credential, local-network, filesystem, desktop-token, or parent-application capability.
 
 ## Public directory boundary
 

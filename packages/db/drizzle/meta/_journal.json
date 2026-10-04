@@ -176,6 +176,27 @@
       "when": 1782244800000,
       "tag": "0024_volunteer_moderation",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1791086400000,
+      "tag": "0025_interactive_post_experiences",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1791172800000,
+      "tag": "0026_desktop_messaging_organizations",
+      "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1791259200000,
+      "tag": "0027_desktop_authorization",
+      "breakpoints": true
     }
   ]
 }

@@ -3,6 +3,47 @@
 All notable changes to VouchNet are documented here. This project follows
 [Semantic Versioning](https://semver.org/).
 
+## 0.11.0 - 2026-10-04
+
+### VouchNet Desktop foundation
+
+- Added `apps/desktop`, a Tauri 2 + Rust + React client with its own installed shell, rail
+  navigation, command palette, and feed rendering. It is a client of the existing VouchNet service,
+  not an embedded `vouchnet.dev` browser shortcut.
+- Added desktop PKCE browser authorization at `/desktop/authorize`, one-time authorization codes,
+  rotating refresh-token families with replay revocation, and the `vouchnet://auth/callback` deep
+  link. The desktop refresh credential is stored through Windows Credential Manager via the Rust
+  keyring crate; browser session cookies are never copied to Desktop.
+- Added canonical desktop build branding from the VouchNet mark, including generated Windows icon,
+  taskbar, installer, and package asset sizes. The Windows bundle is configured for NSIS and MSI.
+- Added public download and release pages: `/download`, `/download/windows`, `/releases`, and
+  `/releases/1.0.0`. Download links deliberately remain unavailable until signed installers and
+  checksums are attached to the GitHub release.
+
+### Shared network messaging
+
+- Replaced the messaging placeholder with a direct-message API and responsive conversation surface.
+  Threads require accepted connections and honor either participant's block list.
+- Added persisted conversation membership, messages, safe HTTPS image/link/document/portfolio
+  attachments, unread counts, mute state, and server-derived read receipts. Outgoing messages show
+  two checks, changing color only when the recipient's persisted read position reaches the message.
+- Added organization membership and role persistence as the shared authority model for future
+  employer/organization clients; source-reviewed directory records still do not imply ownership.
+
+### Database migrations
+
+- `0026_desktop_messaging_organizations` adds shared organization membership and private messaging
+  tables.
+- `0027_desktop_authorization` adds the separate device authorization-code, access-token, refresh-
+  token, and family-revocation boundary.
+
+### Release contents and limitations
+
+- This source release contains the Desktop 1.0.0 source and native build configuration, but no
+  signed installer, updater signing key, GitHub Release binary, or public checksum yet. Do not
+  distribute an unsigned local build as the public Desktop release.
+- Apply migrations through `0027` before enabling messages or desktop sign-in in production.
+
 ## 0.10.0 - 2026-10-04
 
 ### VouchNet Experiences
@@ -292,3 +333,4 @@ All notable changes to VouchNet are documented here. This project follows
 [0.9.2]: https://github.com/theworker02/VouchNet/releases/tag/v0.9.2
 [0.9.3]: https://github.com/theworker02/VouchNet/releases/tag/v0.9.3
 [0.10.0]: https://github.com/theworker02/VouchNet/releases/tag/v0.10.0
+[0.11.0]: https://github.com/theworker02/VouchNet/releases/tag/v0.11.0

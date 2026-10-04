@@ -1,0 +1,31 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "VouchNet",
+  "version": "1.0.0",
+  "identifier": "dev.vouchnet.desktop",
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "beforeBuildCommand": "pnpm build",
+    "devUrl": "http://localhost:1420",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      { "title": "VouchNet", "width": 1180, "height": 780, "minWidth": 760, "minHeight": 600 }
+    ],
+    "security": {
+      "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data:; connect-src 'self' https://vouchnet.dev; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis", "msi"],
+    "icon": ["icons/icon.ico", "icons/32x32.png", "icons/128x128.png", "icons/128x128@2x.png"],
+    "windows": {
+      "nsis": { "displayLanguageSelector": false, "installMode": "currentUser" },
+      "wix": { "language": "en-US" }
+    },
+    "createUpdaterArtifacts": false
+  },
+  "plugins": { "deep-link": { "desktop": { "schemes": ["vouchnet"] } } }
+}

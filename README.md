@@ -92,11 +92,15 @@ VouchNet is an active early-stage product. The current vertical slices include:
 - PostgreSQL migrations, Docker-based local PostgreSQL + Redis, and typed API boundaries
 - Redacted client-error telemetry with an administrator-only diagnostic queue
 - Native applications and an Application Radar for reviewed employer-submitted roles
+- Private, connection-gated direct messaging with persisted conversation state, safe HTTPS media/link
+  attachments, and recipient read receipts
+- A native Windows desktop foundation with shared-account PKCE sign-in, Windows Credential Manager
+  refresh storage, deep links, command palette, and a service-backed feed
 
 Incomplete routes intentionally show unavailable states rather than pretend the feature works.
-Messaging, internal job applications, organization administration, full notifications, moderation,
-and the MCP gateway remain in development. Public directory records are expressly not official
-organization pages unless a future domain-verification workflow confirms ownership. See the
+Internal job applications, organization administration, full notifications, moderation, the MCP
+gateway, and the signed desktop installer/updater remain in development. Public directory records
+are expressly not official organization pages unless a future domain-verification workflow confirms ownership. See the
 [implementation matrix](docs/IMPLEMENTATION_MATRIX.md) for authoritative feature-by-feature status.
 
 ## A note on early content
@@ -114,6 +118,7 @@ consent-based invite approach, and launch checks are in the [launch playbook](do
 ```text
 apps/
   web/             Next.js UI, server rendering, and HTTP boundary
+  desktop/         Tauri/Rust/React installed client for the same VouchNet service
   worker/          Future attributable background-work boundary
 packages/
   auth/            Session and identity contracts
@@ -129,7 +134,8 @@ docs/              Architecture, security, privacy, and deployment decisions
 
 The application is a modular Next.js monolith with explicit package boundaries. It stays
 maintainable now while preserving a path to extract services later without coupling domain policy
-to React components.
+to React components. VouchNet Web and VouchNet Desktop are clients of the same account, network,
+and service; Desktop does not introduce another backend or a separate registration flow.
 
 ## Security principles
 
@@ -208,7 +214,7 @@ Before treating a deployment as ready, verify:
 ### Required production migration step
 
 Deploy application code only after the database has received the matching migrations. This release
-includes migrations through `0021`; run `pnpm db:migrate` with the production
+includes migrations through `0027`; run `pnpm db:migrate` with the production
 `DATABASE_URL` available to the migration process. Never place the connection string in Git or a
 client-side environment variable.
 
@@ -259,7 +265,7 @@ than opening public issues. Contributor expectations are in [CONTRIBUTING.md](CO
 
 ## Status
 
-The current source release is [v0.9.1](docs/releases/v0.9.1.md). No binaries are distributed with
+The current source release is [v0.11.0](docs/releases/v0.11.0.md). No signed binaries are distributed with
 this release.
 VouchNet is not yet a production-complete social network; the implementation matrix is the source
 of truth for capability readiness and deliberate scope boundaries.

@@ -1,0 +1,11 @@
+{
+  "name": "@vouchnet/brand",
+  "private": true,
+  "version": "1.0.0",
+  "files": [
+    "logo.svg",
+    "logo-light.svg",
+    "logo-dark.svg",
+    "README.md"
+  ]
+}

@@ -1,0 +1,318 @@
+:root {
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  color: #eaf0fb;
+  background: #101827;
+  font-synthesis: none;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  min-width: 760px;
+}
+.desktop-splash,
+.desktop-welcome {
+  display: grid;
+  min-height: 100vh;
+  place-content: center;
+  text-align: center;
+  background: radial-gradient(circle at 50% 30%, #223c70, #101827 54%);
+}
+.desktop-mark {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 12px;
+  color: white;
+  background: linear-gradient(145deg, #3a78f5, #17419a);
+  font-weight: 900;
+  font-size: 1.4rem;
+}
+.desktop-splash .desktop-mark,
+.desktop-welcome .desktop-mark {
+  width: 72px;
+  height: 72px;
+  margin: auto;
+  border-radius: 22px;
+  font-size: 2.4rem;
+}
+.desktop-splash h1 {
+  margin: 18px 0 4px;
+}
+.desktop-splash p,
+.desktop-welcome p {
+  color: #afbdd5;
+}
+.desktop-welcome {
+  max-width: none;
+  padding: 32px;
+}
+.desktop-welcome h1 {
+  max-width: 540px;
+  margin: 16px auto 8px;
+  font-size: 2.2rem;
+}
+.desktop-welcome p {
+  max-width: 480px;
+  margin: 0 auto 24px;
+  line-height: 1.6;
+}
+.desktop-welcome button {
+  margin: auto;
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 9px;
+  color: #fff;
+  background: #3975ec;
+  font-weight: 800;
+  cursor: pointer;
+}
+.desktop-welcome a {
+  margin-top: 14px;
+  color: #b9ccf7;
+}
+.kicker {
+  margin: 0;
+  color: #83a8f9;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.desktop-app {
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: 76px 218px minmax(0, 1fr);
+  background: #111a2b;
+}
+.desktop-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 9px;
+  border-right: 1px solid #283752;
+  background: #0d1524;
+}
+.desktop-rail .desktop-mark {
+  margin-bottom: 12px;
+}
+.desktop-rail button {
+  display: grid;
+  width: 55px;
+  min-height: 49px;
+  place-items: center;
+  border: 0;
+  border-radius: 10px;
+  color: #9eb0cc;
+  background: transparent;
+  cursor: pointer;
+}
+.desktop-rail button span {
+  font-size: 1.15rem;
+}
+.desktop-rail button small {
+  font-size: 0.6rem;
+}
+.desktop-rail button:hover,
+.desktop-rail button.active {
+  color: #fff;
+  background: #21355a;
+}
+.desktop-rail .desktop-profile {
+  margin-top: auto;
+  color: #fff;
+  background: #6d58d7;
+  font-weight: 800;
+}
+.desktop-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 22px 12px;
+  border-right: 1px solid #283752;
+  background: #151f31;
+}
+.desktop-sidebar header {
+  padding: 0 10px 18px;
+}
+.desktop-sidebar header strong,
+.desktop-sidebar header span {
+  display: block;
+}
+.desktop-sidebar header span {
+  margin-top: 5px;
+  color: #92a4c1;
+  font-size: 0.7rem;
+}
+.desktop-sidebar > button {
+  padding: 10px;
+  border: 0;
+  border-radius: 7px;
+  color: #aebcd3;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.desktop-sidebar > button:hover,
+.desktop-sidebar > button.selected {
+  color: #fff;
+  background: #253b61;
+}
+.desktop-sidebar .create-button {
+  margin-top: 12px;
+  color: #9bc0ff;
+  border: 1px solid #3865ad;
+}
+.desktop-main {
+  min-width: 0;
+  padding: 30px max(30px, 6vw);
+  background: #101827;
+}
+.desktop-main-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+.desktop-main-header h1 {
+  margin: 5px 0 30px;
+  font-size: 1.75rem;
+  letter-spacing: -0.04em;
+}
+.desktop-main-header button {
+  padding: 9px 12px;
+  border: 1px solid #344663;
+  border-radius: 8px;
+  color: #9eb1d0;
+  background: #18243a;
+}
+.desktop-main-header kbd {
+  margin-left: 8px;
+  padding: 2px 5px;
+  border: 1px solid #465a7b;
+  border-radius: 4px;
+  color: #cbd8ee;
+}
+.desktop-composer {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  padding: 17px;
+  border: 1px solid #31435f;
+  border-radius: 12px;
+  color: #a8b7d1;
+  background: #172239;
+  text-align: left;
+  cursor: pointer;
+}
+.desktop-composer span {
+  color: #75a4ff;
+  font-size: 0.72rem;
+}
+.desktop-feed {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+.desktop-feed article {
+  padding: 17px;
+  border: 1px solid #2c3c57;
+  border-radius: 12px;
+  background: #172238;
+  box-shadow: 0 8px 22px rgb(0 0 0 / 12%);
+}
+.desktop-feed article header {
+  display: flex;
+  gap: 10px;
+}
+.post-avatar {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 10px;
+  background: #416de0;
+  font-weight: 800;
+}
+.desktop-feed article strong,
+.desktop-feed article small {
+  display: block;
+}
+.desktop-feed article small {
+  margin-top: 3px;
+  color: #91a3be;
+  font-size: 0.7rem;
+}
+.desktop-feed article > p {
+  white-space: pre-wrap;
+  line-height: 1.55;
+}
+.desktop-feed footer {
+  display: flex;
+  gap: 14px;
+  color: #93a7c7;
+  font-size: 0.72rem;
+}
+.desktop-feed a,
+.desktop-route a {
+  color: #8fb4ff;
+}
+.desktop-empty,
+.desktop-route {
+  padding: 35px;
+  border: 1px dashed #405372;
+  border-radius: 12px;
+  color: #a8b7d1;
+}
+.command-backdrop {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: start center;
+  padding-top: 14vh;
+  background: rgb(1 8 18 / 58%);
+}
+.command-palette {
+  width: min(580px, 90vw);
+  padding: 12px;
+  border: 1px solid #435a82;
+  border-radius: 12px;
+  background: #17243a;
+  box-shadow: 0 18px 50px rgb(0 0 0 / 48%);
+}
+.command-palette input {
+  width: 100%;
+  padding: 12px;
+  border: 0;
+  border-bottom: 1px solid #364c71;
+  color: #fff;
+  background: transparent;
+  font-size: 0.94rem;
+  outline: 0;
+}
+.command-palette p {
+  padding: 0 8px;
+  color: #8fa2c1;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+.command-palette button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  border: 0;
+  border-radius: 7px;
+  color: #eaf0fb;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.command-palette button:hover {
+  background: #2a4169;
+}
