@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
 import { VerifiedWorkBadge } from './components/verified-work-badge';
 import { ButtonLink } from './components/ui/button';
 import { useMotionPreference } from './lib/motion';
@@ -15,6 +16,64 @@ function reveal(reducedMotion: boolean, delay = 0) {
     viewport: { once: true, amount: 0.18 },
     transition: { duration: 0.48, delay, ease: [0.16, 1, 0.3, 1] as const },
   };
+}
+
+function PublicNavigationMenu() {
+  const [isOpen, setIsOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const closeMenu = (event: PointerEvent) => {
+      if (event.target instanceof Node && !menuRef.current?.contains(event.target))
+        setIsOpen(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsOpen(false);
+    };
+    window.addEventListener('pointerdown', closeMenu);
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      window.removeEventListener('pointerdown', closeMenu);
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [isOpen]);
+
+  return (
+    <div className="public-nav-more" ref={menuRef}>
+      <button
+        aria-controls="public-navigation-menu"
+        aria-expanded={isOpen}
+        aria-label={isOpen ? 'Close public navigation' : 'Open public navigation'}
+        type="button"
+        onClick={() => setIsOpen((open) => !open)}
+      >
+        <span>Explore</span>
+        <svg aria-hidden="true" fill="none" viewBox="0 0 16 16">
+          <path d="m4 6 4 4 4-4" />
+        </svg>
+      </button>
+      {isOpen ? (
+        <nav aria-label="Public navigation menu" id="public-navigation-menu">
+          <Link href="/explore" onClick={() => setIsOpen(false)}>
+            Explore people
+          </Link>
+          <Link href="/jobs" onClick={() => setIsOpen(false)}>
+            Jobs
+          </Link>
+          <Link href="/download" onClick={() => setIsOpen(false)}>
+            Desktop
+          </Link>
+          <Link href="/developers" onClick={() => setIsOpen(false)}>
+            Developers
+          </Link>
+          <a href="https://github.com/theworker02/VouchNet" rel="noreferrer" target="_blank">
+            Repository <span aria-hidden="true">↗</span>
+          </a>
+        </nav>
+      ) : null}
+    </div>
+  );
 }
 
 export default function HomePage() {
@@ -35,6 +94,7 @@ export default function HomePage() {
             Repository
           </a>
         </nav>
+        <PublicNavigationMenu />
         <div className="public-nav-actions">
           <Link className="public-nav-signin" href="/login">
             Sign in

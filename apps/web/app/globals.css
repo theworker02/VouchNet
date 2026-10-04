@@ -7406,6 +7406,7 @@ body {
 }
 
 .public-nav--refined {
+  position: relative;
   min-height: 76px;
   border-bottom: 1px solid #e5eaf3;
 }
@@ -7438,6 +7439,80 @@ body {
 .public-nav-actions {
   gap: 15px;
   margin-left: 26px;
+}
+
+.public-nav-more {
+  position: relative;
+  display: none;
+  margin-left: auto;
+}
+
+.public-nav-more > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 34px;
+  padding: 0 9px;
+  border: 1px solid #d7e0ee;
+  border-radius: 8px;
+  color: #435474;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 760;
+}
+
+.public-nav-more > button svg {
+  width: 13px;
+  height: 13px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+  transition: transform 160ms ease;
+}
+
+.public-nav-more > button[aria-expanded='true'] {
+  border-color: #9db7e8;
+  color: #244fbb;
+  background: #f7faff;
+}
+
+.public-nav-more > button[aria-expanded='true'] svg {
+  transform: rotate(180deg);
+}
+
+.public-nav-more nav {
+  position: absolute;
+  z-index: 30;
+  top: calc(100% + 8px);
+  right: 0;
+  display: grid;
+  min-width: 190px;
+  padding: 6px;
+  border: 1px solid #cad7ed;
+  border-radius: 11px;
+  background: rgb(255 255 255 / 0.98);
+  box-shadow: 0 18px 35px rgb(26 50 98 / 0.16);
+}
+
+.public-nav-more nav a {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 36px;
+  padding: 0 9px;
+  border-radius: 7px;
+  color: #41516f;
+  font-size: 0.76rem;
+  font-weight: 680;
+  text-decoration: none;
+}
+
+.public-nav-more nav a:hover,
+.public-nav-more nav a:focus-visible {
+  color: #1e4caa;
+  background: #edf3ff;
 }
 
 .landing-hero--refined {
@@ -7965,6 +8040,34 @@ body {
     color: #aebbd1;
   }
 
+  .public-nav-more > button {
+    border-color: #405172;
+    color: #cfdaef;
+    background: #172238;
+  }
+
+  .public-nav-more > button[aria-expanded='true'] {
+    border-color: #668bd4;
+    color: #cddcff;
+    background: #203150;
+  }
+
+  .public-nav-more nav {
+    border-color: #405172;
+    background: rgb(23 34 56 / 0.99);
+    box-shadow: 0 18px 35px rgb(0 0 0 / 0.34);
+  }
+
+  .public-nav-more nav a {
+    color: #c6d2e9;
+  }
+
+  .public-nav-more nav a:hover,
+  .public-nav-more nav a:focus-visible {
+    color: #dce7ff;
+    background: #263a60;
+  }
+
   .landing-copy--refined h1,
   .landing-directives h2,
   .landing-close--refined h2 {
@@ -8073,6 +8176,10 @@ body {
     display: none;
   }
 
+  .public-nav-more {
+    display: block;
+  }
+
   .landing-hero--refined {
     grid-template-columns: minmax(0, 1fr);
     gap: 58px;
@@ -8106,6 +8213,12 @@ body {
   .public-nav-actions {
     gap: 9px;
     margin-left: auto;
+  }
+
+  .public-nav-more > button {
+    min-height: 32px;
+    padding: 0 8px;
+    font-size: 0.7rem;
   }
 
   .public-nav-signin {

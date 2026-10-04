@@ -3,6 +3,18 @@
 All notable changes to VouchNet are documented here. This project follows
 [Semantic Versioning](https://semver.org/).
 
+## 1.3.0 - 2026-10-04
+
+### Public surface and release continuity
+
+- Added an accessible compact navigation menu for the public landing page, preserving direct access
+  to Explore, Jobs, Desktop, Developers, and the repository below the desktop navigation breakpoint.
+- Added a versioned public release page at `/releases/1.3.0` and updated the release index so the
+  website describes the current source release instead of presenting Desktop 1.0.0 as the latest
+  platform release.
+- Kept availability truthful: v1.3.0 is source-only and does not imply that a signed Windows
+  installer or updater has been published.
+
 ## 0.11.1 - 2026-10-04
 
 ### Public preview polish

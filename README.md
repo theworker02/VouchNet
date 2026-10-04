@@ -276,7 +276,7 @@ than opening public issues. Contributor expectations are in [CONTRIBUTING.md](CO
 
 ## Status
 
-The current source release is [v0.11.1](docs/releases/v0.11.1.md). No signed binaries are distributed with
+The current source release is [v1.3.0](docs/releases/v1.3.0.md). No signed binaries are distributed with
 this release.
 VouchNet is not yet a production-complete social network; the implementation matrix is the source
 of truth for capability readiness and deliberate scope boundaries.
