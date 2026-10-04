@@ -1377,22 +1377,22 @@ a {
 }
 .primary,
 .secondary,
-button {
+button:not([class]) {
   padding: 9px 14px;
-  border-radius: 7px;
+  border-radius: 12px;
   font: inherit;
   font-weight: 700;
   text-decoration: none;
   cursor: pointer;
 }
 .primary,
-button {
+button:not([class]) {
   color: white;
   background: var(--accent);
   border: 1px solid var(--accent);
 }
 .primary:hover,
-button:hover {
+button:not([class]):hover {
   background: var(--accent-strong);
   border-color: var(--accent-strong);
 }
@@ -5335,17 +5335,17 @@ summary:focus-visible {
 
 .primary,
 .secondary,
-button {
+button:not([class]) {
   min-height: 38px;
   padding: 9px 14px;
-  border-radius: 8px;
+  border-radius: var(--control-radius);
   font-size: 0.84rem;
   font-weight: 750;
   letter-spacing: -0.01em;
 }
 
 .primary,
-button {
+button:not([class]) {
   box-shadow: 0 5px 12px rgb(46 91 215 / 0.17);
 }
 
@@ -7107,7 +7107,7 @@ button {
   --control-height-sm: 34px;
   --control-height-md: 40px;
   --control-height-lg: 46px;
-  --control-radius: 9px;
+  --control-radius: 12px;
   --control-padding-sm: 12px;
   --control-padding-md: 16px;
   --control-padding-lg: 19px;
@@ -8813,6 +8813,65 @@ body {
     border-color: #435a84;
     color: #d5e2ff;
     background: linear-gradient(145deg, #24375b, #1b2a46);
+  }
+
+  /* The signed-in home uses the same depth ladder as messaging and settings rather than a
+     light-only card treatment. This keeps the primary workspace legible in system dark mode. */
+  .member-card,
+  .sidebar-links,
+  .rail-card,
+  .feed-empty,
+  .post-composer,
+  .post-card,
+  .feed-toolbar {
+    border-color: #34445f;
+    box-shadow:
+      0 1px 2px rgb(0 0 0 / 0.18),
+      0 12px 28px rgb(0 0 0 / 0.13);
+  }
+
+  .home-intro {
+    border-top-color: #7e9eea;
+    background:
+      radial-gradient(circle at 93% 8%, rgb(102 139 233 / 0.2), transparent 17rem),
+      linear-gradient(135deg, #1c2941, #151e31);
+    box-shadow:
+      0 1px 2px rgb(0 0 0 / 0.18),
+      0 12px 28px rgb(0 0 0 / 0.13);
+  }
+
+  .home-intro h1,
+  .rail-card h2 {
+    color: #f1f5ff;
+  }
+
+  .sidebar-links a {
+    color: #c4d2ec;
+  }
+
+  .sidebar-links a:hover {
+    color: #d8e4ff;
+  }
+
+  .home-intro-topline > span {
+    border-color: #2f7059;
+    color: #9be2bc;
+    background: #16382e;
+  }
+
+  .rail-card a {
+    color: #c5d6ff;
+    background: #1d3157;
+  }
+
+  .rail-card a:hover {
+    color: #eef4ff;
+    background: #294673;
+  }
+
+  .rail-principle {
+    border-color: #334d7a;
+    background: #172842;
   }
 }
 

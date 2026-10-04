@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { classNames } from '@nexus/ui';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'quiet';
 export type ButtonSize = 'sm' | 'md' | 'lg';
@@ -10,17 +11,13 @@ type ButtonStyleOptions = {
   variant?: ButtonVariant | undefined;
 };
 
-function joinClasses(...classes: Array<string | undefined>): string {
-  return classes.filter(Boolean).join(' ');
-}
-
 /** Shared control measurements keep actions consistent across public and authenticated surfaces. */
 export function buttonClassName({
   className,
   size = 'md',
   variant = 'primary',
 }: ButtonStyleOptions = {}): string {
-  return joinClasses('vn-button', `vn-button--${variant}`, `vn-button--${size}`, className);
+  return classNames('vn-button', `vn-button--${variant}`, `vn-button--${size}`, className);
 }
 
 export function ButtonLink({

@@ -5,6 +5,7 @@ import { getNetworkOverview } from '../lib/social';
 import { listHiringOrganizations, listPublicJobs } from '../lib/directory';
 import { FeedClient } from '../modules/posts/feed-client';
 import { HomeProfileCard } from '../components/home-profile-card';
+import { ButtonLink } from '../components/ui/button';
 export default function Home() {
   return <HomeContent />;
 }
@@ -52,12 +53,10 @@ async function HomeContent() {
               context, not constant noise.
             </p>
             <div className="actions">
-              <Link className="primary" href="/onboarding">
-                Finish your profile
-              </Link>
-              <Link className="secondary" href="/network/discover">
+              <ButtonLink href="/onboarding">Finish your profile</ButtonLink>
+              <ButtonLink href="/network/discover" variant="secondary">
                 Discover people
-              </Link>
+              </ButtonLink>
             </div>
           </section>
           <FeedClient />
