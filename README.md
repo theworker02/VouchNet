@@ -18,6 +18,17 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-2ea44f?style=flat-square" alt="MIT License" /></a>
 </p>
 
+## Screenshots
+
+<p align="center">
+  <img src="docs/assets/screenshots/landing-desktop.jpg" alt="VouchNet landing page on desktop, showing the professional identity workspace preview" width="100%" />
+</p>
+
+<p align="center">
+  <img src="docs/assets/screenshots/landing-mobile.jpg" alt="VouchNet responsive landing page on a narrow viewport" width="32%" />
+  <img src="docs/assets/screenshots/sign-in.jpg" alt="VouchNet sign-in page with email and provider authentication options" width="64%" />
+</p>
+
 ## Purpose
 
 VouchNet is an independent professional network designed around one durable rule:
@@ -265,7 +276,7 @@ than opening public issues. Contributor expectations are in [CONTRIBUTING.md](CO
 
 ## Status
 
-The current source release is [v0.11.0](docs/releases/v0.11.0.md). No signed binaries are distributed with
+The current source release is [v0.11.1](docs/releases/v0.11.1.md). No signed binaries are distributed with
 this release.
 VouchNet is not yet a production-complete social network; the implementation matrix is the source
 of truth for capability readiness and deliberate scope boundaries.

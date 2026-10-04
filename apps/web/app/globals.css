@@ -386,8 +386,8 @@ a {
   }
   .project-feedback {
     right: 12px;
-    bottom: calc(72px + env(safe-area-inset-bottom));
-    width: min(248px, calc(100vw - 24px));
+    bottom: calc(14px + env(safe-area-inset-bottom));
+    width: auto;
   }
 }
 
@@ -7448,12 +7448,12 @@ body {
 }
 
 .landing-copy--refined h1 {
-  max-width: 650px;
+  max-width: 690px;
   margin: 13px 0 20px;
   color: #14264b;
-  font-size: clamp(3.8rem, 7.1vw, 6.7rem);
-  letter-spacing: -0.082em;
-  line-height: 0.88;
+  font-size: clamp(3.6rem, 5.7vw, 5.85rem);
+  letter-spacing: -0.07em;
+  line-height: 0.93;
 }
 
 .landing-copy--refined h1 em {

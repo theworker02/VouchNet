@@ -3,6 +3,22 @@
 All notable changes to VouchNet are documented here. This project follows
 [Semantic Versioning](https://semver.org/).
 
+## 0.11.1 - 2026-10-04
+
+### Public preview polish
+
+- Added current desktop, mobile, and sign-in screenshots to the README so prospective contributors
+  can inspect the product surface directly from GitHub.
+- Rebalanced the landing-page hero typography against the workspace preview and kept the compact
+  feedback action anchored safely on narrow, mobile viewports.
+- Disabled the local Next.js development inspector so it cannot overlap VouchNet's interface during
+  product review or screenshot capture.
+
+### Release contents
+
+- This is a source-only release. It includes no database migration, signed Desktop installer,
+  updater artifact, or binary download.
+
 ## 0.11.0 - 2026-10-04
 
 ### VouchNet Desktop foundation

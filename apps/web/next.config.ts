@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   // Do not publish server or browser source maps with production deploys.
   // This limits deployment metadata exposure; it does not make public source secret.
   productionBrowserSourceMaps: false,
+  // The local Next.js inspector is useful to developers but should not overlap VouchNet's UI
+  // during product reviews or screenshots.
+  devIndicators: false,
   experimental: {
     serverSourceMaps: false,
   },
