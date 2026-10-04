@@ -64,6 +64,26 @@ used to report a suspected account, authorization, credential, or data-exposure 
 
 All future writes are required to authenticate, authorize, validate input, rate limit, evaluate trust as applicable, and audit sensitive decisions. This baseline does not claim that later feature-specific controls are already implemented.
 
+## Interactive Experiences
+
+An Experience may contain untrusted HTML, CSS, and JavaScript, but that code is not part of the VouchNet
+application origin. Runtime 1.0 is a zero-capability sandbox: the iframe receives only `allow-scripts`,
+has an opaque origin, and its generated document sets `connect-src 'none'`. It cannot read VouchNet
+cookies or local storage, inspect the parent DOM, use the VouchNet APIs, submit forms, open popups, start
+workers, fetch external resources, navigate the host, download files, or access device permissions.
+The host currently has no `postMessage` listener for Experience commands. Future capabilities must use
+versioned, schema-validated RPC with per-operation authorization and rate limits; adding an SDK must not
+weaken this boundary. Source size and manifest values are bounded at the API boundary. Disabled
+Experiences render a non-executing notice while retaining their ordinary post for moderation evidence.
+
+## VouchNet Labs local benchmark
+
+Labs includes an opt-in browser-only diagnostic for a single explicit loopback URL and an optional local
+Ollama inference. The client rejects remote hosts and credential-bearing URLs, makes no server-side or
+proxied request, does not enumerate hosts or ports, imposes a 12-second request budget, and does not
+persist the endpoint, prompt, result, or timing. It is not an external endpoint scanner and does not grant
+new account privileges. Local runtimes must independently permit the VouchNet browser origin with CORS.
+
 ## Current controls and limits
 
 - Passwords use Argon2id and sessions are opaque, 256-bit random, hashed server-side, idle-expiring,

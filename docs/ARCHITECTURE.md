@@ -24,6 +24,21 @@ numeric salary range. No job application data is collected by VouchNet in this i
 
 No browser assertion establishes authorization. Future write endpoints must authenticate, validate with Zod, rate-limit, evaluate trust, authorize server-side, and emit an audit event where sensitive.
 
+## VouchNet Experiences runtime
+
+Interactive posts are persisted as a typed `INTERACTIVE` post plus a bounded JSON Experience payload.
+Their authored HTML, CSS, and JavaScript are never injected into VouchNet's DOM. The feed renders each
+active Experience through an iframe with `sandbox="allow-scripts"`, which creates an opaque origin and
+does not grant same-origin, form, popup, download, navigation, or parent-document access. The generated
+document adds a second restrictive CSP (`default-src 'none'`, `connect-src 'none'`, no forms, workers,
+media, or objects). The first runtime has no SDK/RPC bridge, external networking, persistent state, or
+VouchNet capability grants. `interactive_status=DISABLED` prevents execution without deleting the post,
+allowing human review to preserve context.
+
+The `VouchNet Labs` Easter egg is a browser-local presentation preference unlocked by typing `vouch`
+outside form controls. It exposes only local experimental display toggles; it never conveys identity,
+authorization, moderation, billing, or developer-platform privileges.
+
 ## State and deletion
 
 Foundation audit/trust/rate-limit records are append-oriented and are not soft-deleted. They carry minimal identifiers and metadata, never secrets or message bodies. Identity and social tables will document their own retention/deletion choices when introduced.

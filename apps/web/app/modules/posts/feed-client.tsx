@@ -5,6 +5,7 @@ import { FocusEvent, FormEvent, KeyboardEvent, useEffect, useId, useMemo, useSta
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import { EmeraldVouchBadge, ProofOfWorkBadge, SignalPulseIcon } from '../../components/symbols';
 import { ReactionBar } from '../../components/feed/reaction-bar';
+import { InteractivePostFrame } from '../../components/experiences/interactive-post-frame';
 import { InteractiveCard } from '../../components/motion/interactive-card';
 import type { FeedDiscovery } from '../../lib/feed-discovery-model';
 import { useMotionPreference } from '../../lib/motion';
@@ -90,6 +91,16 @@ function PostCard({
         </div>
       </header>
       <MarkdownBody body={post.bodyMarkdown} />
+      {post.postType === 'INTERACTIVE' &&
+      post.interactiveContent !== null &&
+      post.interactiveStatus === 'ACTIVE' ? (
+        <InteractivePostFrame content={post.interactiveContent} />
+      ) : null}
+      {post.postType === 'INTERACTIVE' && post.interactiveStatus === 'DISABLED' ? (
+        <p className="experience-disabled" role="status">
+          This Experience has been disabled while the surrounding post remains available.
+        </p>
+      ) : null}
       {post.codeSnippets.map((snippet, index) => (
         <pre className="post-code" key={`${snippet.language}-${index}`}>
           <code data-language={snippet.language}>{snippet.code}</code>
@@ -472,6 +483,9 @@ export function FeedClient() {
             </AnimatePresence>
           </div>
           <span className="composer-note">Markdown supported</span>
+          <Link className="composer-experience-link" href="/feed/create">
+            Create Experience
+          </Link>
           <button disabled={isSubmitting}>{isSubmitting ? 'Publishing…' : 'Publish'}</button>
         </div>
       </motion.form>

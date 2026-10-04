@@ -3,6 +3,43 @@
 All notable changes to VouchNet are documented here. This project follows
 [Semantic Versioning](https://semver.org/).
 
+## 0.10.0 - 2026-10-04
+
+### VouchNet Experiences
+
+- Added the first interactive-post runtime. Authors can publish bounded HTML, CSS, and JavaScript
+  Experiences from `/feed/create`, beginning with the `Open to connect` template.
+- Experiences execute only inside a restrictive opaque-origin iframe sandbox. Runtime 1.0 has no
+  network access, VouchNet API bridge, persistent data access, forms, popups, downloads, or parent
+  document access.
+- Added a per-post runtime disable state so interactive code can be stopped while its ordinary post
+  remains available for human review and context.
+
+### VouchNet Labs
+
+- Added a browser-local Labs Easter egg, enabled by typing `vouch` outside a form field. Labs
+  provides optional compact-feed and runtime-boundary display preferences without conveying any
+  server-side authority.
+- Added a deliberately narrow local runtime benchmark. It only accepts one explicit loopback URL,
+  blocks remote hosts and redirects, never proxies through VouchNet, and supports one optional
+  short Ollama inference when the local runtime permits browser CORS.
+
+### UI and quality
+
+- Polished Experience frame hierarchy, editor focus treatment, responsive composer layout, Labs
+  controls, benchmark result states, and mobile behavior.
+- Added runtime-manifest and loopback-address regression tests.
+
+### Database migrations
+
+- `0025_interactive_post_experiences` adds post type, validated interactive content storage, an
+  execution kill state, and an index for active interactive content.
+
+### Release contents
+
+- This is a source-only feature release. It contains no compiled binaries, installers, or attached
+  artifacts. See [`docs/releases/v0.10.0.md`](docs/releases/v0.10.0.md).
+
 ## 0.9.5 - 2026-10-03
 
 ### Security automation
@@ -254,3 +291,4 @@ All notable changes to VouchNet are documented here. This project follows
 [0.9.1]: https://github.com/theworker02/VouchNet/releases/tag/v0.9.1
 [0.9.2]: https://github.com/theworker02/VouchNet/releases/tag/v0.9.2
 [0.9.3]: https://github.com/theworker02/VouchNet/releases/tag/v0.9.3
+[0.10.0]: https://github.com/theworker02/VouchNet/releases/tag/v0.10.0

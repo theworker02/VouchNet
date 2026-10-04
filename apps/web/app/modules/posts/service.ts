@@ -2,6 +2,7 @@ import 'server-only';
 import { createSqlClient } from '@nexus/db';
 import { getUserSettings } from '../../lib/settings';
 import { hasVouchNetPlus } from '../../lib/subscription';
+import type { InteractivePostContent } from '../experiences/model';
 
 export const postCategories = ['TECHNICAL', 'PROJECT', 'HIRING', 'STATUS', 'OPINION'] as const;
 export type PostCategory = (typeof postCategories)[number];
@@ -18,6 +19,8 @@ export const reactionTypes = [
   'BENCHMARK',
 ] as const;
 export type ReactionType = (typeof reactionTypes)[number];
+export const postTypes = ['TEXT', 'IMAGE', 'VIDEO', 'DOCUMENT', 'INTERACTIVE'] as const;
+export type PostType = (typeof postTypes)[number];
 
 export interface CodeSnippet {
   language: string;
@@ -31,6 +34,8 @@ export interface CreatePostInput {
   visibility: PostVisibility;
   quotePostId?: string | undefined;
   mentionedUserIds: string[];
+  postType: PostType;
+  interactiveContent?: InteractivePostContent | undefined;
 }
 export interface FeedPost {
   id: string;
@@ -49,6 +54,9 @@ export interface FeedPost {
   commentCount: number;
   viewerReaction: ReactionType | null;
   isPlusAuthor: boolean;
+  postType: PostType;
+  interactiveContent: InteractivePostContent | null;
+  interactiveStatus: 'ACTIVE' | 'DISABLED';
 }
 
 function sql() {
@@ -65,8 +73,8 @@ export async function createPost(
   try {
     return await client.begin(async (transaction) => {
       const posts = await transaction<{ id: string }[]>`
-        INSERT INTO posts (author_id,body_markdown,code_snippets,media_urls,feed_category,visibility,quote_post_id,published_at)
-        VALUES (${authorId},${input.bodyMarkdown},${JSON.stringify(input.codeSnippets)}::jsonb,${JSON.stringify(input.mediaUrls)}::jsonb,${input.category},${input.visibility},${input.quotePostId ?? null},now())
+        INSERT INTO posts (author_id,body_markdown,code_snippets,media_urls,feed_category,visibility,quote_post_id,post_type,interactive_content,published_at)
+        VALUES (${authorId},${input.bodyMarkdown},${JSON.stringify(input.codeSnippets)}::jsonb,${JSON.stringify(input.mediaUrls)}::jsonb,${input.category},${input.visibility},${input.quotePostId ?? null},${input.postType},${input.interactiveContent === undefined ? null : JSON.stringify(input.interactiveContent)}::jsonb,now())
         RETURNING id
       `;
       const post = posts[0];
@@ -107,7 +115,7 @@ export async function getFeed(
     ]);
     const mutedTerms = isPlus ? settings.preferences.feedMuteKeywords : [];
     const rows = await client<FeedPost[]>`
-      SELECT p.id,p.author_id AS "authorId",concat(pr.first_name,' ',pr.last_name) AS "authorName",pr.slug AS "authorSlug",pr.headline AS "authorHeadline",p.body_markdown AS "bodyMarkdown",p.code_snippets AS "codeSnippets",p.media_urls AS "mediaUrls",p.feed_category AS category,p.visibility,p.created_at AS "createdAt",
+      SELECT p.id,p.author_id AS "authorId",concat(pr.first_name,' ',pr.last_name) AS "authorName",pr.slug AS "authorSlug",pr.headline AS "authorHeadline",p.body_markdown AS "bodyMarkdown",p.code_snippets AS "codeSnippets",p.media_urls AS "mediaUrls",p.feed_category AS category,p.visibility,p.created_at AS "createdAt",p.post_type AS "postType",p.interactive_content AS "interactiveContent",p.interactive_status AS "interactiveStatus",
         EXISTS (SELECT 1 FROM user_subscriptions us WHERE us.user_id=p.author_id AND us.tier='PLUS' AND us.status='ACTIVE' AND (us.current_period_ends_at IS NULL OR us.current_period_ends_at>now())) AS "isPlusAuthor",
         COALESCE((SELECT sum(CASE r.reaction_type WHEN 'VERIFY' THEN 4 WHEN 'BENCHMARK' THEN 3 WHEN 'INSIGHTFUL' THEN 2 ELSE 1 END)::int FROM post_reactions r JOIN connections c ON c.state='ACCEPTED' AND ((c.requester_id=r.user_id AND c.recipient_id=p.author_id) OR (c.recipient_id=r.user_id AND c.requester_id=p.author_id)) WHERE r.post_id=p.id),0) AS "peerSignal",
         (SELECT count(*)::int FROM post_comments pc WHERE pc.post_id=p.id AND pc.deleted_at IS NULL) AS "commentCount",

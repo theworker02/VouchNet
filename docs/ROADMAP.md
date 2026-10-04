@@ -61,6 +61,20 @@ email delivery, and E2E coverage remain incomplete. The matrix in
 - Public roles now have SEO-ready, shareable detail pages at `/jobs/[slug]`; VouchNet preserves
   the source organization as application authority and links out rather than simulating an ATS.
 
+## In progress: VouchNet Experiences
+
+- Migration `0025_interactive_post_experiences` adds typed interactive post payloads and a runtime
+  kill state. It must be applied before interactive publishing can be used in a deployed database.
+- Runtime 1.0 supports authored HTML/CSS/JavaScript and live previews only in an opaque-origin,
+  no-network, no-capability iframe sandbox. It is intentionally not a general browser extension,
+  form platform, storage platform, or social-action API.
+- `/feed/create` provides a source composer and the first `Open to connect` template. The later
+  visual builder, templates, viewer-private/shared state, controlled forms, analytics, RPC
+  capabilities, and approved-domain networking remain future phases pending security review.
+- Typing `vouch` outside a text field enables VouchNet Labs on that browser. Labs includes only
+  local presentation experiments and an explicit-loopback local runtime benchmark; it is not an
+  authorization, developer-client, or network-scanning backdoor.
+
 ## In progress: internal diagnostic telemetry
 
 - Migration `0019_error_telemetry` adds a restricted PostgreSQL queue for redacted browser error

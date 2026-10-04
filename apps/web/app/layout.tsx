@@ -6,6 +6,7 @@ import { ProjectFeedback } from './components/project-feedback';
 import { PageTransition } from './components/motion/page-transition';
 import { ClientErrorCapture } from './components/telemetry/client-error-capture';
 import { ComponentDiagnosticBoundary } from './components/telemetry/error-boundary';
+import { DeveloperModeListener } from './components/developer-mode';
 import './globals.css';
 
 const siteUrl = new URL(process.env.APP_URL?.trim() || 'https://vouchnet.dev');
@@ -76,6 +77,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       <body>
         <SiteMaintenanceBanner />
         <ProjectFeedback />
+        <DeveloperModeListener />
         <ClientErrorCapture />
         <ComponentDiagnosticBoundary>
           <PageTransition>{children}</PageTransition>

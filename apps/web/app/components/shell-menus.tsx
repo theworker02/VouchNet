@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useMotionPreference } from '../lib/motion';
+import { developerModeEvent, isDeveloperModeEnabled } from './developer-mode';
 
 type ShellMenuProps = {
   children: ReactNode;
@@ -81,6 +82,15 @@ export function AccountMenu({
   initials: string;
   profileSlug: string | null;
 }) {
+  const [labsEnabled, setLabsEnabled] = useState(false);
+  useEffect(() => {
+    function refresh() {
+      setLabsEnabled(isDeveloperModeEnabled());
+    }
+    refresh();
+    window.addEventListener(developerModeEvent, refresh);
+    return () => window.removeEventListener(developerModeEvent, refresh);
+  }, []);
   return (
     <ShellMenu
       label="Account menu"
@@ -110,6 +120,11 @@ export function AccountMenu({
         <Link href="/settings/account" role="menuitem">
           Display &amp; language
         </Link>
+        {labsEnabled ? (
+          <Link href="/settings/labs" role="menuitem">
+            VouchNet Labs
+          </Link>
+        ) : null}
       </div>
       <form action="/api/auth/logout" method="post">
         <button className="shell-menu-signout" role="menuitem" type="submit">

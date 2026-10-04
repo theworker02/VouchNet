@@ -2,7 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { actorFromRequest } from '../../lib/identity';
 import { hasSameOrigin } from '../../lib/request-security';
-import { createPost, postCategories, postVisibilities } from '../../modules/posts/service';
+import { interactivePostContentSchema } from '../../modules/experiences/model';
+import {
+  createPost,
+  postCategories,
+  postTypes,
+  postVisibilities,
+} from '../../modules/posts/service';
 import { enforceRateLimit } from '../../lib/security/rate-limit';
 import { rateLimitResponse } from '../../lib/security/rate-limit-response';
 
@@ -23,6 +29,8 @@ const createPostSchema = z
     visibility: z.enum(postVisibilities),
     quotePostId: z.string().uuid().optional(),
     mentionedUserIds: z.array(z.string().uuid()).max(20).default([]),
+    postType: z.enum(postTypes).default('TEXT'),
+    interactiveContent: interactivePostContentSchema.optional(),
   })
   .strict()
   .superRefine((value, context) => {
@@ -31,6 +39,18 @@ const createPostSchema = z
         code: 'custom',
         path: ['bodyMarkdown'],
         message: 'Quote posts require at least 80 characters.',
+      });
+    if (value.postType === 'INTERACTIVE' && value.interactiveContent === undefined)
+      context.addIssue({
+        code: 'custom',
+        path: ['interactiveContent'],
+        message: 'Interactive posts require an Experience payload.',
+      });
+    if (value.postType !== 'INTERACTIVE' && value.interactiveContent !== undefined)
+      context.addIssue({
+        code: 'custom',
+        path: ['interactiveContent'],
+        message: 'Only interactive posts may include an Experience payload.',
       });
   });
 
