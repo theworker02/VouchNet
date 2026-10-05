@@ -14,13 +14,22 @@ struct PendingAuthorization { state: String, verifier: String }
 #[derive(Deserialize)] #[serde(rename_all = "camelCase")] struct TokenResponse { access_token: String, refresh_token: String }
 #[derive(Deserialize, Serialize)] #[serde(rename_all = "camelCase")] struct Profile { full_name: String, headline: Option<String>, slug: String }
 #[derive(Deserialize)] struct ProfileResponse { profile: Option<Profile> }
+#[derive(Deserialize, Serialize)] #[serde(rename_all = "camelCase")] struct DesktopAttachment { url: String, kind: String, label: Option<String>, alt_text: Option<String> }
 
 fn base_url() -> String { std::env::var("VOUCHNET_URL").unwrap_or_else(|_| "https://vouchnet.dev".into()).trim_end_matches('/').into() }
 fn random_urlsafe() -> String { let mut bytes = [0_u8; 32]; rand::thread_rng().fill_bytes(&mut bytes); URL_SAFE_NO_PAD.encode(bytes) }
 fn challenge(verifier: &str) -> String { URL_SAFE_NO_PAD.encode(Sha256::digest(verifier.as_bytes())) }
+fn is_uuid(value: &str) -> bool {
+  value.len() == 36
+    && value.chars().enumerate().all(|(index, character)| match index {
+      8 | 13 | 18 | 23 => character == '-',
+      _ => character.is_ascii_hexdigit(),
+    })
+}
 fn credential() -> Result<keyring::Entry, String> { keyring::Entry::new(SERVICE, ACCOUNT).map_err(|e| e.to_string()) }
 fn save_refresh(value: &str) -> Result<(), String> { credential()?.set_password(value).map_err(|e| e.to_string()) }
 fn load_refresh() -> Result<Option<String>, String> { match credential()?.get_password() { Ok(value) => Ok(Some(value)), Err(keyring::Error::NoEntry) => Ok(None), Err(error) => Err(error.to_string()) } }
+fn clear_refresh() -> Result<(), String> { match credential()?.delete_credential() { Ok(()) | Err(keyring::Error::NoEntry) => Ok(()), Err(error) => Err(error.to_string()) } }
 
 async fn exchange(path: &str, payload: serde_json::Value) -> Result<TokenResponse, String> {
   let response = reqwest::Client::new().post(format!("{}{}", base_url(), path)).json(&payload).send().await.map_err(|e| e.to_string())?;
@@ -40,6 +49,20 @@ async fn profile(state: &DesktopState) -> Result<Option<Profile>, String> {
   let response = reqwest::Client::new().get(format!("{}/api/desktop/me", base_url())).bearer_auth(token).send().await.map_err(|e| e.to_string())?;
   if response.status().as_u16() == 401 { *state.access_token.lock().map_err(|_| "Desktop session lock failed.")? = None; return Err("Desktop session expired.".into()); }
   response.json::<ProfileResponse>().await.map_err(|e| e.to_string()).map(|response| response.profile)
+}
+async fn authenticated_get(state: &DesktopState, path: &str) -> Result<serde_json::Value, String> {
+  let token = access(state).await?;
+  let response = reqwest::Client::new().get(format!("{}{}", base_url(), path)).bearer_auth(token).send().await.map_err(|_| "VouchNet is temporarily unavailable. Check your connection and retry.".to_string())?;
+  if response.status().as_u16() == 401 { *state.access_token.lock().map_err(|_| "Desktop session lock failed.")? = None; return Err("Your desktop session needs to be reconnected.".into()); }
+  if !response.status().is_success() { return Err("VouchNet could not complete that request.".into()); }
+  response.json().await.map_err(|_| "VouchNet returned an invalid response.".into())
+}
+async fn authenticated_post(state: &DesktopState, path: &str, payload: serde_json::Value) -> Result<serde_json::Value, String> {
+  let token = access(state).await?;
+  let response = reqwest::Client::new().post(format!("{}{}", base_url(), path)).bearer_auth(token).json(&payload).send().await.map_err(|_| "VouchNet is temporarily unavailable. Check your connection and retry.".to_string())?;
+  if response.status().as_u16() == 401 { *state.access_token.lock().map_err(|_| "Desktop session lock failed.")? = None; return Err("Your desktop session needs to be reconnected.".into()); }
+  if !response.status().is_success() { return Err("VouchNet could not send that message.".into()); }
+  response.json().await.map_err(|_| "VouchNet returned an invalid response.".into())
 }
 
 #[tauri::command]
@@ -66,6 +89,25 @@ async fn desktop_complete_authentication(state: State<'_, DesktopState>, callbac
 #[tauri::command]
 async fn desktop_restore_session(state: State<'_, DesktopState>) -> Result<Option<Profile>, String> { if load_refresh()?.is_none() { return Ok(None); } profile(&state).await }
 #[tauri::command]
-async fn desktop_feed(state: State<'_, DesktopState>) -> Result<serde_json::Value, String> { let token = access(&state).await?; let response = reqwest::Client::new().get(format!("{}/api/desktop/feed", base_url())).bearer_auth(token).send().await.map_err(|e| e.to_string())?; if !response.status().is_success() { return Err("The VouchNet feed is unavailable.".into()); } response.json().await.map_err(|e| e.to_string()) }
+async fn desktop_feed(state: State<'_, DesktopState>) -> Result<serde_json::Value, String> { authenticated_get(&state, "/api/desktop/feed").await }
+#[tauri::command]
+async fn desktop_conversations(state: State<'_, DesktopState>) -> Result<serde_json::Value, String> { authenticated_get(&state, "/api/desktop/messages").await }
+#[tauri::command]
+async fn desktop_messages(state: State<'_, DesktopState>, conversation_id: String) -> Result<serde_json::Value, String> {
+  if !is_uuid(&conversation_id) { return Err("Invalid conversation.".into()); }
+  authenticated_get(&state, &format!("/api/desktop/messages/{conversation_id}")).await
+}
+#[tauri::command]
+async fn desktop_send_message(state: State<'_, DesktopState>, conversation_id: String, body: String, attachments: Vec<DesktopAttachment>) -> Result<serde_json::Value, String> {
+  if !is_uuid(&conversation_id) { return Err("Invalid conversation.".into()); }
+  if body.trim().is_empty() && attachments.is_empty() { return Err("Write a message or add an attachment first.".into()); }
+  if body.chars().count() > 12_000 || attachments.len() > 4 { return Err("That message is too large.".into()); }
+  authenticated_post(&state, &format!("/api/desktop/messages/{conversation_id}/send"), serde_json::json!({"body":body,"attachments":attachments})).await
+}
+#[tauri::command]
+fn desktop_sign_out(state: State<DesktopState>) -> Result<(), String> {
+  *state.access_token.lock().map_err(|_| "Desktop session lock failed.")? = None;
+  clear_refresh()
+}
 
-fn main() { tauri::Builder::default().plugin(tauri_plugin_deep_link::init()).plugin(tauri_plugin_opener::init()).plugin(tauri_plugin_notification::init()).manage(DesktopState::default()).invoke_handler(tauri::generate_handler![desktop_begin_authentication, desktop_complete_authentication, desktop_restore_session, desktop_feed]).run(tauri::generate_context!()).expect("failed to run VouchNet Desktop"); }
+fn main() { tauri::Builder::default().plugin(tauri_plugin_deep_link::init()).plugin(tauri_plugin_opener::init()).plugin(tauri_plugin_notification::init()).manage(DesktopState::default()).invoke_handler(tauri::generate_handler![desktop_begin_authentication, desktop_complete_authentication, desktop_restore_session, desktop_feed, desktop_conversations, desktop_messages, desktop_send_message, desktop_sign_out]).run(tauri::generate_context!()).expect("failed to run VouchNet Desktop"); }

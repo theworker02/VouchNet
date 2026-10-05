@@ -6,6 +6,7 @@ import { hasSameOrigin } from '../../../lib/request-security';
 import { enforceRateLimit } from '../../../lib/security/rate-limit';
 import { rateLimitResponse } from '../../../lib/security/rate-limit-response';
 import { recordSecurityAuditEvent } from '../../../lib/security/audit';
+import { beginMfaLoginChallenge, mfaChallengeCookie } from '../../../lib/mfa';
 
 export const runtime = 'nodejs';
 
@@ -57,6 +58,18 @@ export async function POST(request: NextRequest) {
         requestId,
       );
       return failureResponse(request, 'INVALID_CREDENTIALS');
+    }
+    if (result.mfaRequired) {
+      const challenge = await beginMfaLoginChallenge(result.userId);
+      const response = NextResponse.redirect(
+        publicUrl(`/login/mfa?next=${encodeURIComponent(next)}`, request.url),
+        303,
+      );
+      response.headers.set(
+        'set-cookie',
+        mfaChallengeCookie(challenge, process.env.NEXUS_ENV === 'production'),
+      );
+      return response;
     }
     await recordLoginAudit(
       { request, action: 'LOGIN_SUCCEEDED', status: 'SUCCESS', actorId: result.userId },

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { attachSession, createUserSession } from '../../../../../lib/identity';
 import { publicUrl } from '../../../../../lib/app-url';
+import { beginMfaLoginChallenge, getMfaStatus, mfaChallengeCookie } from '../../../../../lib/mfa';
 import {
   applyOAuthStateClear,
   issueOAuthRegistration,
@@ -26,6 +27,23 @@ export async function GET(
   try {
     const result = await resolveOAuthCallback(request, provider);
     if (result.type === 'session') {
+      if ((await getMfaStatus(result.userId)).enabled) {
+        const challenge = await beginMfaLoginChallenge(result.userId);
+        const response = applyOAuthStateClear(
+          NextResponse.redirect(
+            publicUrl(
+              `/login/mfa?next=${encodeURIComponent(result.returnTo ?? '/home')}`,
+              request.url,
+            ),
+            303,
+          ),
+        );
+        response.headers.set(
+          'set-cookie',
+          mfaChallengeCookie(challenge, process.env.NEXUS_ENV === 'production'),
+        );
+        return response;
+      }
       const session = await createUserSession(result.userId);
       return applyOAuthStateClear(
         attachSession(

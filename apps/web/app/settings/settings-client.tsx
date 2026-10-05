@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { PlusMembershipPanel } from '../components/plus-membership-panel';
 import { FeedMuteControls } from '../components/feed-mute-controls';
+import { MfaPanel } from './mfa-panel';
 type SettingSection =
   'account' | 'security' | 'visibility' | 'notifications' | 'data' | 'developers';
 type UserSettings = {
@@ -275,13 +276,9 @@ export function SettingsClient({ section }: { section: SettingSection }) {
           <>
             <h2>Security center</h2>
             <p className="muted-copy">
-              Review and revoke active sessions from the security center. Password changes and MFA
-              enrollment are deliberately withheld until a verified secret-storage and recovery
-              implementation is available.
+              Review active sessions and protect password sign-in with a Google Authenticator code.
             </p>
-            <Link className="secondary" href="/settings/security">
-              Review active sessions
-            </Link>
+            <MfaPanel />
           </>
         ) : null}
         {section === 'visibility' ? (

@@ -11,7 +11,7 @@
   },
   "app": {
     "windows": [
-      { "title": "VouchNet", "width": 1180, "height": 780, "minWidth": 760, "minHeight": 600 }
+      { "title": "VouchNet", "width": 1280, "height": 820, "minWidth": 980, "minHeight": 650 }
     ],
     "security": {
       "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https: data:; connect-src 'self' https://vouchnet.dev; object-src 'none'; base-uri 'none'; form-action 'none'; frame-src 'none'"

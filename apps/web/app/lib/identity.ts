@@ -12,6 +12,7 @@ import { createSqlClient } from '@nexus/db';
 import { cache } from 'react';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
+import { getMfaStatus } from './mfa';
 
 export const sessionCookieName = 'nexus_session';
 const sessionDays = 30;
@@ -267,6 +268,7 @@ export async function login(emailInput: string, password: string, priorSessionTo
       !(await verifyPassword(user.password_hash, password))
     )
       return null;
+    if ((await getMfaStatus(user.id)).enabled) return { userId: user.id, mfaRequired: true as const };
     const token = createSecretToken(sessionDays * 24 * 60 * 60 * 1000);
     const idleExpiresAt = new Date(Date.now() + sessionIdleHours * 60 * 60 * 1000);
     // Create the replacement session and invalidate the prior browser session through the same
@@ -283,7 +285,7 @@ export async function login(emailInput: string, password: string, priorSessionTo
         VALUES (${user.id},${token.tokenHash},${token.expiresAt},${idleExpiresAt})
       `;
     });
-    return { userId: user.id, token: token.token };
+    return { userId: user.id, token: token.token, mfaRequired: false as const };
   } finally {
     await sql.end({ timeout: 1 });
   }
