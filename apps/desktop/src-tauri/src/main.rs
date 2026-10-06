@@ -12,8 +12,9 @@ const ACCOUNT: &str = "refresh-token";
 #[derive(Default)] struct DesktopState { pending: Mutex<Option<PendingAuthorization>>, access_token: Mutex<Option<String>> }
 struct PendingAuthorization { state: String, verifier: String }
 #[derive(Deserialize)] #[serde(rename_all = "camelCase")] struct TokenResponse { access_token: String, refresh_token: String }
-#[derive(Deserialize, Serialize)] #[serde(rename_all = "camelCase")] struct Profile { full_name: String, headline: Option<String>, slug: String }
-#[derive(Deserialize)] struct ProfileResponse { profile: Option<Profile> }
+#[derive(Deserialize, Serialize)] #[serde(rename_all = "camelCase")] struct Profile { full_name: String, headline: Option<String>, slug: String, #[serde(default)] identity_verification: Option<IdentityVerification> }
+#[derive(Deserialize, Serialize, Clone)] #[serde(rename_all = "camelCase")] struct IdentityVerification { method: String, verified_at: String }
+#[derive(Deserialize)] struct ProfileResponse { profile: Option<Profile>, verification: Option<IdentityVerification> }
 #[derive(Deserialize, Serialize)] #[serde(rename_all = "camelCase")] struct DesktopAttachment { url: String, kind: String, label: Option<String>, alt_text: Option<String> }
 
 fn base_url() -> String { std::env::var("VOUCHNET_URL").unwrap_or_else(|_| "https://vouchnet.dev".into()).trim_end_matches('/').into() }
@@ -48,7 +49,10 @@ async fn profile(state: &DesktopState) -> Result<Option<Profile>, String> {
   let token = access(state).await?;
   let response = reqwest::Client::new().get(format!("{}/api/desktop/me", base_url())).bearer_auth(token).send().await.map_err(|e| e.to_string())?;
   if response.status().as_u16() == 401 { *state.access_token.lock().map_err(|_| "Desktop session lock failed.")? = None; return Err("Desktop session expired.".into()); }
-  response.json::<ProfileResponse>().await.map_err(|e| e.to_string()).map(|response| response.profile)
+  let payload = response.json::<ProfileResponse>().await.map_err(|e| e.to_string())?;
+  // The badge only communicates that the member is verified plus the method and date; which
+  // provider performed the check is deliberately not surfaced.
+  Ok(payload.profile.map(|mut profile| { profile.identity_verification = payload.verification.clone(); profile }))
 }
 async fn authenticated_get(state: &DesktopState, path: &str) -> Result<serde_json::Value, String> {
   let token = access(state).await?;

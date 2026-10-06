@@ -12483,3 +12483,74 @@ select.instrument-input option {
     font-size: 0.62rem;
   }
 }
+
+/* Identity Verified badge: hover reveals the detail card on pointer devices; tapping the badge
+   toggles the same card on touch screens. */
+.identity-badge-wrap {
+  position: relative;
+  display: inline-flex;
+  margin-top: 6px;
+}
+
+.identity-verified-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid #a6c8e8;
+  border-radius: 6px;
+  color: #1f4e8c;
+  background: #eef5fd;
+  font-size: 0.62rem;
+  font-weight: 760;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+}
+
+.identity-verified-badge > span {
+  display: grid;
+  width: 12px;
+  height: 12px;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  background: #2f6fc0;
+  font-size: 0.5rem;
+}
+
+.identity-badge-card {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 6px);
+  left: 0;
+  display: none;
+  width: max-content;
+  max-width: 240px;
+  padding: 10px 12px;
+  border: 1px solid #cbd9ee;
+  border-radius: 10px;
+  color: #23354f;
+  background: #fff;
+  box-shadow: 0 12px 30px rgb(31 61 126 / 0.16);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  text-align: left;
+  white-space: normal;
+}
+
+.identity-badge-card > strong,
+.identity-badge-card > span {
+  display: block;
+}
+
+.identity-badge-wrap:hover .identity-badge-card,
+.identity-badge-wrap:focus-within .identity-badge-card,
+.identity-badge-card.open {
+  display: block;
+}
+
+.identity-verification-card {
+  align-items: flex-start;
+  flex-direction: column;
+}

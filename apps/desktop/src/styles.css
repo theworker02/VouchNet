@@ -1328,3 +1328,17 @@ textarea:focus-visible {
   background: transparent;
   font-size: 0.86rem;
 }
+
+.desktop-verified-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border: 1px solid #a6c8e8;
+  border-radius: 6px;
+  color: #1f4e8c;
+  background: #eef5fd;
+  font-size: 0.62rem;
+  font-weight: 700;
+  vertical-align: middle;
+  cursor: default;
+}

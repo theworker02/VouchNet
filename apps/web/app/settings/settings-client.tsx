@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { ApiCreditsPanel } from '../components/api-credits-panel';
 import { PlusMembershipPanel } from '../components/plus-membership-panel';
 import { FeedMuteControls } from '../components/feed-mute-controls';
+import { IdentityVerificationPanel } from '../components/identity-verification-panel';
 import { MfaPanel } from './mfa-panel';
 type SettingSection =
   'account' | 'security' | 'visibility' | 'notifications' | 'data' | 'developers';
@@ -215,6 +216,8 @@ export function SettingsClient({ section }: { section: SettingSection }) {
                 ) : null}
               </section>
             )}
+            <h2>Identity verification</h2>
+            <IdentityVerificationPanel />
             <h2>Site display</h2>
             <label>
               Theme

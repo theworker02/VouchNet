@@ -20,6 +20,22 @@ import { getConstellation } from '../../lib/vouch-graph';
 import { getComposerState, listReceivedVouches } from '../../lib/work-vouches';
 import { getProfileIntent } from '../../lib/build-discovery';
 import { profileIntentLabels } from '../../lib/profile-intent';
+import { publicVerificationBadge } from '../../lib/identity-verification';
+import { IdentityVerifiedBadge } from '../../components/identity-verified-badge';
+
+function verifiedBadge(badge: Awaited<ReturnType<typeof publicVerificationBadge>>) {
+  if (badge === null) return null;
+  return (
+    <IdentityVerifiedBadge
+      method={badge.method}
+      verifiedDateLabel={badge.verifiedAt.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })}
+    />
+  );
+}
 
 export async function generateMetadata({
   params,
@@ -63,6 +79,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
     composer,
     viewer,
     intent,
+    verificationBadge,
   ] = await Promise.all([
     getProfileVouches(viewerId, profile.userId),
     listFeaturedProofNodes(profile.userId),
@@ -75,6 +92,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
       : getComposerState(viewerId, profile.userId),
     viewerId === null ? Promise.resolve(null) : getProfileSummary(viewerId),
     getProfileIntent(profile.userId).catch(() => null),
+    publicVerificationBadge(profile.userId).catch(() => null),
   ]);
   const intentLabel = intent === null ? null : profileIntentLabels[intent];
   const recipient = {
@@ -98,6 +116,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
           featuredNodes={featuredNodes}
           projects={projects}
           intentLabel={intentLabel}
+          badge={verifiedBadge(verificationBadge)}
           trust={
             <TrustModule
               constellation={constellation}
@@ -129,6 +148,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
               <h1>
                 {profile.firstName} {profile.lastName}
               </h1>
+              {verifiedBadge(verificationBadge)}
               <p className="profile-headline">{profile.headline ?? 'VouchNet member'}</p>
               {intentLabel === null ? null : (
                 <p className="profile-intent">
@@ -264,8 +284,10 @@ function PublicProfile({
   trust,
   reputation,
   intentLabel,
+  badge,
 }: {
   intentLabel: string | null;
+  badge: React.ReactNode;
   trust: React.ReactNode;
   reputation: React.ReactNode;
   profile: NonNullable<Awaited<ReturnType<typeof getVisibleProfile>>>;
@@ -300,6 +322,7 @@ function PublicProfile({
             <h1>
               {profile.firstName} {profile.lastName}
             </h1>
+            {badge}
             <p>{profile.headline ?? 'VouchNet member'}</p>
             {intentLabel === null ? null : (
               <p className="profile-intent">

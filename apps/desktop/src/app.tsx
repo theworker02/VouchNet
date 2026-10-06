@@ -3,7 +3,20 @@ import { invoke } from '@tauri-apps/api/core';
 import { onOpenUrl } from '@tauri-apps/plugin-deep-link';
 import { openUrl } from '@tauri-apps/plugin-opener';
 
-type Profile = { fullName: string; headline: string | null; slug: string } | null;
+type IdentityVerification = { method: string; verifiedAt: string };
+type Profile = {
+  fullName: string;
+  headline: string | null;
+  slug: string;
+  identityVerification?: IdentityVerification | null;
+} | null;
+
+function verifiedDateLabel(iso: string) {
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime())
+    ? ''
+    : date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+}
 type FeedPost = {
   id: string;
   authorName: string;
@@ -318,7 +331,17 @@ export function App() {
             {profile?.fullName ? initials(profile.fullName) : 'V'}
           </div>
           <div>
-            <strong>{profile?.fullName ?? 'VouchNet member'}</strong>
+            <strong>
+              {profile?.fullName ?? 'VouchNet member'}
+              {profile?.identityVerification ? (
+                <span
+                  className="desktop-verified-badge"
+                  title={`Identity verified · ${profile.identityVerification.method} · ${verifiedDateLabel(profile.identityVerification.verifiedAt)}`}
+                >
+                  ✓ Identity Verified
+                </span>
+              ) : null}
+            </strong>
             <span>{profile?.headline ?? 'Your professional network'}</span>
           </div>
           <i className="connection-dot" title="Secure device session" />

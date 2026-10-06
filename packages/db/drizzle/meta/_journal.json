@@ -218,6 +218,13 @@
       "when": 1791518400000,
       "tag": "0029_build_in_public",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1791604800000,
+      "tag": "0030_identity_verification",
+      "breakpoints": true
     }
   ]
 }
