@@ -295,8 +295,21 @@ function PublicProfile({
   featuredNodes: Awaited<ReturnType<typeof listFeaturedProofNodes>>;
   projects: Awaited<ReturnType<typeof listProfileProjects>>;
 }) {
+  const siteUrl = process.env.APP_URL?.trim() || 'https://vouchnet.dev';
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    name: `${profile.firstName} ${profile.lastName}`,
+    url: `${siteUrl}/in/${profile.slug}`,
+    ...(profile.headline === null ? {} : { jobTitle: profile.headline }),
+    ...(profile.about === null ? {} : { description: profile.about }),
+  };
   return (
     <main className="public-profile">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <header className="public-nav">
         <Link className="brand" href="/">
           VouchNet

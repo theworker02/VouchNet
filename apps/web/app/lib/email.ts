@@ -74,6 +74,21 @@ export async function sendVerificationLinkEmail(input: {
   });
 }
 
+export async function sendOrganizationClaimEmail(input: {
+  email: string;
+  organizationName: string;
+  token: string;
+}): Promise<void> {
+  const claimUrl = new URL(`/claim/${input.token}`, appUrl());
+  const organizationName = htmlEscape(input.organizationName);
+  await sendEmail({
+    to: input.email,
+    subject: `Claim the ${input.organizationName} profile on VouchNet`,
+    text: `${input.organizationName} has a public profile on VouchNet and you've been invited to claim it.\n\nClaim it at ${claimUrl.toString()}\n\nThis link expires in 7 days. Sign in with this email address to complete the claim. If you are not affiliated with ${input.organizationName}, you can ignore this email.`,
+    html: `<!doctype html><html><body style="margin:0;background:#f2f5f9;color:#172033;font-family:Inter,Arial,sans-serif"><main style="max-width:600px;margin:0 auto;padding:36px 16px"><section style="overflow:hidden;border:1px solid #d9e1ee;border-radius:20px;background:#ffffff;box-shadow:0 12px 36px rgba(15,35,70,.10)"><header style="padding:28px 32px;background:linear-gradient(135deg,#103372,#2463d4);color:#ffffff"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="width:38px;height:38px;border-radius:11px;background:#ffffff;color:#1d56be;font-size:23px;font-weight:800;text-align:center">V</td><td style="padding-left:11px;font-size:19px;font-weight:800;letter-spacing:-.3px">VouchNet</td></tr></table></header><div style="padding:34px 32px"><p style="margin:0 0 14px;color:#2463d4;font-size:12px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase">Organization profile claim</p><h1 style="margin:0 0 14px;font-size:30px;line-height:1.18;letter-spacing:-.6px">Claim ${organizationName}.</h1><p style="margin:0;color:#526174;font-size:16px;line-height:1.65">${organizationName} has a public directory profile on VouchNet. Claim it to manage the official page, post roles, and represent the organization.</p><a href="${claimUrl.toString()}" style="display:inline-block;margin-top:26px;padding:13px 18px;border-radius:9px;background:#2463d4;color:#ffffff;font-size:15px;font-weight:700;text-decoration:none">Claim this profile</a><p style="margin:24px 0 0;color:#778397;font-size:13px;line-height:1.5">The link expires in 7 days. You must sign in with this email address to complete the claim. If you are not affiliated with ${organizationName}, you can safely ignore this email.</p></div></section></main></body></html>`,
+  });
+}
+
 export async function sendPasswordResetEmail(input: {
   email: string;
   token: string;

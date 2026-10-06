@@ -225,6 +225,13 @@
       "when": 1791604800000,
       "tag": "0030_identity_verification",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1791691200000,
+      "tag": "0031_organization_claims",
+      "breakpoints": true
     }
   ]
 }

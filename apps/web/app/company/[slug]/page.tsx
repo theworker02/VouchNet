@@ -27,8 +27,25 @@ export default async function CompanyPage({ params }: { params: Promise<{ slug: 
   const [organization, jobs] = await Promise.all([getOrganization(slug), listPublicJobs()]);
   if (organization === null) notFound();
   const organizationJobs = jobs.filter((job) => job.organizationSlug === slug);
+  const siteUrl = process.env.APP_URL?.trim() || 'https://vouchnet.dev';
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: organization.name,
+    url: `${siteUrl}/company/${organization.slug}`,
+    description: organization.description,
+    ...(organization.tagline === null ? {} : { slogan: organization.tagline }),
+    ...(organization.websiteUrl === null ? {} : { sameAs: [organization.websiteUrl] }),
+    ...(organization.headquarters === null
+      ? {}
+      : { address: { '@type': 'PostalAddress', addressLocality: organization.headquarters } }),
+  };
   return (
     <main className="directory-page">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <header className="public-nav">
         <Link className="brand" href="/">
           VouchNet
@@ -49,7 +66,11 @@ export default async function CompanyPage({ params }: { params: Promise<{ slug: 
         <div>
           <div className="company-hero-topline">
             <span className="directory-label">Public organization directory</span>
-            <span className="source-review">Source reviewed</span>
+            {organization.verificationStatus === 'DOMAIN_VERIFIED' ? (
+              <span className="company-verified-badge">✓ Verified organization</span>
+            ) : (
+              <span className="source-review">Source reviewed</span>
+            )}
           </div>
           <h1>{organization.name}</h1>
           <p>{organization.tagline}</p>
@@ -64,6 +85,16 @@ export default async function CompanyPage({ params }: { params: Promise<{ slug: 
             This is a public directory record, not an official company page. VouchNet has not
             verified administrative ownership.
           </p>
+          {organization.verificationStatus === 'DOMAIN_VERIFIED' ? null : (
+            <div className="company-claim-card">
+              <strong>Is this your organization?</strong>
+              <p>
+                Claimed profiles can manage the official page, post roles directly, and represent
+                the organization on VouchNet. A current admin or VouchNet moderator can email you a
+                claim invite.
+              </p>
+            </div>
+          )}
           <div className="company-links">
             <a href={organization.websiteUrl} rel="noreferrer" target="_blank">
               Website ↗
