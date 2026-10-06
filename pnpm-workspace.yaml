@@ -11,3 +11,7 @@ allowBuilds:
   argon2: true
   esbuild: true
   unrs-resolver: true
+
+# Security: patched source-map-js (GHSA-68fv-2mgg-jv7q) pulled in via next > postcss.
+overrides:
+  source-map-js: '>=1.2.2'
