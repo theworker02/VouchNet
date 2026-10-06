@@ -54,14 +54,17 @@ export async function getVisibleProfile(
   | (PersonCard & {
       about: string | null;
       visibility: string;
+      earlyMember: boolean;
     })
   | null
 > {
   const client = sql();
   try {
-    const rows = await client<(PersonCard & { about: string | null; visibility: string })[]>`
+    const rows = await client<
+      (PersonCard & { about: string | null; visibility: string; earlyMember: boolean })[]
+    >`
       SELECT p.user_id AS "userId",p.slug,p.first_name AS "firstName",p.last_name AS "lastName",
-             p.headline,p.location,
+             p.headline,p.location,p.early_member AS "earlyMember",
              EXISTS (SELECT 1 FROM user_subscriptions us WHERE us.user_id=p.user_id AND us.tier='PLUS' AND us.status='ACTIVE' AND (us.current_period_ends_at IS NULL OR us.current_period_ends_at>now())) AS "isPlus",
              p.about,p.visibility
       FROM profiles p

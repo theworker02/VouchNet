@@ -20,12 +20,40 @@ function htmlEscape(value: string): string {
   });
 }
 
+async function sendViaGmail(input: {
+  to: string;
+  subject: string;
+  html: string;
+  text: string;
+}): Promise<boolean> {
+  const user = process.env.GMAIL_USER;
+  const appPassword = process.env.GMAIL_APP_PASSWORD;
+  if (user === undefined || appPassword === undefined) return false;
+  const { createTransport } = await import('nodemailer');
+  const transport = createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: { user, pass: appPassword },
+  });
+  await transport.sendMail({
+    from: process.env.EMAIL_FROM ?? `VouchNet <${user}>`,
+    to: input.to,
+    subject: input.subject,
+    text: input.text,
+    html: input.html,
+  });
+  return true;
+}
+
 async function sendEmail(input: {
   to: string;
   subject: string;
   html: string;
   text: string;
 }): Promise<void> {
+  // Gmail SMTP is preferred when configured; Resend remains the fallback provider.
+  if (await sendViaGmail(input)) return;
   const apiKey = process.env.RESEND_API_KEY;
   const from = process.env.EMAIL_FROM;
   if (apiKey === undefined || from === undefined) throw new Error('EMAIL_PROVIDER_UNCONFIGURED');

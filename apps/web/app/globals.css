@@ -12609,3 +12609,214 @@ select.instrument-input option {
   display: inline-block;
   margin-top: 18px;
 }
+
+/* Experience + services editors. */
+.experience-entry {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid #e4e9f1;
+}
+
+.experience-entry p {
+  margin: 4px 0;
+}
+.experience-entry span {
+  color: #778397;
+  font-size: 0.78rem;
+}
+.experience-entry-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.experience-entry-actions .danger {
+  color: #b3342f;
+}
+
+.experience-form {
+  margin-top: 14px;
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #d9e1ee;
+  border-radius: 12px;
+  background: #f7faff;
+}
+
+.experience-form label {
+  display: grid;
+  gap: 6px;
+  font-size: 0.78rem;
+  font-weight: 640;
+  color: #3b4a63;
+}
+.experience-form input,
+.experience-form select,
+.experience-form textarea {
+  padding: 8px 10px;
+  border: 1px solid #cdd6e4;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 500;
+  background: #fff;
+}
+
+.experience-form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+.experience-current {
+  display: flex !important;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600 !important;
+}
+.experience-form-actions {
+  display: flex;
+  gap: 10px;
+}
+.form-error {
+  color: #b3342f;
+  font-size: 0.8rem;
+  margin: 0;
+}
+
+.services-rate-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+.rate-input {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #cdd6e4;
+  border-radius: 8px;
+  padding: 0 10px;
+  background: #fff;
+}
+.rate-input input {
+  border: 0;
+  padding: 8px 0;
+  width: 90px;
+}
+.rate-input .rate-unit {
+  color: #778397;
+  font-size: 0.72rem;
+}
+
+.service-request-form {
+  margin-top: 12px;
+}
+.service-request-sent {
+  color: #1f7a4d;
+  font-weight: 640;
+}
+.service-request-link {
+  display: inline-block;
+}
+
+/* 3D spinnable badge. */
+.badge3d {
+  display: inline-grid;
+  justify-items: center;
+  gap: 6px;
+}
+.badge3d-stage {
+  width: 132px;
+  height: 132px;
+  perspective: 700px;
+  touch-action: none;
+  cursor: grab;
+}
+.badge3d-stage:active {
+  cursor: grabbing;
+}
+.badge3d-coin {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+.badge3d-face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 4px;
+  border-radius: 50%;
+  border: 5px solid rgb(255 255 255 / 0.28);
+  box-shadow:
+    inset 0 -10px 24px rgb(0 0 0 / 0.28),
+    inset 0 8px 16px rgb(255 255 255 / 0.25),
+    0 14px 28px rgb(15 35 70 / 0.25);
+  backface-visibility: hidden;
+  color: #fff;
+  text-align: center;
+}
+.badge3d-back {
+  transform: rotateY(180deg);
+  padding: 14px;
+}
+.badge3d-emblem {
+  font-size: 2.4rem;
+  line-height: 1;
+  text-shadow: 0 2px 6px rgb(0 0 0 / 0.35);
+}
+.badge3d-title {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.badge3d-caption {
+  font-size: 0.62rem;
+  font-weight: 650;
+  line-height: 1.4;
+}
+.badge3d-detail {
+  font-size: 0.58rem;
+  opacity: 0.9;
+}
+.badge3d-rim {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+.badge3d-rim-segment {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9px;
+  height: 112px;
+  margin: -56px 0 0 -4.5px;
+  backface-visibility: visible;
+}
+.badge3d-hint {
+  font-size: 0.62rem;
+  color: #778397;
+  letter-spacing: 0.04em;
+}
+
+.profile-badge-shelf {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 22px;
+}
+.profile-rate-chip {
+  display: inline-block;
+  margin: 0 0 12px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid #a6c8e8;
+  background: #eef5fd;
+  color: #1f4e8c;
+  font-weight: 760;
+  font-size: 0.8rem;
+}

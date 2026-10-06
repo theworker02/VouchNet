@@ -100,7 +100,10 @@ export async function registerHuman(input: {
       const created = rows[0];
       if (created === undefined) throw new Error('USER_CREATION_FAILED');
       await transaction`INSERT INTO user_emails (user_id,email_normalized) VALUES (${created.id},${email})`;
-      await transaction`INSERT INTO profiles (user_id,slug,first_name,last_name) VALUES (${created.id},${slug},${input.firstName.trim()},${input.lastName.trim()})`;
+      // Early-member badge: the first 10,000 registrants (and everyone pre-launch) are early.
+      await transaction`INSERT INTO profiles (user_id,slug,first_name,last_name,early_member)
+        VALUES (${created.id},${slug},${input.firstName.trim()},${input.lastName.trim()},
+          (SELECT count(*) < 10000 FROM profiles))`;
       await transaction`INSERT INTO privacy_settings (user_id) VALUES (${created.id})`;
       await transaction`INSERT INTO terms_acceptances (user_id,document_type,document_version) VALUES (${created.id},'TERMS','2026-09'),(${created.id},'PRIVACY','2026-09')`;
       await transaction`INSERT INTO email_verifications (user_id,token_hash,code_hash,expires_at) VALUES (${created.id},${verification.tokenHash},${verificationCode.codeHash},${verification.expiresAt})`;

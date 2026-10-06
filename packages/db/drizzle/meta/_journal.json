@@ -232,6 +232,20 @@
       "when": 1791691200000,
       "tag": "0031_organization_claims",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1780353600000,
+      "tag": "0032_profile_services",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1780440000000,
+      "tag": "0033_early_member_badge",
+      "breakpoints": true
     }
   ]
 }

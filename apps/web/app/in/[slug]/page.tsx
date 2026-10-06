@@ -22,6 +22,18 @@ import { getProfileIntent } from '../../lib/build-discovery';
 import { profileIntentLabels } from '../../lib/profile-intent';
 import { publicVerificationBadge } from '../../lib/identity-verification';
 import { IdentityVerifiedBadge } from '../../components/identity-verified-badge';
+import {
+  getProfileRate,
+  listExperiences,
+  listProfileServices,
+  listServiceRequests,
+} from '../../lib/profile-services';
+import { employmentTypeLabels, monthLabels } from '../../lib/profile-catalog';
+import { ExperienceEditor } from '../../components/experience-editor';
+import { rateLabel, ServicesEditor } from '../../components/services-panel';
+import { RequestServiceButton } from '../../components/request-service';
+import { ServiceRequestsInbox } from '../../components/service-requests-inbox';
+import { Badge3d } from '../../components/badge-3d';
 
 function verifiedBadge(badge: Awaited<ReturnType<typeof publicVerificationBadge>>) {
   if (badge === null) return null;
@@ -80,6 +92,10 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
     viewer,
     intent,
     verificationBadge,
+    experiences,
+    services,
+    profileRate,
+    serviceRequests,
   ] = await Promise.all([
     getProfileVouches(viewerId, profile.userId),
     listFeaturedProofNodes(profile.userId),
@@ -93,6 +109,10 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
     viewerId === null ? Promise.resolve(null) : getProfileSummary(viewerId),
     getProfileIntent(profile.userId).catch(() => null),
     publicVerificationBadge(profile.userId).catch(() => null),
+    listExperiences(profile.userId).catch(() => []),
+    listProfileServices(profile.userId, isOwner).catch(() => []),
+    getProfileRate(profile.userId).catch(() => null),
+    isOwner ? listServiceRequests(profile.userId, 'received').catch(() => []) : Promise.resolve([]),
   ]);
   const intentLabel = intent === null ? null : profileIntentLabels[intent];
   const recipient = {
@@ -116,6 +136,10 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
           featuredNodes={featuredNodes}
           projects={projects}
           intentLabel={intentLabel}
+          experiences={experiences}
+          services={services}
+          profileRate={profileRate}
+          verificationBadge={verificationBadge}
           badge={verifiedBadge(verificationBadge)}
           trust={
             <TrustModule
@@ -256,12 +280,98 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
           <p>{profile.about ?? 'This member has not added an about section yet.'}</p>
         </section>
         <section className="profile-section">
-          <h2>Experience & education</h2>
-          <p>
-            Structured experience, education, credentials, and verified organization links are shown
-            here as members add them.
-          </p>
+          <h2>Experience</h2>
+          {isOwner ? (
+            <ExperienceEditor initial={experiences} />
+          ) : experiences.length === 0 ? (
+            <p>Experience entries appear here when this member adds them.</p>
+          ) : (
+            experiences.map((entry) => (
+              <article className="experience-entry" key={entry.id}>
+                <div>
+                  <strong>{entry.title}</strong>
+                  <p>
+                    {entry.organization} · {employmentTypeLabels[entry.employmentType]}
+                  </p>
+                  <span>
+                    {entry.startMonth === null ? '' : `${monthLabels[entry.startMonth - 1]} `}
+                    {entry.startYear} —{' '}
+                    {entry.isCurrent
+                      ? 'Present'
+                      : `${entry.endMonth === null ? '' : `${monthLabels[entry.endMonth - 1]} `}${entry.endYear ?? ''}`}
+                    {entry.location === null || entry.location === '' ? '' : ` · ${entry.location}`}
+                  </span>
+                  {entry.description === null ? null : <p>{entry.description}</p>}
+                </div>
+              </article>
+            ))
+          )}
         </section>
+        {isOwner || services.length > 0 || profileRate?.visible === true ? (
+          <section className="profile-section profile-services">
+            <h2>Services</h2>
+            {profileRate?.visible === true && profileRate.amount !== null ? (
+              <p className="profile-rate-chip">
+                ${Number(profileRate.amount).toLocaleString()} {profileRate.currency}/hour
+              </p>
+            ) : null}
+            {isOwner ? (
+              <ServicesEditor
+                services={services}
+                hourlyRate={profileRate?.amount ?? null}
+                rateVisible={profileRate?.visible ?? false}
+              />
+            ) : (
+              <>
+                {services.map((service) => (
+                  <article className="experience-entry" key={service.id}>
+                    <div>
+                      <strong>{service.title}</strong>
+                      {service.description === null ? null : <p>{service.description}</p>}
+                      <span>{rateLabel(service) ?? 'Rate on request'}</span>
+                    </div>
+                  </article>
+                ))}
+                <RequestServiceButton
+                  providerUserId={profile.userId}
+                  providerName={profile.firstName}
+                  services={services}
+                  signInHref={
+                    viewerId === null
+                      ? `/login?next=${encodeURIComponent(`/in/${profile.slug}`)}`
+                      : null
+                  }
+                />
+              </>
+            )}
+          </section>
+        ) : null}
+        {isOwner && serviceRequests.length > 0 ? (
+          <section className="profile-section">
+            <h2>Service requests</h2>
+            <ServiceRequestsInbox
+              requests={serviceRequests.map((r) => ({
+                ...r,
+                createdAt: r.createdAt.toISOString(),
+              }))}
+            />
+          </section>
+        ) : null}
+        {profile.earlyMember || verificationBadge !== null || profile.isPlus ? (
+          <section className="profile-section profile-badges">
+            <h2>Badges</h2>
+            <div className="profile-badge-shelf">
+              {profile.earlyMember ? <Badge3d kind="early" /> : null}
+              {verificationBadge !== null ? (
+                <Badge3d
+                  kind="verified"
+                  detail={`Verified ${verificationBadge.verifiedAt.toLocaleDateString()}`}
+                />
+              ) : null}
+              {profile.isPlus ? <Badge3d kind="plus" /> : null}
+            </div>
+          </section>
+        ) : null}
         <TrustModule constellation={constellation} signInHref={null} />
         <ReputationSummary reputation={reputation} isOwner={isOwner} />
         {vouchData.vouches.length === 0 ? null : (
@@ -285,6 +395,10 @@ function PublicProfile({
   reputation,
   intentLabel,
   badge,
+  experiences,
+  services,
+  profileRate,
+  verificationBadge,
 }: {
   intentLabel: string | null;
   badge: React.ReactNode;
@@ -294,6 +408,10 @@ function PublicProfile({
   vouchData: Awaited<ReturnType<typeof getProfileVouches>>;
   featuredNodes: Awaited<ReturnType<typeof listFeaturedProofNodes>>;
   projects: Awaited<ReturnType<typeof listProfileProjects>>;
+  experiences: Awaited<ReturnType<typeof listExperiences>>;
+  services: Awaited<ReturnType<typeof listProfileServices>>;
+  profileRate: Awaited<ReturnType<typeof getProfileRate>> | null;
+  verificationBadge: Awaited<ReturnType<typeof publicVerificationBadge>>;
 }) {
   const siteUrl = process.env.APP_URL?.trim() || 'https://vouchnet.dev';
   const jsonLd = {
@@ -397,6 +515,69 @@ function PublicProfile({
           </article>
         </section>
       )}
+      {experiences.length === 0 ? null : (
+        <section className="public-profile-content public-vouch-section">
+          <article>
+            <p className="eyebrow">Experience</p>
+            <h2>Work history</h2>
+            {experiences.map((entry) => (
+              <div key={entry.id}>
+                <strong>{entry.title}</strong>
+                <p>
+                  {entry.organization} · {employmentTypeLabels[entry.employmentType]} ·{' '}
+                  {entry.startYear} — {entry.isCurrent ? 'Present' : (entry.endYear ?? '')}
+                </p>
+              </div>
+            ))}
+          </article>
+        </section>
+      )}
+      {services.length === 0 &&
+      !(profileRate?.visible === true && profileRate.amount !== null) ? null : (
+        <section className="public-profile-content public-vouch-section">
+          <article>
+            <p className="eyebrow">Services</p>
+            <h2>Hire {profile.firstName}</h2>
+            {profileRate?.visible === true && profileRate.amount !== null ? (
+              <p className="profile-rate-chip">
+                ${Number(profileRate.amount).toLocaleString()} {profileRate.currency}/hour
+              </p>
+            ) : null}
+            {services.map((service) => (
+              <div key={service.id}>
+                <strong>{service.title}</strong>
+                <p>
+                  {service.description ?? ''}
+                  {rateLabel(service) === null ? ' Rate on request.' : ` ${rateLabel(service)}.`}
+                </p>
+              </div>
+            ))}
+            <RequestServiceButton
+              providerUserId={profile.userId}
+              providerName={profile.firstName}
+              services={services}
+              signInHref={`/login?next=${encodeURIComponent(`/in/${profile.slug}`)}`}
+            />
+          </article>
+        </section>
+      )}
+      {profile.earlyMember || verificationBadge !== null || profile.isPlus ? (
+        <section className="public-profile-content public-vouch-section">
+          <article>
+            <p className="eyebrow">Badges</p>
+            <div className="profile-badge-shelf">
+              {profile.earlyMember ? <Badge3d kind="early" /> : null}
+              {verificationBadge !== null ? (
+                <Badge3d
+                  kind="verified"
+                  detail={`Verified ${verificationBadge.verifiedAt.toLocaleDateString()}`}
+                />
+              ) : null}
+              {profile.isPlus ? <Badge3d kind="plus" /> : null}
+            </div>
+          </article>
+        </section>
+      ) : null}
       <section className="public-profile-content public-trust-section">
         <article>
           {trust}
