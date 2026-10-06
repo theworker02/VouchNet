@@ -1,6 +1,7 @@
 import 'server-only';
 import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { createSqlClient } from '@nexus/db';
+import { spendCredits } from './api-credits-ledger';
 
 const availableScopes = ['profile:read', 'profile:email', 'resume:read', 'skills:verify'] as const;
 export type ApplyScope = (typeof availableScopes)[number];
@@ -273,9 +274,11 @@ export async function exchangeAuthorizationCode(input: {
           client_secret_hash: string;
           client_id: string;
           revoked_at: Date | null;
+          developer_client_id: string;
+          owner_id: string;
         }[]
       >`
-        SELECT code.id,code.user_id,code.redirect_uri,code.scopes,code.code_challenge,client.client_secret_hash,client.client_id,client.revoked_at
+        SELECT code.id,code.user_id,code.redirect_uri,code.scopes,code.code_challenge,client.client_secret_hash,client.client_id,client.revoked_at,client.id AS developer_client_id,client.owner_id
         FROM oauth_authorization_codes code JOIN developer_clients client ON client.id=code.client_id
         WHERE code.code_hash=${opaqueHash(input.code)} AND code.used_at IS NULL AND code.expires_at>now() FOR UPDATE
       `;
@@ -291,6 +294,14 @@ export async function exchangeAuthorizationCode(input: {
       const expectedChallenge = createHash('sha256').update(input.codeVerifier).digest('base64url');
       if (!timingSafeEqual(Buffer.from(expectedChallenge), Buffer.from(grant.code_challenge)))
         throw new ApplyOAuthError('INVALID_GRANT');
+      // Metered only after the client is authenticated and the grant is valid. Spending inside this
+      // transaction means a failed exchange is never charged, and an InsufficientCreditsError rolls
+      // back before the one-use code is consumed so the client can retry after topping up.
+      await spendCredits(transaction, {
+        userId: grant.owner_id,
+        operation: 'oauth.token',
+        developerClientId: grant.developer_client_id,
+      });
       const token = `vnat_${randomBytes(32).toString('base64url')}`;
       await transaction`UPDATE oauth_authorization_codes SET used_at=now() WHERE id=${grant.id}`;
       await transaction`
@@ -311,44 +322,61 @@ export async function exchangeAuthorizationCode(input: {
   }
 }
 
-export async function profileForAccessToken(token: string) {
+/**
+ * Resolves a third-party bearer token to the authorizing member's profile and charges the client
+ * owner's prepaid credits for the call. The charge commits in the same transaction as the read, so
+ * invalid tokens, missing scopes, and server errors are never charged.
+ */
+export async function profileForAccessToken(
+  token: string,
+  operation: 'oauth.userinfo' | 'v1.applicant_data',
+) {
   const sql = database();
   try {
-    const rows = await sql<
-      {
-        token_id: string;
-        scopes: unknown;
-        user_id: string;
-        slug: string;
-        first_name: string;
-        last_name: string;
-        headline: string | null;
-        email_normalized: string;
-      }[]
-    >`
-      SELECT token.id AS token_id,token.scopes,token.user_id,p.slug,p.first_name,p.last_name,p.headline,e.email_normalized
-      FROM oauth_access_tokens token
-      JOIN developer_clients client ON client.id=token.client_id AND client.revoked_at IS NULL
-      JOIN profiles p ON p.user_id=token.user_id
-      JOIN user_emails e ON e.user_id=token.user_id AND e.is_primary=true AND e.verified_at IS NOT NULL
-      WHERE token.token_hash=${opaqueHash(token)} AND token.revoked_at IS NULL AND token.expires_at>now()
-    `;
-    const record = rows[0];
-    if (record === undefined) throw new ApplyOAuthError('INVALID_TOKEN');
-    const scopes = Array.isArray(record.scopes)
-      ? record.scopes.filter((scope): scope is ApplyScope => typeof scope === 'string')
-      : [];
-    if (!scopes.includes('profile:read')) throw new ApplyOAuthError('INVALID_TOKEN');
-    await sql`UPDATE oauth_access_tokens SET last_used_at=now() WHERE id=${record.token_id}`;
-    return {
-      sub: record.user_id,
-      profile_url: `${process.env.APP_URL ?? 'http://localhost:3002'}/vouch/${record.slug}`,
-      name: `${record.first_name} ${record.last_name}`,
-      given_name: record.first_name,
-      family_name: record.last_name,
-      headline: record.headline,
-      ...(scopes.includes('profile:email') ? { email: record.email_normalized } : {}),
-    };
+    return await sql.begin(async (transaction) => {
+      const rows = await transaction<
+        {
+          token_id: string;
+          scopes: unknown;
+          user_id: string;
+          developer_client_id: string;
+          owner_id: string;
+          slug: string;
+          first_name: string;
+          last_name: string;
+          headline: string | null;
+          email_normalized: string;
+        }[]
+      >`
+        SELECT token.id AS token_id,token.scopes,token.user_id,client.id AS developer_client_id,client.owner_id,p.slug,p.first_name,p.last_name,p.headline,e.email_normalized
+        FROM oauth_access_tokens token
+        JOIN developer_clients client ON client.id=token.client_id AND client.revoked_at IS NULL
+        JOIN profiles p ON p.user_id=token.user_id
+        JOIN user_emails e ON e.user_id=token.user_id AND e.is_primary=true AND e.verified_at IS NOT NULL
+        WHERE token.token_hash=${opaqueHash(token)} AND token.revoked_at IS NULL AND token.expires_at>now()
+      `;
+      const record = rows[0];
+      if (record === undefined) throw new ApplyOAuthError('INVALID_TOKEN');
+      const scopes = Array.isArray(record.scopes)
+        ? record.scopes.filter((scope): scope is ApplyScope => typeof scope === 'string')
+        : [];
+      if (!scopes.includes('profile:read')) throw new ApplyOAuthError('INVALID_TOKEN');
+      await spendCredits(transaction, {
+        userId: record.owner_id,
+        operation,
+        developerClientId: record.developer_client_id,
+      });
+      await transaction`UPDATE oauth_access_tokens SET last_used_at=now() WHERE id=${record.token_id}`;
+      return {
+        sub: record.user_id,
+        profile_url: `${process.env.APP_URL ?? 'http://localhost:3002'}/vouch/${record.slug}`,
+        name: `${record.first_name} ${record.last_name}`,
+        given_name: record.first_name,
+        family_name: record.last_name,
+        headline: record.headline,
+        ...(scopes.includes('profile:email') ? { email: record.email_normalized } : {}),
+      };
+    });
   } finally {
     await sql.end({ timeout: 1 });
   }

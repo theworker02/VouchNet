@@ -5,6 +5,8 @@ import {
   hasValidPkceVerifier,
   ApplyOAuthError,
 } from '../../../lib/apply-oauth';
+import { InsufficientCreditsError } from '../../../lib/api-credits-ledger';
+import { insufficientCreditsResponse } from '../../../lib/api-credits-response';
 import { enforceRateLimit } from '../../../lib/security/rate-limit';
 import { rateLimitResponse } from '../../../lib/security/rate-limit-response';
 import { strictFormDataRecord } from '../../../lib/validation/strict-form-data';
@@ -77,6 +79,8 @@ export async function POST(request: NextRequest) {
       { headers: { 'cache-control': 'no-store' } },
     );
   } catch (error) {
+    if (error instanceof InsufficientCreditsError)
+      return insufficientCreditsResponse(error, request.url);
     const code =
       error instanceof ApplyOAuthError && error.code === 'INVALID_REQUEST'
         ? 'invalid_request'
