@@ -18,6 +18,8 @@ import { VouchTrigger } from '../../components/vouches/vouch-trigger';
 import { getReputation } from '../../lib/reputation';
 import { getConstellation } from '../../lib/vouch-graph';
 import { getComposerState, listReceivedVouches } from '../../lib/work-vouches';
+import { getProfileIntent } from '../../lib/build-discovery';
+import { profileIntentLabels } from '../../lib/profile-intent';
 
 export async function generateMetadata({
   params,
@@ -60,6 +62,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
     reputation,
     composer,
     viewer,
+    intent,
   ] = await Promise.all([
     getProfileVouches(viewerId, profile.userId),
     listFeaturedProofNodes(profile.userId),
@@ -71,7 +74,9 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
       ? Promise.resolve(null)
       : getComposerState(viewerId, profile.userId),
     viewerId === null ? Promise.resolve(null) : getProfileSummary(viewerId),
+    getProfileIntent(profile.userId).catch(() => null),
   ]);
+  const intentLabel = intent === null ? null : profileIntentLabels[intent];
   const recipient = {
     userId: profile.userId,
     slug: profile.slug,
@@ -92,6 +97,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
           vouchData={vouchData}
           featuredNodes={featuredNodes}
           projects={projects}
+          intentLabel={intentLabel}
           trust={
             <TrustModule
               constellation={constellation}
@@ -124,6 +130,12 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
                 {profile.firstName} {profile.lastName}
               </h1>
               <p className="profile-headline">{profile.headline ?? 'VouchNet member'}</p>
+              {intentLabel === null ? null : (
+                <p className="profile-intent">
+                  <span className="discover-intent-chip">{intentLabel}</span>
+                  {isOwner ? <Link href="/discover">Change</Link> : null}
+                </p>
+              )}
               <p>{profile.location ?? 'Location not listed'} · Contact info</p>
             </div>
           </div>
@@ -251,7 +263,9 @@ function PublicProfile({
   projects,
   trust,
   reputation,
+  intentLabel,
 }: {
+  intentLabel: string | null;
   trust: React.ReactNode;
   reputation: React.ReactNode;
   profile: NonNullable<Awaited<ReturnType<typeof getVisibleProfile>>>;
@@ -287,6 +301,11 @@ function PublicProfile({
               {profile.firstName} {profile.lastName}
             </h1>
             <p>{profile.headline ?? 'VouchNet member'}</p>
+            {intentLabel === null ? null : (
+              <p className="profile-intent">
+                <span className="discover-intent-chip">{intentLabel}</span>
+              </p>
+            )}
             <span>{profile.location ?? 'Location not listed'}</span>
           </div>
         </div>

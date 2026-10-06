@@ -5,7 +5,10 @@ import {
   rankBuilders,
   rankByMomentum,
   rankOpportunities,
+  selectProjectSections,
+  type DiscoverProjectCandidate,
 } from './discovery-ranking';
+import { normalizeProfileIntent, profileIntentSchema } from './profile-intent';
 
 const now = new Date('2026-10-06T12:00:00Z');
 const daysAgo = (days: number) => new Date(now.getTime() - days * 86_400_000);
@@ -79,5 +82,61 @@ describe('open opportunities', () => {
     );
     expect(ranked.map((item) => item.id)).toEqual(['fresh', 'closing', 'old']);
     expect(ranked[1]?.reasons).toContain('Closes in 3 days');
+  });
+});
+
+describe('project sections', () => {
+  const project = (
+    id: string,
+    overrides: Partial<DiscoverProjectCandidate> = {},
+  ): DiscoverProjectCandidate => ({
+    id,
+    status: 'ACTIVE_DEVELOPMENT',
+    openSource: false,
+    lookingFor: [],
+    tags: [],
+    createdAt: daysAgo(60),
+    statusChangedAt: daysAgo(60),
+    lastActivityAt: daysAgo(5),
+    signals: [],
+    ...overrides,
+  });
+
+  it('places projects by recorded activity and never shows archived ones', () => {
+    const sections = selectProjectSections(
+      [
+        project('active', { signals: [{ kind: 'buildLog', at: daysAgo(1) }] }),
+        project('archived', {
+          status: 'ARCHIVED',
+          openSource: true,
+          createdAt: daysAgo(1),
+          signals: [{ kind: 'buildLog', at: daysAgo(1) }],
+        }),
+        project('new', { createdAt: daysAgo(2) }),
+        project('launched-old', { status: 'LAUNCHED', statusChangedAt: daysAgo(20) }),
+        project('launched-new', { status: 'LAUNCHED', statusChangedAt: daysAgo(3) }),
+        project('oss-quiet', { openSource: true, lastActivityAt: daysAgo(1) }),
+        project('oss-help', { openSource: true, lookingFor: ['CONTRIBUTORS'] }),
+        project('research', { tags: ['Research'] }),
+        project('researchers', { lookingFor: ['RESEARCHERS'], lastActivityAt: daysAgo(1) }),
+      ],
+      now,
+    );
+    expect(sections.momentum.map((item) => item.id)).toEqual(['active']);
+    expect(sections.momentum[0]?.reasons).toEqual(['1 build-log entry in 14 days']);
+    expect(sections.fresh.map((item) => item.id)).toEqual(['new']);
+    expect(sections.launched.map((item) => item.id)).toEqual(['launched-new', 'launched-old']);
+    expect(sections.openSource.map((item) => item.id)).toEqual(['oss-help', 'oss-quiet']);
+    expect(sections.research.map((item) => item.id)).toEqual(['researchers', 'research']);
+  });
+});
+
+describe('profile intent', () => {
+  it('accepts the five intents or clearing, and nothing else', () => {
+    expect(profileIntentSchema.parse({ intent: 'HIRING' })).toEqual({ intent: 'HIRING' });
+    expect(profileIntentSchema.parse({ intent: null })).toEqual({ intent: null });
+    expect(() => profileIntentSchema.parse({ intent: 'OPEN_TO_ANYTHING' })).toThrow();
+    expect(normalizeProfileIntent('JUST_NETWORKING')).toBe('JUST_NETWORKING');
+    expect(normalizeProfileIntent('nope')).toBeNull();
   });
 });

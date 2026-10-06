@@ -181,3 +181,73 @@ export function rankOpportunities<T extends OpportunityCandidate>(
     .sort((left, right) => right.score - left.score || left.id.localeCompare(right.id))
     .slice(0, limit);
 }
+
+export type DiscoverProjectCandidate = {
+  id: string;
+  status: string;
+  openSource: boolean;
+  lookingFor: readonly string[];
+  tags: readonly string[];
+  createdAt: Date;
+  statusChangedAt: Date;
+  lastActivityAt: Date;
+  signals: readonly MomentumSignal[];
+};
+
+export type ProjectSections<T> = {
+  momentum: RankedItem<T>[];
+  fresh: T[];
+  launched: T[];
+  openSource: T[];
+  research: T[];
+};
+
+const newProjectWindowDays = 30;
+const helpWanted = new Set(['CONTRIBUTORS', 'MAINTAINERS', 'TESTERS', 'WRITERS', 'DESIGNERS']);
+
+function newestFirst<T extends { id: string }>(pick: (item: T) => Date) {
+  return (left: T, right: T) =>
+    pick(right).getTime() - pick(left).getTime() || left.id.localeCompare(right.id);
+}
+
+/**
+ * Splits visible public projects into the discovery sections. Archived projects never appear;
+ * every section is ordered by recorded activity, not by popularity or prediction.
+ */
+export function selectProjectSections<T extends DiscoverProjectCandidate>(
+  projects: readonly T[],
+  now = new Date(),
+  limit = 6,
+): ProjectSections<T> {
+  const live = projects.filter((project) => project.status !== 'ARCHIVED');
+  const newSince = now.getTime() - newProjectWindowDays * 86_400_000;
+  return {
+    momentum: rankByMomentum(live, now, limit),
+    fresh: live
+      .filter((project) => project.createdAt.getTime() >= newSince)
+      .sort(newestFirst((project) => project.createdAt))
+      .slice(0, limit),
+    launched: live
+      .filter((project) => project.status === 'LAUNCHED')
+      .sort(newestFirst((project) => project.statusChangedAt))
+      .slice(0, limit),
+    openSource: live
+      .filter((project) => project.openSource)
+      .sort((left, right) => {
+        const help = (project: T) => project.lookingFor.some((role) => helpWanted.has(role));
+        return (
+          Number(help(right)) - Number(help(left)) ||
+          newestFirst<T>((project) => project.lastActivityAt)(left, right)
+        );
+      })
+      .slice(0, limit),
+    research: live
+      .filter(
+        (project) =>
+          project.lookingFor.includes('RESEARCHERS') ||
+          project.tags.some((tag) => tag.toLowerCase() === 'research'),
+      )
+      .sort(newestFirst((project) => project.lastActivityAt))
+      .slice(0, limit),
+  };
+}

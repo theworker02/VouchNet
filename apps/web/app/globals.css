@@ -3887,7 +3887,7 @@ button.signal-cell:focus-visible {
     bottom: 0;
     left: 0;
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
     padding: 8px 6px calc(8px + env(safe-area-inset-bottom));
     border-top: 1px solid var(--line);
     background: color-mix(in srgb, var(--surface) 94%, transparent);
@@ -12176,5 +12176,301 @@ select.instrument-input option {
   }
   .opportunity-form-actions {
     justify-content: flex-end;
+  }
+}
+
+/* Build in Public: discovery (reuses company-jobs, project-card, job-row, and project-tags) */
+.discover-page {
+  display: grid;
+  gap: 18px;
+}
+.discover-page .projects-heading {
+  max-width: none;
+  margin-bottom: 0;
+}
+.discover-page .company-jobs {
+  margin-top: 0;
+}
+.discover-page .company-jobs .section-heading > a {
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+.discover-intent {
+  display: grid;
+  flex: 0 1 290px;
+  gap: 6px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.discover-intent label {
+  color: #34456a;
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+.discover-intent select {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid #ccd7e8;
+  border-radius: 8px;
+  color: var(--ink);
+  background: var(--surface);
+  font: inherit;
+  font-size: 0.84rem;
+}
+.discover-intent select:focus {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(46 91 215 / 0.13);
+}
+.discover-intent small {
+  color: var(--muted);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+.discover-intent small [role='status'] {
+  color: var(--success);
+  font-weight: 750;
+}
+.discover-jump {
+  margin-top: 0;
+}
+.discover-filter {
+  margin: 14px 0 4px;
+}
+.discover-jump a:hover,
+.discover-filter a:hover,
+.discover-jump a:focus-visible,
+.discover-filter a:focus-visible {
+  color: var(--accent);
+}
+.discover-filter a[aria-current='true'] {
+  color: #fff;
+  background: var(--accent);
+}
+.discover-people {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 16px;
+}
+.discover-person {
+  display: grid;
+  align-content: start;
+  gap: 12px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.discover-person-head {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  min-width: 0;
+}
+.discover-person-head > div {
+  min-width: 0;
+}
+.discover-avatar {
+  display: grid;
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 50%;
+  color: white;
+  background: linear-gradient(135deg, #3257bc, #7451b9);
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+.discover-person h3 {
+  margin: 0;
+  color: #1e3159;
+  font-size: 0.98rem;
+  letter-spacing: -0.03em;
+}
+.discover-person h3 a,
+.discover-section .job-row h3 a {
+  color: inherit;
+  text-decoration: none;
+}
+.discover-person h3 a:hover,
+.discover-person h3 a:focus-visible,
+.discover-section .job-row h3 a:hover,
+.discover-section .job-row h3 a:focus-visible {
+  text-decoration: underline;
+}
+.discover-person-head p {
+  overflow: hidden;
+  margin: 2px 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.discover-person-meta,
+.profile-intent {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  margin: 0;
+  color: #5f6e89;
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+.discover-intent-chip {
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 12%, transparent);
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+.profile-intent {
+  margin-top: 8px;
+}
+.profile-intent a {
+  color: var(--accent);
+  font-size: 0.75rem;
+}
+.discover-reasons {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+.discover-reasons li::before {
+  content: '·';
+  margin-right: 6px;
+  color: var(--accent);
+  font-weight: 900;
+}
+.project-card .discover-reasons {
+  margin-top: 14px;
+}
+.discover-project-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 16px;
+}
+.discover-project-grid .project-card {
+  min-height: 0;
+}
+.discover-project-grid .project-card h3 {
+  margin: 20px 0 8px;
+  color: #1d315a;
+  font-size: 1.12rem;
+  letter-spacing: -0.04em;
+}
+.project-card > .discover-reasons + a {
+  margin-top: 16px;
+}
+.discover-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.discover-section .job-row > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.discover-columns .job-row {
+  padding: 16px 0;
+}
+.discover-column-empty,
+.discover-empty p {
+  margin: 14px 0 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+.discover-empty {
+  margin-top: 16px;
+  padding: 22px;
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+}
+.discover-empty h3 {
+  margin: 0;
+  color: #1e3159;
+  font-size: 1rem;
+}
+.discover-empty p {
+  margin-top: 6px;
+}
+.discover-explainer summary {
+  color: #20345c;
+  font-weight: 800;
+  cursor: pointer;
+}
+.discover-explainer ul {
+  display: grid;
+  gap: 10px;
+  margin: 14px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.6;
+}
+.discover-public .discover-page {
+  padding-bottom: 48px;
+}
+@media (prefers-color-scheme: dark) {
+  .discover-intent label {
+    color: #c3d3f8;
+  }
+  .discover-intent select {
+    border-color: #3b4a67;
+    background: #182135;
+  }
+  .discover-person h3,
+  .discover-empty h3,
+  .discover-project-grid .project-card h3,
+  .discover-explainer summary {
+    color: #eef3ff;
+  }
+}
+@media (max-width: 980px) {
+  .discover-people,
+  .discover-project-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 700px) {
+  /* Six primary destinations share the bottom bar once Discover joins it. */
+  .mobile-nav a > span:not(.nav-active-indicator):not(.nav-notification-count) {
+    font-size: 0.72rem;
+    white-space: nowrap;
+  }
+  .discover-people,
+  .discover-project-grid,
+  .discover-columns {
+    grid-template-columns: 1fr;
+  }
+  .discover-intent {
+    flex-basis: auto;
+  }
+  .discover-jump {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+  .discover-jump a {
+    flex: 0 0 auto;
+  }
+}
+@media (max-width: 360px) {
+  .mobile-nav a > span:not(.nav-active-indicator):not(.nav-notification-count) {
+    font-size: 0.62rem;
   }
 }

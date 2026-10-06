@@ -23,6 +23,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const publicRoutes: MetadataRoute.Sitemap = [
     entry('/', undefined, 1),
     entry('/jobs', undefined, 0.9),
+    entry('/discover', undefined, 0.8),
+    entry('/opportunities', undefined, 0.8),
     entry('/games', undefined, 0.7),
     entry('/privacy', undefined, 0.3),
     entry('/terms', undefined, 0.3),
@@ -32,7 +34,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const sql = createSqlClient(databaseUrl);
   try {
-    const [profiles, organizations, projects] = await Promise.all([
+    const [profiles, organizations, projects, opportunities] = await Promise.all([
       sql<SitemapRow[]>`
         SELECT p.slug,p.updated_at AS "updatedAt"
         FROM profiles p JOIN users u ON u.id=p.user_id
@@ -48,6 +50,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         JOIN users u ON u.id=p.owner_id
         WHERE p.visibility='PUBLIC' AND pr.visibility='PUBLIC' AND u.status='ACTIVE'
       `,
+      sql<SitemapRow[]>`
+        SELECT o.slug,o.updated_at AS "updatedAt"
+        FROM opportunities o
+        JOIN profiles pr ON pr.user_id=o.poster_id
+        JOIN users u ON u.id=o.poster_id
+        WHERE o.status='OPEN' AND o.moderation_state='ACTIVE' AND pr.visibility='PUBLIC'
+          AND u.status='ACTIVE' AND (o.deadline IS NULL OR o.deadline >= current_date)
+      `,
     ]);
     return [
       ...publicRoutes,
@@ -56,6 +66,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         entry(`/company/${organization.slug}`, organization.updatedAt, 0.7),
       ),
       ...projects.map((project) => entry(`/projects/${project.slug}`, project.updatedAt, 0.7)),
+      ...opportunities.map((opportunity) =>
+        entry(`/opportunities/${opportunity.slug}`, opportunity.updatedAt, 0.6),
+      ),
     ];
   } catch {
     return publicRoutes;
