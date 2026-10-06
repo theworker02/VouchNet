@@ -4959,7 +4959,7 @@ button.signal-cell:focus-visible {
   margin: 0;
   color: var(--muted);
 }
-.public-profile-identity span:not(.profile-avatar) {
+.public-profile-identity span:not(.profile-avatar):not(.identity-badge-card) {
   display: block;
   margin-top: 7px;
   color: #74819a;
