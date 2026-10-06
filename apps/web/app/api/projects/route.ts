@@ -1,3 +1,4 @@
+import { submitToIndexNow } from '../../lib/indexnow';
 import { NextRequest, NextResponse } from 'next/server';
 import { guardedWrite } from '../../lib/build-route';
 import { projectInputSchema } from '../../lib/project-model';
@@ -9,6 +10,7 @@ export async function POST(request: NextRequest) {
       actor.userId,
       projectInputSchema.parse(await request.json()),
     );
+    submitToIndexNow(`/projects/${project.slug}`);
     return NextResponse.json({ project }, { status: 201 });
   });
 }

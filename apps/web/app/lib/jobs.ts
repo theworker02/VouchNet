@@ -1,5 +1,6 @@
 import 'server-only';
 import { createSqlClient } from '@nexus/db';
+import { submitToIndexNow } from './indexnow';
 
 export const jobSourceProviders = ['GREENHOUSE', 'LEVER'] as const;
 export type JobSourceProvider = (typeof jobSourceProviders)[number];
@@ -88,8 +89,10 @@ export async function submitEmployerJob(
   input: JobSubmissionInput,
 ): Promise<{ freeUntil: Date; id: string }> {
   const client = sql();
+  let submittedOrgSlug: string | null = null;
+  let submittedJobSlug: string | null = null;
   try {
-    return await client.begin(async (transaction) => {
+    const result = await client.begin(async (transaction) => {
       const existingOrganizations = await transaction<{ id: string; slug: string }[]>`
         SELECT id,slug FROM organizations
         WHERE lower(name)=lower(${input.organizationName}) AND deleted_at IS NULL
@@ -97,13 +100,17 @@ export async function submitEmployerJob(
         FOR UPDATE
       `;
       const organization = existingOrganizations[0];
+      const organizationSlug =
+        organization?.slug ??
+        `${slugify(input.organizationName, 48)}-${crypto.randomUUID().slice(0, 6)}`;
+      submittedOrgSlug = organizationSlug;
       const organizationId =
         organization?.id ??
         (
           await transaction<{ id: string }[]>`
             INSERT INTO organizations (slug,name,tagline,description,website_url,verification_status)
             VALUES (
-              ${`${slugify(input.organizationName, 48)}-${crypto.randomUUID().slice(0, 6)}`},
+              ${organizationSlug},
               ${input.organizationName},
               ${'Employer-submitted organization'},
               ${'This organization was submitted by a VouchNet member and is awaiting verification.'},
@@ -132,7 +139,7 @@ export async function submitEmployerJob(
           origin,employer_review_status,posting_owner_user_id,launch_waiver_expires_at,native_application_enabled
         ) VALUES (
           ${organizationId},
-          ${`${slugify(input.organizationName, 30)}-${slugify(input.title, 50)}-${crypto.randomUUID().slice(0, 6)}`},
+          ${(submittedJobSlug = `${slugify(input.organizationName, 30)}-${slugify(input.title, 50)}-${crypto.randomUUID().slice(0, 6)}`)},
           ${input.title},${input.summary},${input.description},${input.location},${input.workplaceType},${input.employmentType},
           ${input.salaryMin},${input.salaryMax},${input.salaryCurrency},${input.skillTags},${input.applicationUrl},now(),'PENDING_REVIEW',
           'EMPLOYER_SUBMISSION','PENDING',${userId},${freeUntil},true
@@ -142,6 +149,11 @@ export async function submitEmployerJob(
       if (job === undefined) throw new Error('JOB_CREATE_FAILED');
       return { freeUntil, id: job.id };
     });
+    const indexable = ['/jobs', '/opportunities'];
+    if (submittedOrgSlug !== null) indexable.push(`/company/${submittedOrgSlug}`);
+    if (submittedJobSlug !== null) indexable.push(`/jobs/${submittedJobSlug}`);
+    submitToIndexNow(indexable);
+    return result;
   } catch (error) {
     if (isUniqueViolation(error)) throw new JobSourcingError('DUPLICATE_JOB');
     throw error;

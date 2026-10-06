@@ -1,3 +1,4 @@
+import { submitToIndexNow } from '../../../lib/indexnow';
 import { NextRequest, NextResponse } from 'next/server';
 import { guardedWrite, uuidParam } from '../../../lib/build-route';
 import { projectUpdateSchema } from '../../../lib/project-model';
@@ -13,6 +14,7 @@ export async function PATCH(request: NextRequest, context: Context) {
       projectId,
       projectUpdateSchema.parse(await request.json()),
     );
+    submitToIndexNow(`/projects/${project.slug}`);
     return NextResponse.json({ project });
   });
 }

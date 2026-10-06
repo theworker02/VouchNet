@@ -1,3 +1,4 @@
+import { submitToIndexNow } from '../../../lib/indexnow';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { actorFromRequest, getProfileSummary, updateOwnProfile } from '../../../lib/identity';
@@ -51,7 +52,9 @@ export async function PATCH(request: NextRequest) {
         currency: input.hourlyRateCurrency ?? 'USD',
         visible: input.hourlyRateVisible ?? (input.hourlyRateAmount ?? null) !== null,
       });
-    return NextResponse.json({ profile: await getProfileSummary(actor.userId) });
+    const profile = await getProfileSummary(actor.userId);
+    if (profile !== null) submitToIndexNow([`/vouch/${profile.slug}`, `/in/${profile.slug}`]);
+    return NextResponse.json({ profile });
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof z.ZodError ? 'INVALID_PROFILE' : 'PROFILE_UPDATE_FAILED' },

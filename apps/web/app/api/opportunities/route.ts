@@ -1,3 +1,4 @@
+import { submitToIndexNow } from '../../lib/indexnow';
 import { NextRequest, NextResponse } from 'next/server';
 import { guardedWrite } from '../../lib/build-route';
 import { createOpportunity } from '../../lib/opportunities';
@@ -9,6 +10,7 @@ export async function POST(request: NextRequest) {
       actor.userId,
       opportunityInputSchema.parse(await request.json()),
     );
+    submitToIndexNow(`/opportunities/${opportunity.slug}`);
     return NextResponse.json({ opportunity }, { status: 201 });
   });
 }
