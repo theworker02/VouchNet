@@ -12,9 +12,11 @@ const ACCOUNT: &str = "refresh-token";
 #[derive(Default)] struct DesktopState { pending: Mutex<Option<PendingAuthorization>>, access_token: Mutex<Option<String>> }
 struct PendingAuthorization { state: String, verifier: String }
 #[derive(Deserialize)] #[serde(rename_all = "camelCase")] struct TokenResponse { access_token: String, refresh_token: String }
-#[derive(Deserialize, Serialize)] #[serde(rename_all = "camelCase")] struct Profile { full_name: String, headline: Option<String>, slug: String, #[serde(default)] identity_verification: Option<IdentityVerification> }
+#[derive(Deserialize, Serialize)] #[serde(rename_all = "camelCase")] struct Profile { full_name: String, headline: Option<String>, slug: String, #[serde(default)] identity_verification: Option<IdentityVerification>, #[serde(default)] early_member: bool, #[serde(default)] hourly_rate_amount: Option<String>, #[serde(default = "default_currency")] hourly_rate_currency: String, #[serde(default)] hourly_rate_visible: bool, #[serde(default)] services: Vec<ProfileService> }
+#[derive(Deserialize, Serialize, Clone)] #[serde(rename_all = "camelCase")] struct ProfileService { title: String, description: Option<String>, rate_amount: Option<String>, rate_currency: String, rate_unit: String }
+fn default_currency() -> String { "USD".into() }
 #[derive(Deserialize, Serialize, Clone)] #[serde(rename_all = "camelCase")] struct IdentityVerification { method: String, verified_at: String }
-#[derive(Deserialize)] struct ProfileResponse { profile: Option<Profile>, verification: Option<IdentityVerification> }
+#[derive(Deserialize)] struct ProfileResponse { profile: Option<Profile>, verification: Option<IdentityVerification>, #[serde(default)] services: Vec<ProfileService> }
 #[derive(Deserialize, Serialize)] #[serde(rename_all = "camelCase")] struct DesktopAttachment { url: String, kind: String, label: Option<String>, alt_text: Option<String> }
 
 fn base_url() -> String { std::env::var("VOUCHNET_URL").unwrap_or_else(|_| "https://vouchnet.dev".into()).trim_end_matches('/').into() }
@@ -52,7 +54,7 @@ async fn profile(state: &DesktopState) -> Result<Option<Profile>, String> {
   let payload = response.json::<ProfileResponse>().await.map_err(|e| e.to_string())?;
   // The badge only communicates that the member is verified plus the method and date; which
   // provider performed the check is deliberately not surfaced.
-  Ok(payload.profile.map(|mut profile| { profile.identity_verification = payload.verification.clone(); profile }))
+  Ok(payload.profile.map(|mut profile| { profile.identity_verification = payload.verification.clone(); profile.services = payload.services; profile }))
 }
 async fn authenticated_get(state: &DesktopState, path: &str) -> Result<serde_json::Value, String> {
   let token = access(state).await?;

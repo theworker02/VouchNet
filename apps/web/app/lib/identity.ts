@@ -385,6 +385,10 @@ export const getProfileSummary = cache(
     about: string | null;
     avatarKey: string | null;
     onboardingStep: number;
+    earlyMember: boolean;
+    hourlyRateAmount: string | null;
+    hourlyRateCurrency: string;
+    hourlyRateVisible: boolean;
   } | null> => {
     const sql = client();
     try {
@@ -398,9 +402,14 @@ export const getProfileSummary = cache(
           about: string | null;
           avatar_key: string | null;
           onboarding_step: number;
+          early_member: boolean;
+          hourly_rate_amount: string | null;
+          hourly_rate_currency: string;
+          rate_visible: boolean;
         }[]
       >`
-      SELECT first_name,last_name,headline,slug,location,about,avatar_key,onboarding_step
+      SELECT first_name,last_name,headline,slug,location,about,avatar_key,onboarding_step,
+             early_member,hourly_rate_amount,hourly_rate_currency,rate_visible
       FROM profiles
       WHERE user_id=${userId}
     `;
@@ -414,6 +423,10 @@ export const getProfileSummary = cache(
         about: profile.about,
         avatarKey: profile.avatar_key,
         onboardingStep: profile.onboarding_step,
+        earlyMember: profile.early_member,
+        hourlyRateAmount: profile.hourly_rate_amount,
+        hourlyRateCurrency: profile.hourly_rate_currency,
+        hourlyRateVisible: profile.rate_visible,
       };
     } finally {
       await sql.end({ timeout: 1 });

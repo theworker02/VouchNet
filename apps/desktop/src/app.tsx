@@ -4,11 +4,23 @@ import { onOpenUrl } from '@tauri-apps/plugin-deep-link';
 import { openUrl } from '@tauri-apps/plugin-opener';
 
 type IdentityVerification = { method: string; verifiedAt: string };
+type ProfileService = {
+  title: string;
+  description: string | null;
+  rateAmount: string | null;
+  rateCurrency: string;
+  rateUnit: 'HOURLY' | 'FIXED' | 'STARTING_AT';
+};
 type Profile = {
   fullName: string;
   headline: string | null;
   slug: string;
   identityVerification?: IdentityVerification | null;
+  earlyMember?: boolean;
+  hourlyRateAmount?: string | null;
+  hourlyRateCurrency?: string;
+  hourlyRateVisible?: boolean;
+  services?: ProfileService[];
 } | null;
 
 function verifiedDateLabel(iso: string) {
@@ -341,8 +353,27 @@ export function App() {
                   ✓ Identity Verified
                 </span>
               ) : null}
+              {profile?.earlyMember ? (
+                <span className="desktop-early-badge" title="Joined during the early invite wave">
+                  ✦ Early member
+                </span>
+              ) : null}
             </strong>
             <span>{profile?.headline ?? 'Your professional network'}</span>
+            {profile?.hourlyRateVisible && profile.hourlyRateAmount ? (
+              <span className="desktop-rate">
+                ${profile.hourlyRateAmount} {profile.hourlyRateCurrency}/hr
+              </span>
+            ) : null}
+            {profile?.services && profile.services.length > 0 ? (
+              <span className="desktop-services">
+                {profile.services
+                  .slice(0, 3)
+                  .map((service) => service.title)
+                  .join(' · ')}
+                {profile.services.length > 3 ? ` +${profile.services.length - 3}` : ''}
+              </span>
+            ) : null}
           </div>
           <i className="connection-dot" title="Secure device session" />
         </header>

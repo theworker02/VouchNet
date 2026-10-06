@@ -1342,3 +1342,27 @@ textarea:focus-visible {
   vertical-align: middle;
   cursor: default;
 }
+.desktop-early-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border: 1px solid #e5cf8f;
+  border-radius: 6px;
+  color: #7a5a12;
+  background: linear-gradient(180deg, #fdf3d7, #f6e3ab);
+  font-size: 0.62rem;
+  font-weight: 700;
+  vertical-align: middle;
+  cursor: default;
+}
+.desktop-rate {
+  display: block;
+  color: #7a5a12;
+  font-size: 0.72rem;
+  font-weight: 600;
+}
+.desktop-services {
+  display: block;
+  color: #5b6472;
+  font-size: 0.7rem;
+}

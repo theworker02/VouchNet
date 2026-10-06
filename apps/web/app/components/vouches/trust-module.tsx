@@ -253,36 +253,60 @@ function VouchGraph({ constellation }: { constellation: Constellation }) {
   }, [board.vouches, constellation]);
   const center = constellation.centerId;
   const others = nodes.filter((node) => node.userId !== center);
+  const ring = others.length > 8 ? 78 : 70;
   const position = new Map<string, { x: number; y: number }>([[center, { x: 0, y: 0 }]]);
   others.forEach((node, index) => {
     const angle = (index / Math.max(others.length, 1)) * Math.PI * 2 - Math.PI / 2;
-    const radius = index % 2 === 0 ? 74 : 60;
-    position.set(node.userId, { x: Math.cos(angle) * radius, y: Math.sin(angle) * radius });
+    position.set(node.userId, { x: Math.cos(angle) * ring, y: Math.sin(angle) * ring });
   });
   return (
     <figure className="trust-graph">
       <figcaption className="instrument-label">VOUCH GRAPH</figcaption>
       <svg
-        viewBox="-100 -100 200 200"
+        viewBox="-108 -108 216 216"
         role="img"
         aria-label={`Vouch graph: ${edges.length} vouches among ${nodes.length} people`}
       >
+        <defs>
+          <marker
+            id="trust-graph-arrow"
+            viewBox="0 0 8 8"
+            refX="7"
+            refY="4"
+            markerWidth="7"
+            markerHeight="7"
+            orient="auto-start-reverse"
+          >
+            <path d="M0,0 L8,4 L0,8 Z" className="trust-graph-arrow" />
+          </marker>
+        </defs>
+        <circle r={ring} className="trust-graph-ring" />
         {edges.map((edge) => {
           const from = position.get(edge.from);
           const to = position.get(edge.to);
           if (from === undefined || to === undefined) return null;
+          const isDirect = edge.to === center || edge.from === center;
+          let d: string;
+          if (isDirect) {
+            // Stop the line at the node edge so the arrowhead isn't hidden under the circle.
+            const dx = to.x - from.x;
+            const dy = to.y - from.y;
+            const length = Math.hypot(dx, dy) || 1;
+            const r = edge.to === center ? 15 : 11;
+            const tx = to.x - (dx / length) * r;
+            const ty = to.y - (dy / length) * r;
+            d = `M${from.x} ${from.y} L${tx} ${ty}`;
+          } else {
+            const mx = (from.x + to.x) / 2;
+            const my = (from.y + to.y) / 2;
+            d = `M${from.x} ${from.y} Q${mx * 1.28} ${my * 1.28} ${to.x} ${to.y}`;
+          }
           return (
-            <line
+            <path
               key={edge.id}
-              x1={from.x}
-              y1={from.y}
-              x2={to.x}
-              y2={to.y}
-              className={
-                edge.to === center || edge.from === center
-                  ? 'trust-graph-edge is-direct'
-                  : 'trust-graph-edge'
-              }
+              d={d}
+              markerEnd="url(#trust-graph-arrow)"
+              className={isDirect ? 'trust-graph-edge is-direct' : 'trust-graph-edge'}
             />
           );
         })}
@@ -293,10 +317,11 @@ function VouchGraph({ constellation }: { constellation: Constellation }) {
           const body = (
             <>
               <title>{node.name}</title>
+              {isCenter ? <circle cx={0} cy={0} r={18} className="trust-graph-halo" /> : null}
               <circle
                 cx={point.x}
                 cy={point.y}
-                r={isCenter ? 12 : 8}
+                r={isCenter ? 12 : 9}
                 className={isCenter ? 'trust-graph-node is-center' : 'trust-graph-node'}
               />
               <text
@@ -304,10 +329,15 @@ function VouchGraph({ constellation }: { constellation: Constellation }) {
                 y={point.y}
                 dy="0.35em"
                 textAnchor="middle"
-                className="trust-graph-initials"
+                className={isCenter ? 'trust-graph-initials is-center' : 'trust-graph-initials'}
               >
                 {node.initials}
               </text>
+              {!isCenter ? (
+                <text x={point.x} y={point.y + 15} textAnchor="middle" className="trust-graph-name">
+                  {node.name.split(' ')[0]}
+                </text>
+              ) : null}
             </>
           );
           return node.slug === '' || isCenter ? (
