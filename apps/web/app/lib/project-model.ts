@@ -58,33 +58,51 @@ const optionalHttpsUrl = z
   .refine((value) => value.startsWith('https://') || value.startsWith('http://'), 'Use a web URL.')
   .optional();
 
+const projectFields = {
+  name: z.string().trim().min(2).max(100),
+  summary: z.string().trim().min(10).max(280),
+  description: z.string().trim().min(10).max(12_000),
+  status: z
+    .enum([...projectStatuses, 'ACTIVE', 'SHIPPED'])
+    .transform((value) => normalizeProjectStatus(value)),
+  projectUrl: optionalHttpsUrl,
+  repositoryUrl: optionalHttpsUrl,
+  documentationUrl: optionalHttpsUrl,
+  demoUrl: optionalHttpsUrl,
+  openSource: z.boolean(),
+  lookingFor: z
+    .array(z.enum(lookingForOptions))
+    .max(8)
+    .transform((items) => [...new Set(items)]),
+  tags: z
+    .array(z.string().trim().min(1).max(40))
+    .max(12)
+    .transform((tags) => [...new Set(tags.map((tag) => tag.toLowerCase()))]),
+};
+
 export const projectInputSchema = z
   .object({
-    name: z.string().trim().min(2).max(100),
-    summary: z.string().trim().min(10).max(280),
-    description: z.string().trim().min(10).max(12_000),
-    status: z
-      .enum([...projectStatuses, 'ACTIVE', 'SHIPPED'])
-      .transform((value) => normalizeProjectStatus(value)),
-    projectUrl: optionalHttpsUrl,
-    repositoryUrl: optionalHttpsUrl,
-    documentationUrl: optionalHttpsUrl,
-    demoUrl: optionalHttpsUrl,
-    openSource: z.boolean().default(false),
-    lookingFor: z
-      .array(z.enum(lookingForOptions))
-      .max(8)
-      .default([])
-      .transform((items) => [...new Set(items)]),
-    tags: z
-      .array(z.string().trim().min(1).max(40))
-      .max(12)
-      .transform((tags) => [...new Set(tags.map((tag) => tag.toLowerCase()))]),
+    ...projectFields,
+    openSource: projectFields.openSource.default(false),
+    lookingFor: projectFields.lookingFor.default([]),
   })
   .strict();
 export type ProjectInput = z.infer<typeof projectInputSchema>;
 
-export const projectUpdateSchema = projectInputSchema.partial().strict();
+/**
+ * Updates are partial and carry no defaults, so omitted fields keep their stored values. An empty
+ * string clears an optional link.
+ */
+export const projectUpdateSchema = z
+  .object({
+    ...projectFields,
+    projectUrl: optionalHttpsUrl.or(z.literal('').transform(() => null)),
+    repositoryUrl: optionalHttpsUrl.or(z.literal('').transform(() => null)),
+    documentationUrl: optionalHttpsUrl.or(z.literal('').transform(() => null)),
+    demoUrl: optionalHttpsUrl.or(z.literal('').transform(() => null)),
+  })
+  .partial()
+  .strict();
 export type ProjectUpdate = z.infer<typeof projectUpdateSchema>;
 
 export const buildLogSchema = z

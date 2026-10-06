@@ -6,6 +6,7 @@ import {
   normalizeProjectStatus,
   projectInputSchema,
   projectLimits,
+  projectUpdateSchema,
 } from './project-model';
 
 describe('project statuses', () => {
@@ -127,5 +128,25 @@ describe('contributor invitations', () => {
     expect(nextContributorStatus({ ...owner, action: 'ACCEPT', current: 'INVITED' })).toBeNull();
     expect(nextContributorStatus({ ...invitee, action: 'REMOVE', current: 'ACCEPTED' })).toBeNull();
     expect(nextContributorStatus({ ...invitee, action: 'ACCEPT', current: 'DECLINED' })).toBeNull();
+  });
+});
+
+describe('project updates', () => {
+  it('leaves omitted fields untouched instead of applying create defaults', () => {
+    const parsed = projectUpdateSchema.parse({ name: 'Renamed project' });
+    expect(parsed).toEqual({ name: 'Renamed project' });
+    expect('openSource' in parsed).toBe(false);
+    expect('lookingFor' in parsed).toBe(false);
+  });
+
+  it('clears an optional link with an empty string and normalizes legacy statuses', () => {
+    expect(projectUpdateSchema.parse({ demoUrl: '', status: 'SHIPPED' })).toEqual({
+      demoUrl: null,
+      status: 'LAUNCHED',
+    });
+  });
+
+  it('rejects unknown fields', () => {
+    expect(projectUpdateSchema.safeParse({ ownerId: 'x' }).success).toBe(false);
   });
 });

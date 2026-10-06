@@ -10,6 +10,8 @@ import { ProfileVouchRoster } from '../../components/profile-vouch-roster';
 import { getProfileVouches } from '../../lib/vouches';
 import { recordProfileView } from '../../lib/profile-analytics';
 import { listFeaturedProofNodes } from '../../lib/featured-proof';
+import { projectStatusLabels } from '../../lib/project-model';
+import { listProfileProjects } from '../../lib/projects';
 
 export async function generateMetadata({
   params,
@@ -41,12 +43,20 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
   const profile = await getVisibleProfile(actor?.userId ?? null, (await params).slug);
   if (profile === null) notFound();
   await recordProfileView(profile.userId, actor?.userId ?? null).catch(() => undefined);
-  const [vouchData, featuredNodes] = await Promise.all([
+  const [vouchData, featuredNodes, projects] = await Promise.all([
     getProfileVouches(actor?.userId ?? null, profile.userId),
     listFeaturedProofNodes(profile.userId),
+    listProfileProjects(profile.userId, actor?.userId ?? null).catch(() => []),
   ]);
   if (actor === null)
-    return <PublicProfile profile={profile} vouchData={vouchData} featuredNodes={featuredNodes} />;
+    return (
+      <PublicProfile
+        profile={profile}
+        vouchData={vouchData}
+        featuredNodes={featuredNodes}
+        projects={projects}
+      />
+    );
   return (
     <Shell>
       <section className="profile-surface">
@@ -126,6 +136,35 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
           </div>
         )}
       </section>
+      <section className="profile-section profile-featured profile-projects">
+        <h2>Projects</h2>
+        {projects.length === 0 ? (
+          <p>
+            {profile.userId === actor.userId ? (
+              <>
+                Projects you own or contribute to appear here.{' '}
+                <Link href="/projects">Add a project</Link>
+              </>
+            ) : (
+              'Projects this member builds or contributes to appear here.'
+            )}
+          </p>
+        ) : (
+          <div>
+            {projects.map((project) => (
+              <article key={project.id}>
+                <div className="project-card-topline">
+                  <span>{projectStatusLabels[project.status]}</span>
+                  <span>{project.relation === 'OWNER' ? 'Owner' : 'Contributor'}</span>
+                </div>
+                <strong>{project.name}</strong>
+                <p>{project.summary}</p>
+                <Link href={`/projects/${project.slug}`}>Open project →</Link>
+              </article>
+            ))}
+          </div>
+        )}
+      </section>
       <section className="profile-section">
         <h2>About</h2>
         <p>{profile.about ?? 'This member has not added an about section yet.'}</p>
@@ -157,10 +196,12 @@ function PublicProfile({
   profile,
   vouchData,
   featuredNodes,
+  projects,
 }: {
   profile: NonNullable<Awaited<ReturnType<typeof getVisibleProfile>>>;
   vouchData: Awaited<ReturnType<typeof getProfileVouches>>;
   featuredNodes: Awaited<ReturnType<typeof listFeaturedProofNodes>>;
+  projects: Awaited<ReturnType<typeof listProfileProjects>>;
 }) {
   return (
     <main className="public-profile">
@@ -222,6 +263,24 @@ function PublicProfile({
                 {node.projectSlug === null ? null : (
                   <Link href={`/projects/${node.projectSlug}`}>Open proof →</Link>
                 )}
+              </div>
+            ))}
+          </article>
+        </section>
+      )}
+      {projects.length === 0 ? null : (
+        <section className="public-profile-content public-vouch-section">
+          <article>
+            <p className="eyebrow">Building in public</p>
+            <h2>Projects</h2>
+            {projects.map((project) => (
+              <div key={project.id}>
+                <strong>{project.name}</strong>
+                <p>
+                  {projectStatusLabels[project.status]} ·{' '}
+                  {project.relation === 'OWNER' ? 'Owner' : 'Contributor'} · {project.summary}
+                </p>
+                <Link href={`/projects/${project.slug}`}>Open project →</Link>
               </div>
             ))}
           </article>
