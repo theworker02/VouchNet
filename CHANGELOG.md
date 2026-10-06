@@ -3,6 +3,39 @@
 All notable changes to VouchNet are documented here. This project follows
 [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Prepaid API and MCP credits
+
+- Added prepaid credits for the public API and MCP. Developers buy credits with one-time Stripe
+  Checkout payments of $5, $10, $25, or $50 (1,000 credits per dollar) using inline USD
+  `price_data`, so no new Stripe Product or Price is required.
+- Credits are granted only by the signed Stripe webhook after Stripe reports the payment as paid,
+  and idempotently by Checkout Session id, so redelivered events cannot double-credit.
+- Metered every third-party API entry point: OAuth token exchange (1 credit), `userinfo`
+  (1 credit), and applicant data / candidate profile (2 credits). Calls without enough credits
+  return HTTP 402 `INSUFFICIENT_CREDITS` and perform nothing. Only successful calls are charged;
+  the debit commits in the same transaction as the work. Costs live in
+  `apps/web/app/lib/api-credits-config.ts`.
+- Added an atomic integer balance and append-only ledger (migration `0029_api_credits.sql`), plus
+  a balance, 30-day usage, recent activity, and add-credit buttons in Account preferences and the
+  Developer center.
+- Added an entry-point inventory test that fails when a new public API or MCP route is not
+  credit-gated or explicitly exempted.
+
+### Retired Developer Access
+
+- Retired the $10/month Developer Access subscription that promised unmetered API/MCP access. It no
+  longer gates or grants anything, the subscribe button is gone, and
+  `POST /api/billing/developer-checkout` returns `410 DEVELOPER_ACCESS_RETIRED`. Legacy
+  subscription webhook events are still recorded, and legacy subscribers can open the Billing
+  Portal to cancel.
+
+### Release contents
+
+- Requires database migration `0029_api_credits.sql` before deploying the application code. No
+  new environment variables; `STRIPE_DEVELOPER_ACCESS_PRICE_ID` is no longer read.
+
 ## 1.3.0 - 2026-10-04
 
 ### Public surface and release continuity

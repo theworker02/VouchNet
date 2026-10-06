@@ -20,3 +20,7 @@ a member browser session.
 The discovery endpoint intentionally reports MCP client registration as unavailable. It must be
 updated only when MCP credential issuance, scope enforcement, audit events, revocation, and human
 approval flows are truly live.
+
+Third-party calls made with an integration client's credentials (token exchange, `userinfo`, and
+applicant data) spend the client owner's prepaid credits. The Developer center shows the balance,
+recent usage, and add-credit buttons; see [Prepaid API and MCP credits](API_CREDITS.md).

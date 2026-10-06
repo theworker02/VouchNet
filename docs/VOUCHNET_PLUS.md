@@ -32,13 +32,22 @@ endpoint and subscribe it to `checkout.session.completed`, `customer.subscriptio
 `STRIPE_WEBHOOK_SECRET`. Stripe's Customer Portal must be enabled in Stripe before the manage
 membership button can create a portal session.
 
-## Developer access subscription
+## API and MCP access: prepaid credits
 
-Developer Access is a second Stripe subscription intended for unmetered API and MCP use under a
-fair-use policy. It does **not** remove credential scopes, distributed rate limits, audit logging,
-or human approval for protected social actions. Configure its recurring Stripe Price with
-`STRIPE_DEVELOPER_ACCESS_PRICE_ID`; it uses the same signed webhook endpoint and subscription
-events as VouchNet+.
+API and MCP access is not part of VouchNet+ and is not sold as a subscription. Developers buy
+prepaid credits with one-time Stripe Checkout payments, and each successful metered call spends
+credits. See [Prepaid API and MCP credits](API_CREDITS.md). Credit top-ups use the same signed
+webhook endpoint; `checkout.session.completed` (already subscribed) confirms payment.
+
+### Retired: Developer Access subscription
+
+Developer Access was a $10/month subscription (`STRIPE_DEVELOPER_ACCESS_PRICE_ID`) intended to
+grant unmetered API and MCP use under fair use. It has been retired: it no longer gates or grants
+anything, the settings page no longer offers it, and `POST /api/billing/developer-checkout` returns
+`410 DEVELOPER_ACCESS_RETIRED`. The webhook still records `vouchnet_developer_access` subscription
+events so a legacy subscriber's status stays accurate and Settings can link them to the Billing
+Portal to cancel. Archive the Developer Access Price in Stripe so no new subscriptions can be
+created from it.
 
 When Stripe sends a cancellation update, VouchNet revokes the entitlement immediately—even if
 Stripe's subscription is configured to end at the current billing period. Every protected request

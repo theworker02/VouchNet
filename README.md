@@ -225,7 +225,7 @@ Before treating a deployment as ready, verify:
 ### Required production migration step
 
 Deploy application code only after the database has received the matching migrations. This release
-includes migrations through `0027`; run `pnpm db:migrate` with the production
+includes migrations through `0029`; run `pnpm db:migrate` with the production
 `DATABASE_URL` available to the migration process. Never place the connection string in Git or a
 client-side environment variable.
 

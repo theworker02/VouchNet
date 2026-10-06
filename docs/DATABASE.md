@@ -24,3 +24,8 @@ per VouchNet account.
 short-lived `oauth_access_tokens`. Client secrets, authorization codes, and access tokens are only
 stored as keyed hashes; the tables cannot reconstruct their plaintext values. Client revocation
 invalidates all corresponding access tokens.
+
+`0029_api_credits.sql` adds prepaid API credits: `api_credit_balances` holds one non-negative
+integer balance per member, and `api_credit_ledger` records top-ups (unique Stripe Checkout Session
+reference), per-call usage (operation and developer client), and adjustments, each with the
+balance after the entry. See [Prepaid API and MCP credits](API_CREDITS.md).
