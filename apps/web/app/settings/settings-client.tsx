@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { ApiCreditsPanel } from '../components/api-credits-panel';
 import { PlusMembershipPanel } from '../components/plus-membership-panel';
 import { FeedMuteControls } from '../components/feed-mute-controls';
 import { MfaPanel } from './mfa-panel';
@@ -426,6 +427,7 @@ export function SettingsClient({ section }: { section: SettingSection }) {
         ) : null}
         {section === 'developers' ? (
           <>
+            <ApiCreditsPanel returnTo="developers" />
             <h2>Integration resources</h2>
             <p className="muted-copy">
               Developer tools use separate credentials and scopes; they never inherit a browser

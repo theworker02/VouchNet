@@ -113,25 +113,12 @@ export async function requireVouchNetPlus(userId: string, feature: PlusFeature):
   if (!(await hasVouchNetPlus(userId))) throw new Error(`PLUS_REQUIRED:${feature}`);
 }
 
-export async function hasDeveloperAccess(userId: string): Promise<boolean> {
-  const sql = client();
-  try {
-    const rows = await sql<
-      { status: SubscriptionSummary['status']; current_period_ends_at: Date | null }[]
-    >`
-      SELECT status,current_period_ends_at FROM developer_access_subscriptions WHERE user_id=${userId}
-    `;
-    const access = rows[0];
-    return (
-      access !== undefined &&
-      access.status === 'ACTIVE' &&
-      (access.current_period_ends_at === null || access.current_period_ends_at > new Date())
-    );
-  } finally {
-    await sql.end({ timeout: 1 });
-  }
-}
-
+/**
+ * Developer Access was a $10/month subscription intended to grant unmetered API/MCP access. It has
+ * been retired in favor of prepaid API credits and grants nothing. Records are still synchronized
+ * from signed Stripe webhooks so any legacy subscriber can be identified and can cancel through
+ * the Billing Portal.
+ */
 export async function getDeveloperAccessSummary(
   userId: string,
 ): Promise<Omit<SubscriptionSummary, 'tier'>> {

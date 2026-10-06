@@ -1,13 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { ApiCreditsPanel } from './api-credits-panel';
 
 type BillingStatus = {
   isConfigured: boolean;
   isPlus: boolean;
   priceCents: number;
   subscription: { status: string; currentPeriodEndsAt: string | null; canManage: boolean };
-  developerAccess: { isConfigured: boolean; isActive: boolean; status: string; canManage: boolean };
+  legacyDeveloperAccess: { isActive: boolean; canManage: boolean };
 };
 
 export function PlusMembershipPanel() {
@@ -26,7 +27,7 @@ export function PlusMembershipPanel() {
         if (!response.ok) throw new Error('BILLING_STATUS_UNAVAILABLE');
         const nextBilling = (await response.json()) as BillingStatus;
         setBilling(nextBilling);
-        if (awaitCheckoutWebhook && (nextBilling.isPlus || nextBilling.developerAccess.isActive)) {
+        if (awaitCheckoutWebhook && nextBilling.isPlus) {
           if (pollTimer !== null) window.clearInterval(pollTimer);
           setMessage('Your paid access is active.');
         }
@@ -47,9 +48,7 @@ export function PlusMembershipPanel() {
     };
   }, []);
 
-  async function redirectTo(
-    endpoint: '/api/billing/checkout' | '/api/billing/portal' | '/api/billing/developer-checkout',
-  ) {
+  async function redirectTo(endpoint: '/api/billing/checkout' | '/api/billing/portal') {
     setAction(endpoint.endsWith('checkout') ? 'starting' : 'opening');
     setMessage(null);
     try {
@@ -109,39 +108,28 @@ export function PlusMembershipPanel() {
         </p>
       )}
       {message === null ? null : <p className="form-error">{message}</p>}
-      <div className="developer-access-summary">
-        <div>
-          <p className="eyebrow">Developer access</p>
-          <h3>
-            {billing.developerAccess.isActive
-              ? 'Unlimited integration access is active.'
-              : 'Unmetered API and MCP access for integrations.'}
-          </h3>
-          <p>
-            No prepaid request quota; fair-use, credential scopes, rate limits, and human-action
-            approval rules still apply.
-          </p>
+      <ApiCreditsPanel returnTo="account" />
+      {billing.legacyDeveloperAccess.isActive ? (
+        <div className="developer-access-summary">
+          <div>
+            <p className="eyebrow">Developer access · retired</p>
+            <h3>Your legacy subscription no longer changes API access.</h3>
+            <p>
+              API and MCP calls now use prepaid credits. Cancel Developer Access in Stripe to stop
+              future renewals.
+            </p>
+          </div>
+          {billing.legacyDeveloperAccess.canManage ? (
+            <button
+              disabled={action !== 'idle'}
+              onClick={() => void redirectTo('/api/billing/portal')}
+              type="button"
+            >
+              {action === 'opening' ? 'Opening Stripe…' : 'Manage legacy subscription'}
+            </button>
+          ) : null}
         </div>
-        {billing.developerAccess.isActive && billing.developerAccess.canManage ? (
-          <button
-            disabled={action !== 'idle'}
-            onClick={() => void redirectTo('/api/billing/portal')}
-            type="button"
-          >
-            Manage developer access
-          </button>
-        ) : billing.developerAccess.isConfigured ? (
-          <button
-            disabled={action !== 'idle'}
-            onClick={() => void redirectTo('/api/billing/developer-checkout')}
-            type="button"
-          >
-            {action === 'starting' ? 'Opening secure checkout…' : 'Subscribe to developer access'}
-          </button>
-        ) : (
-          <p className="muted-copy">Developer billing is being configured.</p>
-        )}
-      </div>
+      ) : null}
     </section>
   );
 }

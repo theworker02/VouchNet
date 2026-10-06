@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { actorFromRequest } from '../../../lib/identity';
-import { isDeveloperAccessConfigured, isStripeConfigured } from '../../../lib/stripe';
+import { isStripeConfigured } from '../../../lib/stripe';
 import {
   getDeveloperAccessSummary,
   getSubscriptionSummary,
-  hasDeveloperAccess,
   hasVouchNetPlus,
 } from '../../../lib/subscription';
 
@@ -12,11 +11,10 @@ export async function GET(request: NextRequest) {
   try {
     const actor = await actorFromRequest(request);
     if (actor === null) return NextResponse.json({ error: 'UNAUTHENTICATED' }, { status: 401 });
-    const [subscription, isPlus, developerAccess, isDeveloperAccess] = await Promise.all([
+    const [subscription, isPlus, legacyDeveloperAccess] = await Promise.all([
       getSubscriptionSummary(actor.userId),
       hasVouchNetPlus(actor.userId),
       getDeveloperAccessSummary(actor.userId),
-      hasDeveloperAccess(actor.userId),
     ]);
     return NextResponse.json({
       isConfigured: isStripeConfigured(),
@@ -27,11 +25,13 @@ export async function GET(request: NextRequest) {
         currentPeriodEndsAt: subscription.currentPeriodEndsAt,
         canManage: subscription.customerId !== null,
       },
-      developerAccess: {
-        isConfigured: isDeveloperAccessConfigured(),
-        isActive: isDeveloperAccess,
-        status: developerAccess.status,
-        canManage: developerAccess.customerId !== null,
+      // Retired subscription: reported only so a legacy subscriber can find and cancel it. It
+      // grants no API or MCP access; prepaid credits do.
+      legacyDeveloperAccess: {
+        isActive:
+          legacyDeveloperAccess.subscriptionId !== null &&
+          legacyDeveloperAccess.status === 'ACTIVE',
+        canManage: legacyDeveloperAccess.customerId !== null,
       },
     });
   } catch {

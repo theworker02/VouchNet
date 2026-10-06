@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type Stripe from 'stripe';
+import { creditCheckoutSession } from '../../../lib/api-credits';
+import { isApiCreditCheckout } from '../../../lib/api-credits-checkout';
 import { stripeClient, webhookSecret } from '../../../lib/stripe';
 import { stripeEntitlementStatus } from '../../../lib/stripe-entitlement';
 import { syncStripeDeveloperAccess, syncStripeSubscription } from '../../../lib/subscription';
@@ -24,6 +26,8 @@ async function syncSubscription(subscription: Stripe.Subscription): Promise<void
         ? null
         : new Date(subscription.items.data[0].current_period_end * 1000),
   };
+  // Developer Access is retired and grants no capability. Legacy events are still recorded so an
+  // existing subscriber's status stays accurate and the settings page can offer cancellation.
   if (subscription.metadata.product === 'vouchnet_developer_access')
     await syncStripeDeveloperAccess(payload);
   else if (subscription.metadata.product === 'vouchnet_plus') await syncStripeSubscription(payload);
@@ -43,11 +47,20 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'INVALID_SIGNATURE' }, { status: 400 });
   }
   try {
-    if (event.type === 'checkout.session.completed') {
+    if (
+      event.type === 'checkout.session.completed' ||
+      event.type === 'checkout.session.async_payment_succeeded'
+    ) {
       const session = event.data.object as Stripe.Checkout.Session;
-      const subscriptionId = asId(session.subscription);
-      if (subscriptionId !== null)
-        await syncSubscription(await stripeClient().subscriptions.retrieve(subscriptionId));
+      if (isApiCreditCheckout(session)) {
+        // Credits are granted only here, from a signed event, once Stripe reports the payment as
+        // paid. The ledger is keyed on the Checkout Session id, so redelivery cannot double-credit.
+        await creditCheckoutSession(session);
+      } else if (event.type === 'checkout.session.completed') {
+        const subscriptionId = asId(session.subscription);
+        if (subscriptionId !== null)
+          await syncSubscription(await stripeClient().subscriptions.retrieve(subscriptionId));
+      }
     }
     if (
       event.type === 'customer.subscription.created' ||
@@ -59,7 +72,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true });
   } catch {
     // Return a retryable failure. Stripe's signed delivery will replay the event safely because
-    // subscription synchronization is idempotent by VouchNet user id.
+    // subscription synchronization is idempotent by VouchNet user id and credit top-ups are
+    // idempotent by Checkout Session id.
     return NextResponse.json({ error: 'WEBHOOK_PROCESSING_FAILED' }, { status: 503 });
   }
 }

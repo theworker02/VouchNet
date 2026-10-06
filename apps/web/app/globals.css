@@ -1131,10 +1131,19 @@ a {
 
 .plus-membership-panel h2,
 .plus-membership-panel h3,
+.developer-access-summary h3,
 .feed-mute-controls h2,
 .plus-membership-panel p,
+.developer-access-summary p,
 .feed-mute-controls p {
   margin: 0;
+}
+
+/* Prepaid API credits reuse the billing card, primary buttons, and developer list rows. */
+.api-credit-topups {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+  gap: 0.6rem;
 }
 
 .feed-mute-controls textarea {
