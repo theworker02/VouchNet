@@ -127,6 +127,8 @@ export function MfaPanel() {
           <li>Enter the six-digit code shown for VouchNet.</li>
         </ol>
         {qr !== null ? (
+          // The QR code is a locally generated data: URL; next/image cannot optimize it.
+          // eslint-disable-next-line @next/next/no-img-element
           <img alt="Scan this QR code with Google Authenticator" className="mfa-qr" src={qr} />
         ) : null}
         <details>

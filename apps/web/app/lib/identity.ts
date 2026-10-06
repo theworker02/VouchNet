@@ -268,7 +268,8 @@ export async function login(emailInput: string, password: string, priorSessionTo
       !(await verifyPassword(user.password_hash, password))
     )
       return null;
-    if ((await getMfaStatus(user.id)).enabled) return { userId: user.id, mfaRequired: true as const };
+    if ((await getMfaStatus(user.id)).enabled)
+      return { userId: user.id, mfaRequired: true as const };
     const token = createSecretToken(sessionDays * 24 * 60 * 60 * 1000);
     const idleExpiresAt = new Date(Date.now() + sessionIdleHours * 60 * 60 * 1000);
     // Create the replacement session and invalidate the prior browser session through the same
