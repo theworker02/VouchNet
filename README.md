@@ -76,7 +76,11 @@ Visitors can explore useful professional context without creating an account:
 
 - **Profiles** — `/in/[username]` respects visibility settings and emits canonical/Open Graph metadata.
 - **Projects** — `/projects/[slug]` presents a member-owned project with technology tags, repository,
-  live-site links, and a shareable badge.
+  live-site links, a shareable badge, its contributors, and its build log.
+- **Opportunities** — `/opportunities` lists open requests from members, with detail pages at
+  `/opportunities/[slug]`.
+- **Discover** — `/discover` shows people building in public, project momentum, and open
+  opportunities, ranked from recorded activity.
 - **Organizations** — `/company/[slug]` presents source-reviewed directory records with clear status
   disclosure and public technology references.
 - **Jobs** — `/jobs` provides source-linked technical roles with transparent salary disclosure when
@@ -84,6 +88,25 @@ Visitors can explore useful professional context without creating an account:
   and an employer launch workspace at `/jobs/post`.
 - **Daily challenge** — `/games` is a short platform-owned technical self-check, never a simulated
   member post.
+
+## Build in Public
+
+Members show work as it happens, and the network can see it:
+
+- **Projects** with followers, invited contributors, and a dated build log.
+- **Vouches** from people you worked with, written in the Vouch Console with a preview before you
+  confirm. Profiles show them in a trust module and an inspector with provenance and history.
+  Verification levels are Standard, Context, Organization (not reachable until organization domain
+  verification ships), and Contribution.
+- **Reputation** earned by participating: activity points × (1 + a vouch bonus capped at 15%), with
+  daily caps and damping so it is hard to game.
+- **Opportunities** at `/opportunities`: requests for software, contracts, grants, bounties, and
+  research collaborations, with one proposal per member and a review flow for the poster.
+- **Discover** at `/discover`: people building, project momentum, open opportunities, and vouched
+  builders. Each card explains why it is there.
+
+How each piece works, including the reputation formula and discovery ranking, is in
+[docs/BUILD_IN_PUBLIC.md](docs/BUILD_IN_PUBLIC.md).
 
 ## Current product surface
 
@@ -225,7 +248,7 @@ Before treating a deployment as ready, verify:
 ### Required production migration step
 
 Deploy application code only after the database has received the matching migrations. This release
-includes migrations through `0027`; run `pnpm db:migrate` with the production
+includes migrations through `0029_build_in_public`; run `pnpm db:migrate` with the production
 `DATABASE_URL` available to the migration process. Never place the connection string in Git or a
 client-side environment variable.
 
@@ -264,6 +287,7 @@ where applicable, and audit handling without exposing secrets or unnecessary per
 - [Analytics](docs/ANALYTICS.md)
 - [Job sourcing and employer launch](docs/JOBS.md)
 - [Volunteer moderation](docs/MODERATION.md)
+- [Build in Public: projects, vouches, opportunities, discovery](docs/BUILD_IN_PUBLIC.md)
 - [Release notes](CHANGELOG.md)
 - [MIT License](LICENSE)
 

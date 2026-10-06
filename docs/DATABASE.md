@@ -24,3 +24,10 @@ per VouchNet account.
 short-lived `oauth_access_tokens`. Client secrets, authorization codes, and access tokens are only
 stored as keyed hashes; the tables cannot reconstruct their plaintext values. Client revocation
 invalidates all corresponding access tokens.
+
+`0029_build_in_public.sql` (self-contained) adds `profiles.current_intent`; project `looking_for`,
+`open_source`, `status_changed_at`, and `last_activity_at`; `project_follows`,
+`project_contributors`, and `project_build_logs`; contextual `work_vouches` with
+`work_vouch_revisions`; `activity_point_revocations` for participation reputation; and
+`opportunities` with `opportunity_proposals`. It does not change earlier tables' existing columns.
+See [Build in Public](BUILD_IN_PUBLIC.md).
