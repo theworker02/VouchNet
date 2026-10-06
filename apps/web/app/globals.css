@@ -11979,3 +11979,202 @@ select.instrument-input option {
     transition: none;
   }
 }
+
+/* Build in Public: opportunities (reuses job-row, employer-form, and public-project surfaces) */
+.opportunities-page {
+  display: grid;
+  gap: 18px;
+}
+.opportunities-page .projects-heading {
+  max-width: none;
+}
+.opportunities-page .company-jobs {
+  margin-top: 0;
+}
+.opportunities-heading-actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.opportunity-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: end;
+  padding: 16px 18px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.opportunity-filters label:not(.project-check) {
+  display: grid;
+  gap: 6px;
+  color: #34456a;
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+.opportunity-filters-query {
+  flex: 1 1 220px;
+}
+.opportunity-filters select,
+.opportunity-filters input:not([type='checkbox']) {
+  width: 100%;
+  min-height: 38px;
+  padding: 8px 10px;
+  border: 1px solid #ccd7e8;
+  border-radius: 8px;
+  color: var(--ink);
+  background: var(--surface);
+  font: inherit;
+  font-size: 0.84rem;
+}
+.opportunity-filters select:focus,
+.opportunity-filters input:focus {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 3px rgb(46 91 215 / 0.13);
+}
+.opportunity-filters .project-check {
+  min-height: 38px;
+}
+.opportunity-filters > a {
+  align-self: center;
+  font-size: 0.82rem;
+}
+.opportunity-list {
+  padding: 0 22px;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.opportunity-list .jobs-empty {
+  margin: 0;
+  border: 0;
+  box-shadow: none;
+}
+.opportunity-row > div {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.opportunity-row h2 a,
+.opportunity-row h3 a {
+  color: inherit;
+  text-decoration: none;
+}
+.opportunity-row h2 a:hover,
+.opportunity-row h3 a:hover,
+.opportunity-row h2 a:focus-visible,
+.opportunity-row h3 a:focus-visible {
+  text-decoration: underline;
+}
+.opportunity-row .job-meta span + span + span {
+  color: #5f6e89;
+}
+.opportunity-row .project-tags {
+  margin-top: 10px;
+}
+.opportunity-facts {
+  margin: 4px 0 14px;
+}
+.opportunity-editor .page-heading {
+  margin-bottom: 0;
+}
+.opportunity-form .two,
+.opportunity-form .three {
+  align-items: end;
+}
+.opportunity-form .two > label,
+.opportunity-form .three > label {
+  margin-top: 0;
+}
+.opportunity-form .two:not(:first-child),
+.opportunity-form .three:not(:first-child) {
+  margin-top: 13px;
+}
+.opportunity-form-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 16px;
+}
+.opportunity-form .opportunity-form-checks label {
+  display: inline-flex;
+  margin-top: 0;
+}
+.opportunity-form .opportunity-form-checks input {
+  width: auto;
+  min-height: 0;
+}
+.opportunity-form-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 10px;
+}
+.opportunity-proposal-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+.opportunity-proposal-form label small {
+  color: var(--muted);
+  font-weight: 560;
+}
+.opportunity-proposal-form select {
+  width: 100%;
+  padding: 10px 11px;
+  border: 1px solid #ccd7e8;
+  border-radius: 8px;
+  color: var(--ink);
+  background: var(--surface);
+}
+.opportunity-proposals .relationship-actions {
+  margin: 12px 0 0;
+}
+.opportunity-proposal-message {
+  margin-top: 10px !important;
+  color: var(--ink) !important;
+  white-space: pre-line;
+}
+.public-project-description h2 + p + h2 {
+  margin-top: 18px;
+}
+@media (prefers-color-scheme: dark) {
+  .opportunity-filters label:not(.project-check) {
+    color: #c3d3f8;
+  }
+  .opportunity-filters select,
+  .opportunity-filters input:not([type='checkbox']),
+  .opportunity-proposal-form select {
+    border-color: #3b4a67;
+    background: #182135;
+  }
+}
+@media (max-width: 700px) {
+  .opportunities-heading-actions {
+    justify-content: flex-start;
+  }
+  .opportunity-form .two,
+  .opportunity-form .three {
+    grid-template-columns: 1fr;
+  }
+  .opportunity-list {
+    padding: 0 16px;
+  }
+  .opportunity-proposal-grid {
+    grid-template-columns: 1fr;
+  }
+  .opportunity-filters > * {
+    flex: 1 1 100%;
+  }
+  .opportunity-form footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .opportunity-form-actions {
+    justify-content: flex-end;
+  }
+}

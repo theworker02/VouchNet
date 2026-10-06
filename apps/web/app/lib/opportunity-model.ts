@@ -32,6 +32,23 @@ export const opportunityTypeLabels: Record<OpportunityType, string> = {
 export const opportunityStatuses = ['OPEN', 'CLOSED', 'FILLED', 'WITHDRAWN'] as const;
 export type OpportunityStatus = (typeof opportunityStatuses)[number];
 
+export const opportunityStatusLabels: Record<OpportunityStatus, string> = {
+  OPEN: 'Open',
+  CLOSED: 'Closed',
+  FILLED: 'Filled',
+  WITHDRAWN: 'Withdrawn',
+};
+
+/** Posters move an opportunity between these states; WITHDRAWN is final. */
+export function canChangeOpportunityStatus(
+  current: OpportunityStatus,
+  next: OpportunityStatus,
+): boolean {
+  if (current === next || current === 'WITHDRAWN') return false;
+  if (next === 'OPEN') return current === 'CLOSED';
+  return current === 'OPEN' || (current === 'CLOSED' && next !== 'CLOSED');
+}
+
 export const proposalStatuses = [
   'SUBMITTED',
   'SHORTLISTED',
@@ -108,6 +125,27 @@ export const proposalInputSchema = z
 export type ProposalInput = z.infer<typeof proposalInputSchema>;
 
 export const opportunityLimits = { postsPerDay: 5, proposalsPerDay: 15 } as const;
+
+/** Directory filters arrive as URL search params; anything unrecognized is ignored, never an error. */
+export function parseOpportunityFilters(params: {
+  type?: string | string[] | undefined;
+  q?: string | string[] | undefined;
+  remote?: string | string[] | undefined;
+}): { type: OpportunityType | null; q: string | null; remoteOnly: boolean } {
+  const first = (value: string | string[] | undefined) => (Array.isArray(value) ? value[0] : value);
+  const type = first(params.type);
+  const q = first(params.q)?.trim().slice(0, 80) ?? '';
+  return {
+    type: opportunityTypes.find((item) => item === type) ?? null,
+    q: q === '' ? null : q,
+    remoteOnly: first(params.remote) === '1',
+  };
+}
+
+/** Request bodies sent as forms use empty strings for "not set". */
+export function blankToNull(value: unknown): unknown {
+  return typeof value === 'string' && value.trim() === '' ? null : value;
+}
 
 export function isPastDeadline(deadline: string | null, now = new Date()): boolean {
   if (deadline === null) return false;

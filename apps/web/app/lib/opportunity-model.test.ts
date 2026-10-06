@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
+  blankToNull,
+  canChangeOpportunityStatus,
   evaluateProposal,
   formatBudget,
   isPastDeadline,
   nextProposalStatus,
   opportunityInputSchema,
+  parseOpportunityFilters,
   proposalInputSchema,
 } from './opportunity-model';
 
@@ -104,5 +107,36 @@ describe('opportunity proposals', () => {
     expect(formatBudget(4000, 9000, 'USD')).toBe('$4,000 – $9,000');
     expect(formatBudget(null, 500, 'USD')).toBe('Up to $500');
     expect(formatBudget(null, null, 'USD')).toBeNull();
+  });
+});
+
+describe('opportunity lifecycle and filters', () => {
+  it('lets posters close, fill, reopen, and withdraw, but never revive a withdrawal', () => {
+    expect(canChangeOpportunityStatus('OPEN', 'CLOSED')).toBe(true);
+    expect(canChangeOpportunityStatus('OPEN', 'FILLED')).toBe(true);
+    expect(canChangeOpportunityStatus('CLOSED', 'OPEN')).toBe(true);
+    expect(canChangeOpportunityStatus('CLOSED', 'WITHDRAWN')).toBe(true);
+    expect(canChangeOpportunityStatus('FILLED', 'OPEN')).toBe(false);
+    expect(canChangeOpportunityStatus('WITHDRAWN', 'OPEN')).toBe(false);
+    expect(canChangeOpportunityStatus('OPEN', 'OPEN')).toBe(false);
+  });
+
+  it('ignores unknown filter values instead of failing', () => {
+    expect(parseOpportunityFilters({ type: 'GRANT', q: '  rust ', remote: '1' })).toEqual({
+      type: 'GRANT',
+      q: 'rust',
+      remoteOnly: true,
+    });
+    expect(parseOpportunityFilters({ type: 'DROP TABLE', q: ['', 'x'], remote: 'yes' })).toEqual({
+      type: null,
+      q: null,
+      remoteOnly: false,
+    });
+  });
+
+  it('treats blank form values as unset', () => {
+    expect(blankToNull('  ')).toBeNull();
+    expect(blankToNull('USD')).toBe('USD');
+    expect(blankToNull(4)).toBe(4);
   });
 });

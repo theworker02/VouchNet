@@ -170,6 +170,10 @@ export function WorkMenu() {
           <strong>Showcase projects</strong>
           <span>Bring meaningful work forward</span>
         </Link>
+        <Link href="/opportunities" role="menuitem">
+          <strong>Opportunities</strong>
+          <span>Requests, contracts, grants, and bounties</span>
+        </Link>
         <Link href="/games" role="menuitem">
           <strong>Daily strategy game</strong>
           <span>One original signal puzzle every day</span>
