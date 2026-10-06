@@ -1,5 +1,5 @@
 [build]
-  command = "pnpm build"
+  command = "node packages/db/scripts/migrate-if-configured.mjs && pnpm build"
   publish = "apps/web/.next"
 
 [build.environment]
