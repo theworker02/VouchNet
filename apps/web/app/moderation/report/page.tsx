@@ -5,8 +5,18 @@ import { getCurrentActor } from '../../lib/identity';
 
 export const metadata = { title: 'Submit a report | VouchNet', robots: { index: false } };
 
-export default async function ModerationReportPage() {
+export default async function ModerationReportPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ path?: string | string[] }>;
+}) {
   if ((await getCurrentActor()) === null) redirect('/login?next=/moderation/report');
+  const requested = (await searchParams).path;
+  // Prefill only same-site paths (for example, /vouches/<id> from the Vouch Inspector).
+  const initialPath =
+    typeof requested === 'string' && /^\/[a-z0-9/_-]{1,200}$/i.test(requested)
+      ? requested
+      : undefined;
   return (
     <Shell>
       <main className="moderation-page moderation-narrow">
@@ -17,7 +27,7 @@ export default async function ModerationReportPage() {
           passwords, private message bodies, or other people&apos;s sensitive information unless it
           is necessary to explain the concern.
         </p>
-        <ModerationReportForm />
+        <ModerationReportForm initialPath={initialPath} />
       </main>
     </Shell>
   );

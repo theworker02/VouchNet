@@ -29,3 +29,10 @@ invalidates all corresponding access tokens.
 integer balance per member, and `api_credit_ledger` records top-ups (unique Stripe Checkout Session
 reference), per-call usage (operation and developer client), and adjustments, each with the
 balance after the entry. See [Prepaid API and MCP credits](API_CREDITS.md).
+
+`0029_build_in_public.sql` (self-contained) adds `profiles.current_intent`; project `looking_for`,
+`open_source`, `status_changed_at`, and `last_activity_at`; `project_follows`,
+`project_contributors`, and `project_build_logs`; contextual `work_vouches` with
+`work_vouch_revisions`; `activity_point_revocations` for participation reputation; and
+`opportunities` with `opportunity_proposals`. It does not change earlier tables' existing columns.
+See [Build in Public](BUILD_IN_PUBLIC.md).

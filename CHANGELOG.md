@@ -31,10 +31,39 @@ All notable changes to VouchNet are documented here. This project follows
   subscription webhook events are still recorded, and legacy subscribers can open the Billing
   Portal to cancel.
 
+### Build in Public
+
+- **Projects** became network objects: follow a project, invite contributors who accept or decline,
+  and post dated build-log entries that notify followers. Projects gain an open-source flag, a
+  "looking for" list, and the statuses Idea, Active development, Launched, Maintained, and Archived.
+- **Vouches**: a Vouch Console with a preview before confirming and an optimistic update that rolls
+  back on failure. Profiles get a trust module (skill categories, accolades, a graph drawn from real
+  vouch edges) and an inspector with provenance, edit history, and reporting. Each vouch has a page
+  at `/vouches/[vouchId]`. Only the author can edit or revoke a vouch, and the recipient can hide or
+  report it. Self-vouches and duplicates are rejected, vouches are rate-limited, and reciprocal
+  pairs are flagged for moderators. Verification levels are Standard, Context, Organization (not
+  reachable yet), and Contribution.
+- **Participation reputation**: score = activity points × (1 + vouch bonus ≤ 15%), with per-action
+  points, daily caps, same-day decay, rapid-repeat damping, no points on your own content, and
+  revocation when content is deleted or moderated. Profiles show the score, level, and an explainer.
+- **Opportunities** at `/opportunities`: post requests for software, jobs, contracts, open-source
+  work, RFPs, grants, bounties, and research collaborations. Members send one proposal each, and
+  posters shortlist, accept, or decline. Includes the Open, Closed, Filled, and Withdrawn lifecycle,
+  moderation, notifications, and daily limits.
+- **Discover** at `/discover` (new in the primary navigation, replacing the Explore placeholder):
+  people building, project momentum, open opportunities, new, launched, open-source, and research
+  projects, and vouched builders by skill, each with the reasons it appears.
+- **Current intent** on profiles: Available for work, Looking for collaborators, Hiring, Looking for
+  funding, or Just networking.
+- The sitemap now lists `/discover`, `/opportunities`, and open public opportunities.
+
 ### Release contents
 
-- Requires database migration `0029_api_credits.sql` before deploying the application code. No
-  new environment variables; `STRIPE_DEVELOPER_ACCESS_PRICE_ID` is no longer read.
+- Requires migrations `0029_api_credits.sql` and then `0029_build_in_public.sql`. Run
+  `pnpm db:migrate` before deploying the application code.
+- No new environment variables, Stripe products, or Netlify settings;
+  `STRIPE_DEVELOPER_ACCESS_PRICE_ID` is no longer read.
+- No generated-content features and no new public API or MCP scopes.
 
 ## 1.3.0 - 2026-10-04
 

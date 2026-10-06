@@ -9,6 +9,7 @@ import { useMotionPreference } from '../lib/motion';
 const navigation = [
   { href: '/home', label: 'Home', icon: 'home' },
   { href: '/mynetwork', label: 'Network', icon: 'network' },
+  { href: '/discover', label: 'Discover', icon: 'compass' },
   { href: '/jobs', label: 'Jobs', icon: 'briefcase' },
   { href: '/messaging', label: 'Messages', icon: 'message' },
   { href: '/notifications', label: 'Alerts', icon: 'bell' },
@@ -24,6 +25,12 @@ function NavigationIcon({ name }: { name: IconName }) {
         <circle cx="8" cy="8" r="3" />
         <circle cx="17" cy="9" r="2.5" />
         <path d="M2.8 20c.8-3.1 2.7-4.7 5.2-4.7s4.4 1.6 5.2 4.7M14.1 18.8c.5-1.9 1.7-2.9 3.5-2.9 1.8 0 3 .9 3.6 2.8" />
+      </>
+    ),
+    compass: (
+      <>
+        <circle cx="12" cy="12" r="9" />
+        <path d="m15.5 8.5-2.1 4.9-4.9 2.1 2.1-4.9 4.9-2.1Z" />
       </>
     ),
     briefcase: (
