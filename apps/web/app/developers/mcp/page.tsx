@@ -33,7 +33,7 @@ export default function McpPage() {
       </section>
       <p>
         Read the complete{' '}
-        <Link href="https://github.com/theworker02/VouchNet/blob/master/docs/MCP.md">
+        <Link href="https://github.com/theworker02/VouchNet/blob/main/docs/MCP.md">
           MCP architecture document
         </Link>
         .

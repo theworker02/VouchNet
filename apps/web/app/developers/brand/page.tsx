@@ -27,7 +27,7 @@ export default function BrandPage() {
         <a download href="/brand/vouchnet-mark.png">
           Download PNG mark
         </a>
-        <a href="https://github.com/theworker02/VouchNet/blob/master/docs/BRAND.md">
+        <a href="https://github.com/theworker02/VouchNet/blob/main/docs/BRAND.md">
           Read brand guidance
         </a>
       </div>

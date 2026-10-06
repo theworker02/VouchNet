@@ -36,7 +36,7 @@ export default function ServerIntegrationPage() {
         </p>
       </section>
       <p>
-        <Link href="https://github.com/theworker02/VouchNet/blob/master/docs/DEVELOPER_PORTAL.md">
+        <Link href="https://github.com/theworker02/VouchNet/blob/main/docs/DEVELOPER_PORTAL.md">
           Read the server integration reference
         </Link>
         .
