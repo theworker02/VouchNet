@@ -204,6 +204,13 @@
       "when": 1791345600000,
       "tag": "0028_totp_mfa",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1791518400000,
+      "tag": "0029_build_in_public",
+      "breakpoints": true
     }
   ]
 }
