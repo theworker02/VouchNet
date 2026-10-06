@@ -30,3 +30,6 @@ export function createSqlClient(databaseUrl: string) {
 }
 
 export { schema };
+
+/** Query-client types for repositories that run inside a caller-owned transaction. */
+export type { Sql as SqlClient, TransactionSql } from 'postgres';
