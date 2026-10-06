@@ -171,18 +171,18 @@ describe('verification levels', () => {
         { type: 'SHARED_PROJECT_CONTRIBUTION', projectId: 'p', projectName: 'Driftwood' },
       ],
       authorMemberSince: new Date('2026-01-15T00:00:00Z'),
-      reciprocalFlagged: false,
+      reciprocalFlagged: null,
       now: new Date('2026-10-06T00:00:00Z'),
     });
     expect(signals).toContain('Author has been a member for 9 months');
     expect(signals).toContain('Both contributed build-log entries to Driftwood');
-    expect(signals).toContain('No reciprocal-vouch anomaly detected');
-    expect(signals.join(' ')).not.toMatch(/score|trustworthy/i);
-    const flagged = provenanceSignals({
+    expect(signals.join(' ')).not.toMatch(/score|trustworthy|reciprocal/i);
+    const forModerator = provenanceSignals({
       evidence: [],
       authorMemberSince: new Date(),
       reciprocalFlagged: true,
     });
-    expect(flagged).not.toContain('No reciprocal-vouch anomaly detected');
+    expect(forModerator).toContain('Moderator note: reciprocal-vouch pattern flagged for review');
+    expect(forModerator).toContain('Author’s account was created this month');
   });
 });

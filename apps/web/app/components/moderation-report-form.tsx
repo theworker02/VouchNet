@@ -11,7 +11,7 @@ const categories = [
   ['OTHER', 'Other policy concern'],
 ] as const;
 
-export function ModerationReportForm() {
+export function ModerationReportForm({ initialPath }: { initialPath?: string | undefined } = {}) {
   const [status, setStatus] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -53,6 +53,7 @@ export function ModerationReportForm() {
         VouchNet page or content path
         <input
           name="subjectPath"
+          defaultValue={initialPath}
           pattern="/[^\s]*"
           placeholder="/vouch/member-name or /feed"
           required

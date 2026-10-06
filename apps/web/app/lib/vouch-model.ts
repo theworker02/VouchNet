@@ -242,7 +242,8 @@ export function canViewVouch(input: {
 export function provenanceSignals(input: {
   evidence: readonly VerificationEvidence[];
   authorMemberSince: Date;
-  reciprocalFlagged: boolean;
+  /** Only moderators see the internal reciprocal-pattern status; pass null for everyone else. */
+  reciprocalFlagged: boolean | null;
   now?: Date;
 }): string[] {
   const now = input.now ?? new Date();
@@ -259,7 +260,7 @@ export function provenanceSignals(input: {
   );
   signals.push(
     months < 1
-      ? 'Author joined VouchNet this month'
+      ? 'Author’s account was created this month'
       : `Author has been a member for ${months} month${months === 1 ? '' : 's'}`,
   );
   for (const item of input.evidence) {
@@ -273,6 +274,9 @@ export function provenanceSignals(input: {
     if (item.type === 'VERIFIED_ORGANIZATION_EMPLOYMENT')
       signals.push(`Employment at ${item.organizationName} is verified`);
   }
-  if (!input.reciprocalFlagged) signals.push('No reciprocal-vouch anomaly detected');
+  if (input.reciprocalFlagged === true)
+    signals.push('Moderator note: reciprocal-vouch pattern flagged for review');
+  else if (input.reciprocalFlagged === false)
+    signals.push('Moderator note: no reciprocal-vouch pattern detected');
   return signals;
 }
