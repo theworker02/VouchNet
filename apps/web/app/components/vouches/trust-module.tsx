@@ -343,7 +343,7 @@ function VouchGraph({ constellation }: { constellation: Constellation }) {
           return node.slug === '' || isCenter ? (
             <g key={node.userId}>{body}</g>
           ) : (
-            <a key={node.userId} href={`/in/${node.slug}`} aria-label={node.name}>
+            <a key={node.userId} href={`/vouch/${node.slug}`} aria-label={node.name}>
               {body}
             </a>
           );

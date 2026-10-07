@@ -76,9 +76,9 @@ function VouchRecord({ vouch }: { vouch: VouchDetail }) {
           </span>
         </div>
         <h1 id="vouch-record-title">
-          <Link href={`/in/${vouch.author.slug}`}>{vouch.author.name}</Link>
+          <Link href={`/vouch/${vouch.author.slug}`}>{vouch.author.name}</Link>
           <span className="instrument-muted"> vouched for </span>
-          <Link href={`/in/${vouch.recipient.slug}`}>{vouch.recipient.name}</Link>
+          <Link href={`/vouch/${vouch.recipient.slug}`}>{vouch.recipient.name}</Link>
         </h1>
         <ul className="vouch-artifact-skills" aria-label="Skills">
           {vouch.skills.map((skill) => (
@@ -137,7 +137,7 @@ function VouchRecord({ vouch }: { vouch: VouchDetail }) {
           </ul>
         </section>
         <footer className="vouch-inspector-actions">
-          <Link className="instrument-quiet" href={`/in/${vouch.recipient.slug}`}>
+          <Link className="instrument-quiet" href={`/vouch/${vouch.recipient.slug}`}>
             View {vouch.recipient.firstName}’s vouches
           </Link>
           {vouch.viewerActions.includes('REPORT') ? (

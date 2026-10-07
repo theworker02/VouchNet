@@ -39,7 +39,7 @@ export function ServiceRequestsInbox({ requests }: { requests: ServiceRequestVie
         <article className="experience-entry" key={request.id}>
           <div>
             <strong>
-              <Link href={`/in/${request.requesterSlug}`}>{request.requesterName}</Link>
+              <Link href={`/vouch/${request.requesterSlug}`}>{request.requesterName}</Link>
               {request.serviceTitle === null ? '' : ` · ${request.serviceTitle}`}
             </strong>
             <p>{request.message}</p>

@@ -8,9 +8,10 @@ cohort while keeping that boundary intact.
 
 Unauthenticated visitors can discover real, indexable content at:
 
-- `/in/[username]` for public professional profiles
+- `/vouch/[username]` for public professional profiles
 - `/projects/[slug]` for public, owner-published projects
 - `/company/[slug]` for source-reviewed organization records
+- `/companies` for the public organization directory
 - `/jobs` for source-linked roles with visible numeric salary ranges
 
 Profiles and projects expose copyable SVG badge URLs. Members can embed the corresponding

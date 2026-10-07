@@ -267,10 +267,10 @@ function VouchDetailView({
         {vouch.author.slug === '' ? (
           vouch.author.name
         ) : (
-          <Link href={`/in/${vouch.author.slug}`}>{vouch.author.name}</Link>
+          <Link href={`/vouch/${vouch.author.slug}`}>{vouch.author.name}</Link>
         )}
         <span className="instrument-muted"> vouched for </span>
-        <Link href={`/in/${vouch.recipient.slug}`}>{vouch.recipient.name}</Link>
+        <Link href={`/vouch/${vouch.recipient.slug}`}>{vouch.recipient.name}</Link>
       </h2>
       <ul className="vouch-artifact-skills" aria-label="Skills">
         {vouch.skills.map((skill) => (

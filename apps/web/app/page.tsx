@@ -65,6 +65,9 @@ function PublicNavigationMenu() {
           <Link href="/jobs" onClick={() => setIsOpen(false)}>
             Jobs
           </Link>
+          <Link href="/companies" onClick={() => setIsOpen(false)}>
+            Companies
+          </Link>
           <Link href="/download" onClick={() => setIsOpen(false)}>
             Desktop
           </Link>
@@ -93,6 +96,7 @@ export default function HomePage() {
           <Link href="/about">About</Link>
           <Link href="/explore">Explore</Link>
           <Link href="/jobs">Jobs</Link>
+          <Link href="/companies">Companies</Link>
           <Link href="/download">Download</Link>
           <Link href="/developers">Developers</Link>
           <a href="https://github.com/theworker02/VouchNet" rel="noreferrer" target="_blank">
@@ -128,6 +132,12 @@ export default function HomePage() {
               Explore the network
             </ButtonLink>
           </div>
+          <nav aria-label="Explore VouchNet" className="landing-discovery-links">
+            <Link href="/discover#people">Find people</Link>
+            <Link href="/companies">Discover companies</Link>
+            <Link href="/discover#momentum">Explore projects</Link>
+            <Link href="/jobs">Find jobs</Link>
+          </nav>
           <dl className="landing-facts">
             <div>
               <dt>Portable</dt>

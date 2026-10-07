@@ -2,7 +2,7 @@
 
 VouchNet exposes a crawlable, canonical public surface for its landing page, public profile
 addresses (`/vouch/[username]`), public projects, source-reviewed organization directory records,
-the jobs directory, public developer integration documentation, desktop download/release pages,
+the public company directory (`/companies`), the jobs directory, public developer integration documentation, desktop download/release pages,
 daily challenges, terms, and privacy policy.
 
 `/robots.txt` disallows account, authenticated-network, OAuth, API, private developer-management,

@@ -6,6 +6,15 @@ import { createContentSecurityPolicy } from './app/lib/security/content-security
  * server so render-time scripts and audit events cannot be influenced by client-supplied values.
  */
 export function proxy(request: NextRequest): NextResponse {
+  // `/vouch/:username` is the public, canonical profile address. Preserve inbound links to the
+  // legacy `/in/:username` shape without allowing two indexable profile URLs to compete.
+  const legacyProfile = request.nextUrl.pathname.match(/^\/in\/([^/]+)$/);
+  if (legacyProfile !== null) {
+    const url = request.nextUrl.clone();
+    url.pathname = `/vouch/${legacyProfile[1]}`;
+    return NextResponse.redirect(url, 308);
+  }
+
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
   const requestId = crypto.randomUUID();
   const requestHeaders = new Headers(request.headers);

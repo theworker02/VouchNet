@@ -5,6 +5,7 @@ const columns = [
     title: 'Network',
     links: [
       { href: '/explore', label: 'Explore people' },
+      { href: '/companies', label: 'Companies' },
       { href: '/discover', label: 'Discover' },
       { href: '/jobs', label: 'Jobs' },
       { href: '/opportunities', label: 'Opportunities' },

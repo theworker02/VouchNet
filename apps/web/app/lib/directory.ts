@@ -67,6 +67,14 @@ export type ClaimableOrganizationRecord = Pick<
   'slug' | 'name' | 'tagline' | 'verificationStatus'
 >;
 
+/** Minimal public organization DTO used by the no-login company directory. */
+export type PublicOrganizationDirectoryRecord = Pick<
+  OrganizationRecord,
+  'slug' | 'name' | 'tagline' | 'headquarters' | 'verificationStatus'
+> & {
+  technologies: string[];
+};
+
 function sql() {
   const url = process.env.DATABASE_URL;
   if (url === undefined) throw new Error('DATABASE_UNAVAILABLE');
@@ -123,6 +131,39 @@ export async function listClaimableOrganizations(
         AND (name ILIKE ${term} OR slug ILIKE ${term})
       ORDER BY name
       LIMIT 24
+    `;
+  } finally {
+    await client.end({ timeout: 1 });
+  }
+}
+
+/**
+ * Public directory data only. It deliberately excludes contacts, membership, internal claim state,
+ * and administrative ownership metadata.
+ */
+export async function listPublicOrganizations(
+  query?: string,
+  limit = 48,
+): Promise<PublicOrganizationDirectoryRecord[]> {
+  const client = sql();
+  try {
+    const pattern = `%${query?.trim() ?? ''}%`;
+    const safeLimit = Math.min(Math.max(Math.floor(limit), 1), 48);
+    return await client<PublicOrganizationDirectoryRecord[]>`
+      SELECT o.slug,o.name,o.tagline,o.headquarters,
+        o.verification_status AS "verificationStatus",
+        COALESCE(array_agg(DISTINCT ot.name) FILTER (WHERE ot.name IS NOT NULL), '{}') AS technologies
+      FROM organizations o
+      LEFT JOIN organization_technologies ot ON ot.organization_id=o.id
+      WHERE o.deleted_at IS NULL
+        AND (o.name ILIKE ${pattern} OR o.slug ILIKE ${pattern} OR o.tagline ILIKE ${pattern}
+          OR EXISTS (
+            SELECT 1 FROM organization_technologies search_technology
+            WHERE search_technology.organization_id=o.id AND search_technology.name ILIKE ${pattern}
+          ))
+      GROUP BY o.id,o.slug,o.name,o.tagline,o.headquarters,o.verification_status
+      ORDER BY (o.verification_status='DOMAIN_VERIFIED') DESC,o.name
+      LIMIT ${safeLimit}
     `;
   } finally {
     await client.end({ timeout: 1 });

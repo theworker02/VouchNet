@@ -147,7 +147,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
           trust={
             <TrustModule
               constellation={constellation}
-              signInHref={`/login?next=${encodeURIComponent(`/in/${profile.slug}`)}`}
+              signInHref={`/login?next=${encodeURIComponent(`/vouch/${profile.slug}`)}`}
             />
           }
           reputation={<ReputationSummary reputation={reputation} isOwner={false} />}
@@ -357,7 +357,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
                   services={services}
                   signInHref={
                     viewerId === null
-                      ? `/login?next=${encodeURIComponent(`/in/${profile.slug}`)}`
+                      ? `/login?next=${encodeURIComponent(`/vouch/${profile.slug}`)}`
                       : null
                   }
                 />
@@ -437,7 +437,7 @@ function PublicProfile({
     '@context': 'https://schema.org',
     '@type': 'Person',
     name: `${profile.firstName} ${profile.lastName}`,
-    url: `${siteUrl}/in/${profile.slug}`,
+    url: `${siteUrl}/vouch/${profile.slug}`,
     ...(profile.headline === null ? {} : { jobTitle: profile.headline }),
     ...(profile.about === null ? {} : { description: profile.about }),
   };
@@ -584,7 +584,7 @@ function PublicProfile({
               providerUserId={profile.userId}
               providerName={profile.firstName}
               services={services}
-              signInHref={`/login?next=${encodeURIComponent(`/in/${profile.slug}`)}`}
+              signInHref={`/login?next=${encodeURIComponent(`/vouch/${profile.slug}`)}`}
             />
           </article>
         </section>

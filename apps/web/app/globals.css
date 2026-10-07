@@ -7582,6 +7582,33 @@ body {
   margin-top: 28px;
 }
 
+.landing-discovery-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-top: 20px;
+}
+
+.landing-discovery-links a {
+  color: #486184;
+  font-size: 0.82rem;
+  font-weight: 760;
+  text-decoration: none;
+}
+
+.landing-discovery-links a::after {
+  margin-left: 6px;
+  content: '→';
+  color: var(--accent);
+}
+
+.landing-discovery-links a:hover,
+.landing-discovery-links a:focus-visible {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
 .landing-facts {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

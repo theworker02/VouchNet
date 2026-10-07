@@ -135,7 +135,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams: Sea
                   </span>
                   <div>
                     <h3>
-                      <Link href={`/in/${builder.slug}`}>{builder.name}</Link>
+                      <Link href={`/vouch/${builder.slug}`}>{builder.name}</Link>
                     </h3>
                     <p>{builder.headline ?? 'VouchNet member'}</p>
                   </div>
@@ -333,7 +333,7 @@ export default async function DiscoverPage({ searchParams }: { searchParams: Sea
                       : ` · vouched for by ${person.voucherNames.join(', ')}`}
                   </p>
                 </div>
-                <Link href={`/in/${person.slug}`}>
+                <Link href={`/vouch/${person.slug}`}>
                   View profile<span className="sr-only">: {person.name}</span>
                 </Link>
               </article>
