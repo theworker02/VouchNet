@@ -12,13 +12,15 @@ VouchNet can create public organization directory records from public, source-re
 
 ## Self-service claim process
 
-1. A signed-in member opens `/company/[slug]/claim`.
-2. VouchNet requires the member's **already verified primary email** to match the organization website domain. A matching display name, ordinary account, or public content edit is never enough.
-3. The member selects a relationship (Founder, Executive, Employee, or Authorized Representative) and writes a short authorization statement.
-4. The request enters the administrator-only `/admin/organization-claims` queue.
-5. A human administrator approves or rejects it. Approval assigns the member `OWNER`, marks the profile `DOMAIN_VERIFIED`, rejects competing pending claims, and appends immutable governance and platform audit records.
+1. A visitor opens `/claim`, searches for an existing organization, and selects its contextual URL: `/claim/[slug]`.
+2. They create or sign in to a VouchNet account. A matching display name, ordinary account, or public content edit is never enough.
+3. A signed-in member opens `/company/[slug]/claim`. VouchNet requires their **already verified primary email** to match the organization website domain, then collects their relationship and authorization statement.
+4. VouchNet creates a canonical `profile_claims` record (`PENDING` / `VERIFICATION_REQUIRED` / `VERIFIED` / `APPROVED`) alongside the reviewer-facing organization request. A successful company-domain check creates `VERIFIED`; it does **not** grant editing privileges.
+5. The request enters the administrator-only `/admin/organization-claims` queue. A human administrator approves or rejects it. Approval assigns the member `OWNER`, marks the profile `DOMAIN_VERIFIED`, rejects competing pending claims, and appends immutable governance and platform audit records.
 
-The domain match is an eligibility control, not an automatic approval. Public email providers and deceptive suffixes such as `company.example.attacker.test` do not satisfy it.
+The domain match is an eligibility control, not an automatic approval. Public email providers and deceptive suffixes such as `company.example.attacker.test` do not satisfy it. DNS, website, and manual-review evidence are reserved for reviewer handling; they never grant control automatically.
+
+Individual profile claims use the same `profile_claims` lifecycle and must remain separate from the public profile until approval. Today personal VouchNet profiles are created with their account, so account recovery is the supported self-service path; a legacy/unclaimed-person import must create an individual claim record and go through manual review rather than silently merging identities.
 
 ## Roles
 
@@ -41,7 +43,7 @@ An existing Owner/Admin or a site administrator can create a one-time, seven-day
 
 ## Migrations
 
-Apply migration `0036_organization_claim_governance` before enabling the review queue or organization role management:
+Apply migrations `0036_organization_claim_governance` and `0037_profile_claims` before enabling the review queue or organization role management:
 
 ```bash
 pnpm db:migrate

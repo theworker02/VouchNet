@@ -13622,11 +13622,79 @@ button.language-chip:focus-visible {
   font-size: 0.74rem;
 }
 
+/* Claim funnel: an unclaimed directory page is discoverable, but never editable before review. */
+.claim-card-actions,
+.claim-search-form > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.claim-search-form {
+  margin-top: 24px;
+}
+
+.claim-search-form label {
+  display: block;
+  margin-bottom: 7px;
+  color: #33456b;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.claim-search-form input {
+  min-width: min(100%, 270px);
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid #b8c8e4;
+  border-radius: 10px;
+  color: #1e2d49;
+  background: #fff;
+}
+
+.claim-search-results {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.claim-search-results article {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: center;
+  padding: 16px;
+  border: 1px solid #d8e1ef;
+  border-radius: 14px;
+  background: #fbfcff;
+}
+
+.claim-search-results h2,
+.claim-search-results p {
+  margin: 6px 0 0;
+}
+
+.claim-search-results h2 {
+  color: #243858;
+  font-size: 1rem;
+}
+
+.claim-search-results p {
+  color: #65728a;
+  font-size: 0.86rem;
+}
+
 @media (max-width: 720px) {
   .site-footer {
     padding: 34px 20px 22px;
   }
   .site-footer-grid {
     grid-template-columns: 1fr 1fr;
+  }
+  .claim-search-results article {
+    align-items: flex-start;
+    flex-direction: column;
   }
 }

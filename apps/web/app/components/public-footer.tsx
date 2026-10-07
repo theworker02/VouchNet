@@ -8,6 +8,7 @@ const columns = [
       { href: '/discover', label: 'Discover' },
       { href: '/jobs', label: 'Jobs' },
       { href: '/opportunities', label: 'Opportunities' },
+      { href: '/claim', label: 'Claim your profile' },
     ],
   },
   {

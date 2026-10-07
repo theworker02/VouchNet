@@ -166,12 +166,22 @@ export async function submitOrganizationClaimRequest(input: {
         FOR UPDATE
       `;
       if (pending[0] !== undefined) throw new OrganizationGovernanceError('CLAIM_ALREADY_OPEN');
+      const profileClaims = await transaction<{ id: string }[]>`
+        INSERT INTO profile_claims
+          (entity_type,organization_id,claimant_user_id,state,verification_method,verification_evidence,verified_at)
+        VALUES (
+          'ORGANIZATION',${organization.id},${input.userId},'VERIFIED','COMPANY_DOMAIN_EMAIL',
+          ${JSON.stringify({ domain: emailDomain(verifiedEmail) })}::jsonb,now()
+        ) RETURNING id
+      `;
+      const profileClaim = profileClaims[0];
+      if (profileClaim === undefined) throw new Error('PROFILE_CLAIM_CREATE_FAILED');
       const created = await transaction<{ id: string }[]>`
         INSERT INTO organization_claim_requests
-          (organization_id,claimant_user_id,verified_email,verified_email_domain,relationship,statement)
+          (organization_id,claimant_user_id,verified_email,verified_email_domain,relationship,statement,profile_claim_id)
         VALUES (
           ${organization.id},${input.userId},${normalizeEmail(verifiedEmail)},${emailDomain(verifiedEmail)},
-          ${input.claim.relationship},${input.claim.statement}
+          ${input.claim.relationship},${input.claim.statement},${profileClaim.id}
         ) RETURNING id
       `;
       const request = created[0];
@@ -257,9 +267,10 @@ export async function reviewOrganizationClaimRequest(input: {
           organization_id: string;
           claimant_user_id: string;
           status: OrganizationClaimRequest['status'];
+          profile_claim_id: string | null;
         }[]
       >`
-        SELECT organization_id,claimant_user_id,status FROM organization_claim_requests
+        SELECT organization_id,claimant_user_id,status,profile_claim_id FROM organization_claim_requests
         WHERE id=${input.claimRequestId} FOR UPDATE
       `;
       const request = rows[0];
@@ -292,6 +303,10 @@ export async function reviewOrganizationClaimRequest(input: {
           WHERE id=${input.claimRequestId}
         `;
         await transaction`
+          UPDATE profile_claims SET state='APPROVED',approved_by=${input.actorId},approved_at=now(),updated_at=now()
+          WHERE id=${request.profile_claim_id} AND state='VERIFIED'
+        `;
+        await transaction`
           UPDATE organization_claim_requests
           SET status='REJECTED',reviewed_by=${input.actorId},reviewed_at=now(),
               review_note='Another verified representative was approved first.',updated_at=now()
@@ -303,6 +318,10 @@ export async function reviewOrganizationClaimRequest(input: {
           UPDATE organization_claim_requests
           SET status='REJECTED',reviewed_by=${input.actorId},reviewed_at=now(),review_note=${input.reviewNote},updated_at=now()
           WHERE id=${input.claimRequestId}
+        `;
+        await transaction`
+          UPDATE profile_claims SET state='REJECTED',approved_by=${input.actorId},approved_at=now(),updated_at=now()
+          WHERE id=${request.profile_claim_id} AND state IN ('PENDING','VERIFICATION_REQUIRED','VERIFIED')
         `;
       }
       await appendGovernanceEvent(transaction, {

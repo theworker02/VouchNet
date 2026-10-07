@@ -31,6 +31,9 @@ export default async function Login({
       footer={
         <>
           New to VouchNet? <a href="/signup">Create your profile</a>
+          <a className="auth-secondary-link" href="/claim">
+            Claim an existing profile
+          </a>
           <a className="auth-secondary-link" href="/forgot-password">
             Forgot password?
           </a>

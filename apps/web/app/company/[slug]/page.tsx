@@ -113,8 +113,8 @@ export default async function CompanyPage({ params }: { params: Promise<{ slug: 
                 Verify control through your company-domain email and a human review. A VouchNet
                 account, matching name, or public-page edit never establishes ownership.
               </p>
-              <Link className="secondary" href={`/company/${organization.slug}/claim`}>
-                Claim this organization
+              <Link className="secondary" href={`/claim/${organization.slug}`}>
+                Claim your VouchNet profile
               </Link>
             </div>
           )}

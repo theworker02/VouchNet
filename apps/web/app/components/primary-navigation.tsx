@@ -14,6 +14,7 @@ const navigation = [
   { href: '/messaging', label: 'Messages', icon: 'message' },
   { href: '/notifications', label: 'Alerts', icon: 'bell' },
   { href: '/games', label: 'Games', icon: 'game' },
+  { href: '/claim', label: 'Claim profile', icon: 'network' },
 ] as const;
 
 type IconName = (typeof navigation)[number]['icon'];

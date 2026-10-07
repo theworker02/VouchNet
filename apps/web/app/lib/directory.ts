@@ -62,6 +62,11 @@ export type HiringOrganizationRecord = {
   openRoleCount: number;
 };
 
+export type ClaimableOrganizationRecord = Pick<
+  OrganizationRecord,
+  'slug' | 'name' | 'tagline' | 'verificationStatus'
+>;
+
 function sql() {
   const url = process.env.DATABASE_URL;
   if (url === undefined) throw new Error('DATABASE_UNAVAILABLE');
@@ -98,6 +103,27 @@ export async function getOrganization(slug: string): Promise<OrganizationRecord 
       ];
     });
     return { ...organization, technologies };
+  } finally {
+    await client.end({ timeout: 1 });
+  }
+}
+
+/** Public directory lookup used by the profile-claim funnel. It never exposes administrative data. */
+export async function listClaimableOrganizations(
+  query = '',
+): Promise<ClaimableOrganizationRecord[]> {
+  const client = sql();
+  try {
+    const term = `%${query.trim()}%`;
+    return await client<ClaimableOrganizationRecord[]>`
+      SELECT slug,name,tagline,verification_status AS "verificationStatus"
+      FROM organizations
+      WHERE deleted_at IS NULL
+        AND verification_status <> 'DOMAIN_VERIFIED'
+        AND (name ILIKE ${term} OR slug ILIKE ${term})
+      ORDER BY name
+      LIMIT 24
+    `;
   } finally {
     await client.end({ timeout: 1 });
   }
