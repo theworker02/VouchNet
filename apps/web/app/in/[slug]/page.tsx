@@ -30,6 +30,7 @@ import {
 } from '../../lib/profile-services';
 import { employmentTypeLabels, monthLabels } from '../../lib/profile-catalog';
 import { ExperienceEditor } from '../../components/experience-editor';
+import { LanguagesEditor } from '../../components/languages-panel';
 import { rateLabel, ServicesEditor } from '../../components/services-panel';
 import { RequestServiceButton } from '../../components/request-service';
 import { ServiceRequestsInbox } from '../../components/service-requests-inbox';
@@ -279,6 +280,22 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
           <h2>About</h2>
           <p>{profile.about ?? 'This member has not added an about section yet.'}</p>
         </section>
+        {isOwner || profile.languages.length > 0 ? (
+          <section className="profile-section">
+            <h2>Languages</h2>
+            {isOwner ? (
+              <LanguagesEditor initial={profile.languages} />
+            ) : (
+              <div className="language-chip-list">
+                {profile.languages.map((language) => (
+                  <span className="language-chip is-active" key={language}>
+                    {language}
+                  </span>
+                ))}
+              </div>
+            )}
+          </section>
+        ) : null}
         <section className="profile-section">
           <h2>Experience</h2>
           {isOwner ? (
@@ -468,6 +485,15 @@ function PublicProfile({
         <article>
           <h2>About</h2>
           <p>{profile.about ?? 'This member has not added an about section yet.'}</p>
+          {profile.languages.length === 0 ? null : (
+            <div className="language-chip-list">
+              {profile.languages.map((language) => (
+                <span className="language-chip is-active" key={language}>
+                  {language}
+                </span>
+              ))}
+            </div>
+          )}
         </article>
         <aside>
           <h2>Credible professional context</h2>

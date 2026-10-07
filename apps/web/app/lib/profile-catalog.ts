@@ -35,6 +35,42 @@ export const rateUnitLabels: Record<RateUnit, string> = {
   STARTING_AT: 'starting at',
 };
 
+/** Curated languages a member can put on their profile — purposeful, not an open text field. */
+export const profileLanguages = [
+  'TypeScript',
+  'JavaScript',
+  'Python',
+  'Rust',
+  'Go',
+  'Ruby',
+  'Java',
+  'Kotlin',
+  'Swift',
+  'C',
+  'C++',
+  'C#',
+  'PHP',
+  'Scala',
+  'Elixir',
+  'Haskell',
+  'Lua',
+  'Dart',
+  'R',
+  'Julia',
+  'Zig',
+  'OCaml',
+  'Clojure',
+  'Erlang',
+  'SQL',
+  'HTML/CSS',
+  'Shell',
+  'Solidity',
+  'Assembly',
+  'MATLAB',
+] as const;
+export type ProfileLanguage = (typeof profileLanguages)[number];
+export const profileLanguageSet = new Set<string>(profileLanguages);
+
 export const monthLabels = [
   'January',
   'February',

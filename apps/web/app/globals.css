@@ -7610,39 +7610,6 @@ body {
     0 2px 4px rgb(20 38 78 / 0.06);
 }
 
-.workspace-badge-lens {
-  position: absolute;
-  z-index: 1;
-  top: -18px;
-  right: 24px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 34px;
-  padding: 0 11px 0 8px;
-  border: 1px solid #b7c9eb;
-  border-radius: 999px;
-  color: #1e579c;
-  background: #f8fbff;
-  box-shadow: 0 8px 18px rgb(32 74 144 / 0.14);
-  font-size: 0.61rem;
-  font-weight: 820;
-  letter-spacing: 0.01em;
-}
-
-.workspace-badge-lens svg {
-  width: 18px;
-  height: 18px;
-  padding: 3px;
-  border-radius: 50%;
-  color: #fff;
-  background: #2b68cf;
-  stroke: currentColor;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 2;
-}
-
 .workspace-topline,
 .workspace-profile,
 .workspace-application {
@@ -8114,13 +8081,6 @@ body {
     border-color: #405172;
     background: #172238;
     box-shadow: 0 26px 65px rgb(0 0 0 / 0.3);
-  }
-
-  .workspace-badge-lens {
-    border-color: #506a96;
-    color: #cfe0ff;
-    background: #20314d;
-    box-shadow: 0 8px 18px rgb(0 0 0 / 0.25);
   }
 
   .workspace-topline,
@@ -9207,10 +9167,6 @@ body {
   .project-feedback summary:hover {
     transform: translateY(-1px);
   }
-
-  .workspace-badge-lens {
-    animation: signal-halo 4.8s ease-in-out infinite;
-  }
 }
 
 .topbar nav a,
@@ -9319,8 +9275,7 @@ body {
 
 @media (prefers-reduced-motion: reduce) {
   .animate-border-shimmer,
-  .animate-pulse-subtle,
-  .workspace-badge-lens {
+  .animate-pulse-subtle {
     animation: none;
   }
 
@@ -13039,4 +12994,264 @@ select.instrument-input option {
 }
 .comment-form .comment-replying {
   flex-basis: 100%;
+}
+
+/* Games hub + board games */
+.games-hub-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.games-hub-card {
+  display: grid;
+  gap: 7px;
+  padding: 18px;
+  border: 1px solid #cdd9ee;
+  border-radius: 13px;
+  background: linear-gradient(150deg, #fbfdff, #f3f7fd);
+  color: inherit;
+  text-decoration: none;
+  transition:
+    transform 140ms ease,
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.games-hub-card:hover,
+.games-hub-card:focus-visible {
+  border-color: #426fce;
+  box-shadow: 0 10px 24px rgb(37 74 141 / 0.13);
+  outline: none;
+  transform: translateY(-2px);
+}
+
+.games-hub-kicker {
+  color: #61718a;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.games-hub-card strong {
+  color: #19315e;
+  font-size: 1.02rem;
+}
+
+.games-hub-card p {
+  margin: 0;
+  color: #55678a;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.games-hub-meta {
+  color: #2558b8;
+  font-size: 0.72rem;
+  font-weight: 760;
+}
+
+/* Four in a row */
+.connect-four-board {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  max-width: 460px;
+  padding: 12px;
+  border: 1px solid #c8d6ed;
+  border-radius: 13px;
+  background: #eaf0fa;
+}
+
+.connect-four-column {
+  display: grid;
+  gap: 6px;
+  padding: 0;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  cursor: pointer;
+}
+
+.connect-four-column:hover:not(:disabled),
+.connect-four-column:focus-visible {
+  outline: 2px solid #94b5f4;
+  outline-offset: 2px;
+}
+
+.connect-four-column:disabled {
+  cursor: default;
+}
+
+.connect-four-cell {
+  display: block;
+  aspect-ratio: 1;
+  border: 1px solid #bdd0eb;
+  border-radius: 50%;
+  background: #f9fbff;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.9);
+}
+
+.connect-four-cell.is-human {
+  border-color: #2558b8;
+  background:
+    radial-gradient(circle at 35% 30%, #bcd6ff 0 12%, transparent 13%),
+    linear-gradient(145deg, #3a74d8, #1e4da0);
+}
+
+.connect-four-cell.is-engine {
+  border-color: #6a4fb0;
+  background:
+    radial-gradient(circle at 35% 30%, #e3d4ff 0 12%, transparent 13%),
+    linear-gradient(145deg, #8a6ecf, #5b3d99);
+}
+
+.connect-four-cell.is-winning {
+  outline: 2px solid #f4b942;
+  outline-offset: 1px;
+}
+
+.connect-four-scoreline {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  color: #61718a;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.connect-four-scoreline button {
+  margin-left: auto;
+}
+
+/* Nim */
+.nim-heaps {
+  display: grid;
+  gap: 16px;
+  max-width: 520px;
+}
+
+.nim-heap {
+  display: grid;
+  grid-template-columns: 76px 1fr 32px;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid #cdd9ee;
+  border-radius: 13px;
+  background: linear-gradient(150deg, #fbfdff, #f3f7fd);
+}
+
+.nim-heap-label {
+  color: #61718a;
+  font-size: 0.72rem;
+  font-weight: 760;
+}
+
+.nim-heap-count {
+  color: #19315e;
+  font-size: 0.95rem;
+  font-weight: 820;
+  text-align: right;
+}
+
+.nim-stones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.nim-stone {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid #bdd0eb;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, #c7ffe8 0 10%, transparent 11%),
+    linear-gradient(145deg, #22a67d, #12644d);
+  box-shadow: 0 2px 5px rgb(19 117 86 / 0.2);
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    outline-color 120ms ease;
+}
+
+.nim-stone:hover:not(:disabled),
+.nim-stone:focus-visible {
+  outline: 2px solid #94b5f4;
+  outline-offset: 2px;
+  transform: translateY(-2px);
+}
+
+.nim-stone:disabled {
+  cursor: default;
+  opacity: 0.85;
+}
+
+.nim-hint {
+  color: #8a97ad;
+  font-size: 0.78rem;
+}
+
+/* Profile languages */
+.language-chip-list,
+.languages-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.languages-grid {
+  margin-top: 10px;
+}
+
+.language-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 0 10px;
+  border: 1px solid #cdd9ee;
+  border-radius: 999px;
+  color: #41527a;
+  background: #f8fbff;
+  font-size: 0.7rem;
+  font-weight: 720;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    background 120ms ease,
+    color 120ms ease;
+}
+
+button.language-chip:hover:not(:disabled),
+button.language-chip:focus-visible {
+  border-color: #426fce;
+  outline: 2px solid #94b5f4;
+  outline-offset: 1px;
+}
+
+.language-chip.is-active {
+  border-color: #2558b8;
+  color: #fff;
+  background: linear-gradient(145deg, #3a74d8, #1e4da0);
+}
+
+.language-chip:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.languages-editor-hint {
+  margin: 0 0 4px;
+  color: #61718a;
+  font-size: 0.78rem;
+}
+
+.languages-editor-status {
+  margin: 10px 0 0;
+  color: #8a97ad;
+  font-size: 0.72rem;
 }

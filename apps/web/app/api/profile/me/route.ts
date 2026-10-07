@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { actorFromRequest, getProfileSummary, updateOwnProfile } from '../../../lib/identity';
 import { setProfileRate } from '../../../lib/profile-services';
+import { profileLanguageSet } from '../../../lib/profile-catalog';
 import { hasSameOrigin } from '../../../lib/request-security';
 
 const profileUpdateSchema = z.object({
@@ -29,6 +30,11 @@ const profileUpdateSchema = z.object({
     .regex(/^[A-Z]{3}$/)
     .optional(),
   hourlyRateVisible: z.boolean().optional(),
+  languages: z
+    .array(z.string().trim().min(1).max(40))
+    .max(12)
+    .refine((values) => values.every((value) => profileLanguageSet.has(value)), 'UNKNOWN_LANGUAGE')
+    .optional(),
 });
 
 export async function GET(request: NextRequest) {

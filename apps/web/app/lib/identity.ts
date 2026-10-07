@@ -389,6 +389,7 @@ export const getProfileSummary = cache(
     hourlyRateAmount: string | null;
     hourlyRateCurrency: string;
     hourlyRateVisible: boolean;
+    languages: string[];
   } | null> => {
     const sql = client();
     try {
@@ -406,10 +407,11 @@ export const getProfileSummary = cache(
           hourly_rate_amount: string | null;
           hourly_rate_currency: string;
           rate_visible: boolean;
+          languages: string[];
         }[]
       >`
       SELECT first_name,last_name,headline,slug,location,about,avatar_key,onboarding_step,
-             early_member,hourly_rate_amount,hourly_rate_currency,rate_visible
+             early_member,hourly_rate_amount,hourly_rate_currency,rate_visible,languages
       FROM profiles
       WHERE user_id=${userId}
     `;
@@ -427,6 +429,7 @@ export const getProfileSummary = cache(
         hourlyRateAmount: profile.hourly_rate_amount,
         hourlyRateCurrency: profile.hourly_rate_currency,
         hourlyRateVisible: profile.rate_visible,
+        languages: profile.languages,
       };
     } finally {
       await sql.end({ timeout: 1 });
@@ -441,6 +444,7 @@ export async function updateOwnProfile(
     location: string | null;
     about: string | null;
     onboardingStep: number;
+    languages?: string[] | undefined;
   },
 ) {
   const sql = client();
@@ -449,6 +453,7 @@ export async function updateOwnProfile(
       UPDATE profiles
       SET headline=${input.headline},location=${input.location},about=${input.about},
           onboarding_step=${input.onboardingStep},updated_at=now()
+          ${input.languages === undefined ? sql`` : sql`,languages=${input.languages}`}
       WHERE user_id=${userId}
     `;
   } finally {

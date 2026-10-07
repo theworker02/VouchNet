@@ -2,10 +2,10 @@
 
 import { useMemo, useState, type CSSProperties } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { toggleSignalCell, type DailyStrategyGame } from '../lib/daily-strategy-game';
-import type { DailyStrategyProgress } from '../lib/daily-strategy';
-import { ProofOfWorkBadge, SignalPulseIcon } from '../components/symbols';
-import { useMotionPreference } from '../lib/motion';
+import { toggleSignalCell, type DailyStrategyGame } from '../../lib/daily-strategy-game';
+import type { DailyStrategyProgress } from '../../lib/daily-strategy';
+import { ProofOfWorkBadge, SignalPulseIcon } from '../../components/symbols';
+import { useMotionPreference } from '../../lib/motion';
 
 type GameState = 'READY' | 'SAVING' | 'COMPLETE' | 'ERROR';
 
