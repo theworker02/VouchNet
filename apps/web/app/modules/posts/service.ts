@@ -102,6 +102,37 @@ export async function createPost(
   }
 }
 
+export interface PublicPost {
+  id: string;
+  authorName: string;
+  authorSlug: string;
+  authorHeadline: string | null;
+  bodyMarkdown: string;
+  mediaUrls: string[];
+  category: PostCategory;
+  createdAt: Date;
+}
+
+/** A post is public-crawlable only when the author explicitly published it PUBLIC. */
+export async function getPublicPost(postId: string): Promise<PublicPost | null> {
+  const client = sql();
+  try {
+    const rows = await client<PublicPost[]>`
+      SELECT p.id,concat(pr.first_name,' ',pr.last_name) AS "authorName",pr.slug AS "authorSlug",
+        pr.headline AS "authorHeadline",p.body_markdown AS "bodyMarkdown",
+        p.media_urls AS "mediaUrls",p.feed_category AS category,p.created_at AS "createdAt"
+      FROM posts p
+      JOIN profiles pr ON pr.user_id=p.author_id
+      JOIN users u ON u.id=p.author_id
+      WHERE p.id=${postId} AND p.visibility='PUBLIC' AND p.status='PUBLISHED'
+        AND p.deleted_at IS NULL AND pr.visibility='PUBLIC' AND u.status='ACTIVE'
+    `;
+    return rows[0] ?? null;
+  } finally {
+    await client.end({ timeout: 1 });
+  }
+}
+
 export async function getFeed(
   viewerId: string,
   mode: 'CHRONOLOGICAL' | 'PEER_VERIFIED',

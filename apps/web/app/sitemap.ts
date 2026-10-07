@@ -34,7 +34,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   const sql = createSqlClient(databaseUrl);
   try {
-    const [profiles, organizations, projects, opportunities] = await Promise.all([
+    const [profiles, organizations, projects, posts, opportunities] = await Promise.all([
       sql<SitemapRow[]>`
         SELECT p.slug,p.updated_at AS "updatedAt"
         FROM profiles p JOIN users u ON u.id=p.user_id
@@ -49,6 +49,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         JOIN profiles pr ON pr.user_id=p.owner_id
         JOIN users u ON u.id=p.owner_id
         WHERE p.visibility='PUBLIC' AND pr.visibility='PUBLIC' AND u.status='ACTIVE'
+      `,
+      sql<SitemapRow[]>`
+        SELECT p.id AS slug,p.updated_at AS "updatedAt"
+        FROM posts p
+        JOIN profiles pr ON pr.user_id=p.author_id
+        JOIN users u ON u.id=p.author_id
+        WHERE p.visibility='PUBLIC' AND p.status='PUBLISHED' AND p.deleted_at IS NULL
+          AND pr.visibility='PUBLIC' AND u.status='ACTIVE'
       `,
       sql<SitemapRow[]>`
         SELECT o.slug,o.updated_at AS "updatedAt"
@@ -66,6 +74,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         entry(`/company/${organization.slug}`, organization.updatedAt, 0.7),
       ),
       ...projects.map((project) => entry(`/projects/${project.slug}`, project.updatedAt, 0.7)),
+      ...posts.map((post) => entry(`/post/${post.slug}`, post.updatedAt, 0.6)),
       ...opportunities.map((opportunity) =>
         entry(`/opportunities/${opportunity.slug}`, opportunity.updatedAt, 0.6),
       ),

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { actorFromRequest } from '../../lib/identity';
 import { hasSameOrigin } from '../../lib/request-security';
+import { submitToIndexNow } from '../../lib/indexnow';
 import { interactivePostContentSchema } from '../../modules/experiences/model';
 import {
   createPost,
@@ -62,7 +63,9 @@ export async function POST(request: NextRequest) {
     if (actor === null) return NextResponse.json({ error: 'UNAUTHENTICATED' }, { status: 401 });
     const rateLimit = await enforceRateLimit(request, 'socialWrite', actor.userId);
     if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
-    const post = await createPost(actor.userId, createPostSchema.parse(await request.json()));
+    const input = createPostSchema.parse(await request.json());
+    const post = await createPost(actor.userId, input);
+    if (input.visibility === 'PUBLIC') submitToIndexNow(`/post/${post.id}`);
     return NextResponse.json({ post }, { status: 201 });
   } catch (error) {
     return NextResponse.json(
