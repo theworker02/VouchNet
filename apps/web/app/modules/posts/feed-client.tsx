@@ -1,7 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { FocusEvent, FormEvent, KeyboardEvent, useEffect, useId, useMemo, useState } from 'react';
+import {
+  ChangeEvent,
+  FocusEvent,
+  FormEvent,
+  KeyboardEvent,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { AnimatePresence, LayoutGroup, motion } from 'framer-motion';
 import { EmeraldVouchBadge, ProofOfWorkBadge, SignalPulseIcon } from '../../components/symbols';
 import { ReactionBar } from '../../components/feed/reaction-bar';
@@ -10,6 +20,7 @@ import { InteractiveCard } from '../../components/motion/interactive-card';
 import type { FeedDiscovery } from '../../lib/feed-discovery-model';
 import { useMotionPreference } from '../../lib/motion';
 import type { FeedPost, PostCategory, PostVisibility, ReactionType } from './service';
+import { PostComments } from './post-comments';
 
 const categories: readonly PostCategory[] = ['TECHNICAL', 'PROJECT', 'HIRING', 'STATUS', 'OPINION'];
 
@@ -37,6 +48,22 @@ async function requestFeed(
   }
 }
 
+function InlineText({ text }: { text: string }) {
+  return (
+    <>
+      {text.split(/(\[[^\]]+\]\([^)]+\))/g).map((part, index) => {
+        const match = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
+        if (match === null) return part;
+        return (
+          <Link key={index} href={match[2]!}>
+            {match[1]}
+          </Link>
+        );
+      })}
+    </>
+  );
+}
+
 function MarkdownBody({ body }: { body: string }) {
   const blocks = useMemo(() => body.split(/(```[\s\S]*?```)/g).filter(Boolean), [body]);
   return (
@@ -47,11 +74,11 @@ function MarkdownBody({ body }: { body: string }) {
             <code>{block.replace(/^```[^\n]*\n?/, '').replace(/```$/, '')}</code>
           </pre>
         ) : (
-          block
-            .split(/\n{2,}/)
-            .map((paragraph, paragraphIndex) => (
-              <p key={`${index}-${paragraphIndex}`}>{paragraph}</p>
-            ))
+          block.split(/\n{2,}/).map((paragraph, paragraphIndex) => (
+            <p key={`${index}-${paragraphIndex}`}>
+              <InlineText text={paragraph} />
+            </p>
+          ))
         ),
       )}
     </div>
@@ -117,6 +144,7 @@ function PostCard({
           value={post.viewerReaction}
         />
       </footer>
+      <PostComments commentCount={post.commentCount} postId={post.id} />
     </InteractiveCard>
   );
 }
@@ -196,6 +224,16 @@ export function FeedClient() {
   const [visibility, setVisibility] = useState<PostVisibility>('PUBLIC');
   const [picker, setPicker] = useState<'category' | 'visibility' | null>(null);
   const [composerExpanded, setComposerExpanded] = useState(false);
+  const [body, setBody] = useState('');
+  const [format, setFormat] = useState<'PLAIN' | 'MARKDOWN'>('PLAIN');
+  const [mentionQuery, setMentionQuery] = useState<{ text: string; start: number } | null>(null);
+  const [mentionResults, setMentionResults] = useState<{
+    people: { id: string; name: string; slug: string; headline: string | null }[];
+    organizations: { id: string; name: string; slug: string }[];
+  } | null>(null);
+  const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([]);
+  const [mentionedOrgIds, setMentionedOrgIds] = useState<string[]>([]);
+  const bodyRef = useRef<HTMLTextAreaElement | null>(null);
   const motionPreference = useMotionPreference();
   const categoryPickerId = useId();
   const visibilityPickerId = useId();
@@ -234,22 +272,58 @@ export function FeedClient() {
       window.clearTimeout(timer);
     };
   }, [mode, hidden]);
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      if (mentionQuery === null || mentionQuery.text.length === 0) {
+        setMentionResults(null);
+        return;
+      }
+      void fetch(`/api/mentions?q=${encodeURIComponent(mentionQuery.text)}`)
+        .then(async (response) => (response.ok ? ((await response.json()) as never) : null))
+        .then((data) => setMentionResults(data))
+        .catch(() => setMentionResults(null));
+    }, 150);
+    return () => window.clearTimeout(timer);
+  }, [mentionQuery]);
+
+  function handleBodyChange(event: ChangeEvent<HTMLTextAreaElement>) {
+    const value = event.currentTarget.value;
+    setBody(value);
+    const caret = event.currentTarget.selectionStart ?? value.length;
+    const before = value.slice(0, caret);
+    const match = before.match(/@([\w&.'\- ]{1,32})$/);
+    if (match === null || /\s{2,}$/.test(match[1]!)) setMentionQuery(null);
+    else setMentionQuery({ text: match[1]!, start: caret - match[1]!.length - 1 });
+  }
+
+  function insertMention(target: { id: string; name: string; href: string; isOrg: boolean }) {
+    if (mentionQuery === null) return;
+    const caret = bodyRef.current?.selectionStart ?? body.length;
+    const next = `${body.slice(0, mentionQuery.start)}[@${target.name}](${target.href})${body.slice(caret)}`;
+    setBody(next);
+    if (target.isOrg) setMentionedOrgIds((ids) => [...new Set([...ids, target.id])]);
+    else setMentionedUserIds((ids) => [...new Set([...ids, target.id])]);
+    setMentionQuery(null);
+    setMentionResults(null);
+    window.setTimeout(() => bodyRef.current?.focus(), 0);
+  }
+
   async function publish(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setIsSubmitting(true);
     setStatus(null);
-    const form = new FormData(event.currentTarget);
     try {
       const response = await fetch('/api/posts', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
-          bodyMarkdown: String(form.get('bodyMarkdown') ?? ''),
-          category: String(form.get('category') ?? 'TECHNICAL'),
-          visibility: String(form.get('visibility') ?? 'PUBLIC'),
+          bodyMarkdown: body,
+          category,
+          visibility,
           codeSnippets: [],
           mediaUrls: [],
-          mentionedUserIds: [],
+          mentionedUserIds,
+          mentionedOrgIds,
         }),
       });
       if (!response.ok) {
@@ -257,7 +331,10 @@ export function FeedClient() {
         return;
       }
       setStatus(null);
-      event.currentTarget.reset();
+      setBody('');
+      setMentionedUserIds([]);
+      setMentionedOrgIds([]);
+      setComposerExpanded(false);
       await load();
     } catch {
       setStatus('Your post could not be published because the network is unavailable. Try again.');
@@ -337,12 +414,68 @@ export function FeedClient() {
           required
           minLength={1}
           maxLength={12000}
-          placeholder="Share useful work, a technical finding, or a project update…"
+          placeholder={
+            format === 'MARKDOWN'
+              ? 'Write in Markdown — links, ```code blocks```, and @mentions…'
+              : 'Share useful work, a technical finding, or a project update… type @ to mention someone'
+          }
+          ref={bodyRef}
+          value={body}
+          onChange={handleBodyChange}
           onFocus={() => setComposerExpanded(true)}
           onBlur={(event) => {
             if (event.currentTarget.value.trim().length === 0) setComposerExpanded(false);
           }}
         />
+        {mentionResults !== null &&
+        (mentionResults.people.length > 0 || mentionResults.organizations.length > 0) ? (
+          <div className="mention-menu" role="listbox">
+            {mentionResults.people.map((person) => (
+              <button
+                className="mention-option"
+                key={person.id}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  insertMention({
+                    id: person.id,
+                    name: person.name,
+                    href: `/vouch/${person.slug}`,
+                    isOrg: false,
+                  });
+                }}
+                type="button"
+              >
+                <strong>@{person.name}</strong>
+                <small>{person.headline ?? 'VouchNet member'}</small>
+              </button>
+            ))}
+            {mentionResults.organizations.map((organization) => (
+              <button
+                className="mention-option"
+                key={organization.id}
+                onMouseDown={(event) => {
+                  event.preventDefault();
+                  insertMention({
+                    id: organization.id,
+                    name: organization.name,
+                    href: `/company/${organization.slug}`,
+                    isOrg: true,
+                  });
+                }}
+                type="button"
+              >
+                <strong>@{organization.name}</strong>
+                <small>Organization</small>
+              </button>
+            ))}
+          </div>
+        ) : null}
+        {format === 'MARKDOWN' && body.trim().length > 0 ? (
+          <div className="composer-preview">
+            <span className="composer-preview-label">Preview</span>
+            <MarkdownBody body={body} />
+          </div>
+        ) : null}
         <div className="composer-controls">
           <input name="category" type="hidden" value={category} />
           <input name="visibility" type="hidden" value={visibility} />
@@ -482,7 +615,26 @@ export function FeedClient() {
               ) : null}
             </AnimatePresence>
           </div>
-          <span className="composer-note">Markdown supported</span>
+          <div className="composer-format" role="group" aria-label="Post format">
+            <button
+              className={
+                format === 'PLAIN' ? 'composer-format-option active' : 'composer-format-option'
+              }
+              onClick={() => setFormat('PLAIN')}
+              type="button"
+            >
+              Plain text
+            </button>
+            <button
+              className={
+                format === 'MARKDOWN' ? 'composer-format-option active' : 'composer-format-option'
+              }
+              onClick={() => setFormat('MARKDOWN')}
+              type="button"
+            >
+              Markdown
+            </button>
+          </div>
           <Link className="composer-experience-link" href="/feed/create">
             Create Experience
           </Link>

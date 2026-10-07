@@ -12842,3 +12842,201 @@ select.instrument-input option {
   font-weight: 760;
   font-size: 0.8rem;
 }
+
+/* @mention autocomplete, composer format toggle, markdown preview */
+.mention-menu {
+  display: grid;
+  gap: 2px;
+  margin-top: -6px;
+  padding: 6px;
+  border: 1px solid var(--instrument-line);
+  border-radius: 10px;
+  background: var(--instrument-layer);
+  box-shadow: 0 10px 28px rgb(0 0 0 / 30%);
+}
+.mention-option {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 7px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--instrument-ink);
+  font: 500 0.82rem/1.2 inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.mention-option:hover,
+.mention-option:focus-visible {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+.mention-option small {
+  color: var(--instrument-muted-ink);
+  font: 400 0.68rem var(--instrument-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.composer-format {
+  display: inline-flex;
+  border: 1px solid var(--instrument-line);
+  border-radius: 8px;
+  overflow: hidden;
+}
+.composer-format-option {
+  padding: 5px 11px;
+  border: 0;
+  background: transparent;
+  color: var(--instrument-muted-ink);
+  font: 500 0.68rem var(--instrument-mono);
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.composer-format-option.active {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  color: var(--instrument-ink);
+}
+.composer-preview {
+  padding: 12px 14px;
+  border: 1px dashed var(--instrument-line-strong);
+  border-radius: 10px;
+}
+.composer-preview-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--instrument-muted-ink);
+  font: 600 0.6rem var(--instrument-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Comments */
+.post-comments {
+  margin-top: 10px;
+  border-top: 1px solid var(--instrument-line);
+  padding-top: 8px;
+}
+.comments-toggle {
+  border: 0;
+  background: transparent;
+  color: var(--instrument-muted-ink);
+  font: 500 0.68rem var(--instrument-mono);
+  letter-spacing: 0.03em;
+  cursor: pointer;
+  padding: 2px 0;
+}
+.comments-toggle:hover {
+  color: var(--instrument-ink);
+}
+.comments-loading,
+.comments-empty,
+.comments-error {
+  color: var(--instrument-muted-ink);
+  font: 400 0.78rem/1.4 inherit;
+  margin: 6px 0;
+}
+.comments-error {
+  color: #e27d7d;
+}
+.comment-thread {
+  margin-top: 10px;
+}
+.post-comment {
+  padding: 8px 0 8px 10px;
+  border-left: 2px solid var(--instrument-line);
+}
+.post-comment.is-reply {
+  margin-left: 18px;
+}
+.comment-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+.comment-head a {
+  font-weight: 600;
+  font-size: 0.8rem;
+}
+.comment-head span {
+  color: var(--instrument-muted-ink);
+  font-size: 0.66rem;
+}
+.comment-head time {
+  color: var(--instrument-muted-ink);
+  font: 400 0.62rem var(--instrument-mono);
+}
+.comment-body {
+  margin: 4px 0 2px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+.comment-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 2px;
+}
+.comment-like,
+.comment-reply {
+  border: 0;
+  background: transparent;
+  color: var(--instrument-muted-ink);
+  font: 500 0.66rem var(--instrument-mono);
+  cursor: pointer;
+  padding: 0;
+}
+.comment-like.liked {
+  color: #e2728d;
+}
+.comment-like:hover,
+.comment-reply:hover {
+  color: var(--instrument-ink);
+}
+.comment-form {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  align-items: center;
+}
+.comment-form input {
+  flex: 1;
+  padding: 7px 10px;
+  border: 1px solid var(--instrument-line);
+  border-radius: 8px;
+  background: var(--instrument-layer);
+  color: var(--instrument-ink);
+  font: 400 0.8rem inherit;
+}
+.comment-form button[type='submit'] {
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--accent) 80%, #000);
+  color: #fff;
+  font: 600 0.72rem inherit;
+  cursor: pointer;
+}
+.comment-replying {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  margin: 0 0 4px;
+  color: var(--instrument-muted-ink);
+  font: 500 0.66rem var(--instrument-mono);
+}
+.comment-replying button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+.comment-form {
+  flex-wrap: wrap;
+}
+.comment-form .comment-replying {
+  flex-basis: 100%;
+}

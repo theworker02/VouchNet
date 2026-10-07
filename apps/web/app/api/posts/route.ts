@@ -30,6 +30,7 @@ const createPostSchema = z
     visibility: z.enum(postVisibilities),
     quotePostId: z.string().uuid().optional(),
     mentionedUserIds: z.array(z.string().uuid()).max(20).default([]),
+    mentionedOrgIds: z.array(z.string().uuid()).max(10).default([]),
     postType: z.enum(postTypes).default('TEXT'),
     interactiveContent: interactivePostContentSchema.optional(),
   })

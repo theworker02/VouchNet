@@ -36,6 +36,7 @@ export interface CreatePostInput {
   mentionedUserIds: string[];
   postType: PostType;
   interactiveContent?: InteractivePostContent | undefined;
+  mentionedOrgIds?: string[] | undefined;
 }
 export interface FeedPost {
   id: string;
@@ -94,6 +95,13 @@ export async function createPost(
           ON CONFLICT (recipient_id,aggregation_key) WHERE read_at IS NULL
           DO UPDATE SET actor_id=EXCLUDED.actor_id,aggregated_count=notifications.aggregated_count + 1,last_occurred_at=now(),updated_at=now()
         `;
+      }
+      for (const organizationId of input.mentionedOrgIds ?? []) {
+        const allowed = await transaction<{ id: string }[]>`
+          SELECT id FROM organizations WHERE id=${organizationId} AND deleted_at IS NULL
+        `;
+        if (allowed.length === 0) continue;
+        await transaction`INSERT INTO post_mentions (post_id,target_type,target_id) VALUES (${post.id},'ORGANIZATION',${organizationId}) ON CONFLICT DO NOTHING`;
       }
       return post;
     });
@@ -208,6 +216,115 @@ export async function reactToPost(
         ON CONFLICT (recipient_id,aggregation_key) WHERE read_at IS NULL
         DO UPDATE SET actor_id=EXCLUDED.actor_id,aggregated_count=notifications.aggregated_count + 1,last_occurred_at=now(),updated_at=now()
       `;
+    });
+  } finally {
+    await client.end({ timeout: 1 });
+  }
+}
+
+export interface PostComment {
+  id: string;
+  postId: string;
+  parentCommentId: string | null;
+  authorId: string;
+  authorName: string;
+  authorSlug: string;
+  authorHeadline: string | null;
+  bodyMarkdown: string;
+  likeCount: number;
+  viewerLiked: boolean;
+  createdAt: Date;
+}
+
+export async function listPostComments(postId: string, viewerId: string): Promise<PostComment[]> {
+  const client = sql();
+  try {
+    return await client<PostComment[]>`
+      SELECT c.id,c.post_id AS "postId",c.parent_comment_id AS "parentCommentId",
+        c.author_id AS "authorId",concat(pr.first_name,' ',pr.last_name) AS "authorName",
+        pr.slug AS "authorSlug",pr.headline AS "authorHeadline",
+        c.body_markdown AS "bodyMarkdown",c.created_at AS "createdAt",
+        COALESCE((SELECT count(*)::int FROM post_comment_reactions r WHERE r.comment_id=c.id),0) AS "likeCount",
+        EXISTS (SELECT 1 FROM post_comment_reactions vr WHERE vr.comment_id=c.id AND vr.user_id=${viewerId}) AS "viewerLiked"
+      FROM post_comments c
+      JOIN profiles pr ON pr.user_id=c.author_id
+      JOIN posts p ON p.id=c.post_id
+      WHERE c.post_id=${postId} AND c.deleted_at IS NULL AND p.deleted_at IS NULL
+        AND NOT EXISTS (SELECT 1 FROM blocks b WHERE (b.blocker_id=${viewerId} AND b.blocked_id=c.author_id) OR (b.blocker_id=c.author_id AND b.blocked_id=${viewerId}))
+      ORDER BY c.created_at ASC
+      LIMIT 200
+    `;
+  } finally {
+    await client.end({ timeout: 1 });
+  }
+}
+
+export async function addPostComment(
+  postId: string,
+  authorId: string,
+  bodyMarkdown: string,
+  parentCommentId: string | null,
+): Promise<{ id: string }> {
+  const client = sql();
+  try {
+    return await client.begin(async (transaction) => {
+      const posts = await transaction<{ author_id: string; visibility: string }[]>`
+        SELECT author_id,visibility FROM posts WHERE id=${postId} AND status='PUBLISHED' AND deleted_at IS NULL
+      `;
+      const post = posts[0];
+      if (post === undefined) throw new Error('POST_NOT_FOUND');
+      if (parentCommentId !== null) {
+        const parents = await transaction<{ id: string }[]>`
+          SELECT id FROM post_comments WHERE id=${parentCommentId} AND post_id=${postId} AND deleted_at IS NULL
+        `;
+        if (parents.length === 0) throw new Error('PARENT_COMMENT_NOT_FOUND');
+      }
+      const comments = await transaction<{ id: string }[]>`
+        INSERT INTO post_comments (post_id,parent_comment_id,author_id,body_markdown)
+        VALUES (${postId},${parentCommentId},${authorId},${bodyMarkdown})
+        RETURNING id
+      `;
+      const comment = comments[0];
+      if (comment === undefined) throw new Error('COMMENT_CREATION_FAILED');
+      const recipientRows =
+        parentCommentId === null
+          ? [{ author_id: post.author_id }]
+          : await transaction<{ author_id: string }[]>`
+              SELECT author_id FROM post_comments WHERE id=${parentCommentId}
+            `;
+      const recipient = recipientRows[0]?.author_id;
+      if (recipient !== undefined && recipient !== authorId)
+        await transaction`
+        INSERT INTO notifications (recipient_id,actor_id,entity_type,entity_id,category,aggregation_key)
+        VALUES (${recipient},${authorId},'POST',${postId},'SYSTEM',${`comment:${postId}`})
+        ON CONFLICT (recipient_id,aggregation_key) WHERE read_at IS NULL
+        DO UPDATE SET actor_id=EXCLUDED.actor_id,aggregated_count=notifications.aggregated_count + 1,last_occurred_at=now(),updated_at=now()
+      `;
+      return comment;
+    });
+  } finally {
+    await client.end({ timeout: 1 });
+  }
+}
+
+export async function toggleCommentReaction(
+  commentId: string,
+  userId: string,
+): Promise<'LIKED' | 'UNLIKED'> {
+  const client = sql();
+  try {
+    return await client.begin(async (transaction) => {
+      const comments = await transaction<{ author_id: string }[]>`
+        SELECT author_id FROM post_comments WHERE id=${commentId} AND deleted_at IS NULL
+      `;
+      if (comments.length === 0) throw new Error('COMMENT_NOT_FOUND');
+      const removed = await transaction<{ comment_id: string }[]>`
+        DELETE FROM post_comment_reactions WHERE comment_id=${commentId} AND user_id=${userId}
+        RETURNING comment_id
+      `;
+      if (removed.length > 0) return 'UNLIKED';
+      await transaction`INSERT INTO post_comment_reactions (comment_id,user_id) VALUES (${commentId},${userId}) ON CONFLICT DO NOTHING`;
+      return 'LIKED';
     });
   } finally {
     await client.end({ timeout: 1 });
