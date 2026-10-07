@@ -55,6 +55,9 @@ function PublicNavigationMenu() {
       </button>
       {isOpen ? (
         <nav aria-label="Public navigation menu" id="public-navigation-menu">
+          <Link href="/about" onClick={() => setIsOpen(false)}>
+            How VouchNet works
+          </Link>
           <Link href="/explore" onClick={() => setIsOpen(false)}>
             Explore people
           </Link>
@@ -86,6 +89,7 @@ export default function HomePage() {
           VouchNet
         </Link>
         <nav aria-label="Public navigation" className="public-nav-links">
+          <Link href="/about">About</Link>
           <Link href="/explore">Explore</Link>
           <Link href="/jobs">Jobs</Link>
           <Link href="/download">Download</Link>

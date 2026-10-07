@@ -22,6 +22,7 @@ export const revalidate = 3600;
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const publicRoutes: MetadataRoute.Sitemap = [
     entry('/', undefined, 1),
+    entry('/about', undefined, 0.8),
     entry('/jobs', undefined, 0.9),
     entry('/discover', undefined, 0.8),
     entry('/opportunities', undefined, 0.8),
