@@ -2452,14 +2452,30 @@ html[data-runtimelabels='true'] .experience-frame__chrome {
   font-size: 1.1rem;
   color: var(--muted);
 }
+/* LinkedIn-style profile: every section is its own stacked card. */
 .profile-section {
-  max-width: 720px;
-  padding: 28px 0;
+  max-width: none;
+  margin-top: 14px;
+  padding: 20px 22px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+}
+.profile-section:first-of-type {
+  margin-top: 18px;
+}
+.profile-section h2 {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+  letter-spacing: -0.015em;
 }
 .profile-section p {
   color: var(--muted);
   white-space: pre-wrap;
   line-height: 1.65;
+}
+.profile-actions {
+  margin-top: -10px;
 }
 .relationship-actions {
   display: flex;
@@ -12596,6 +12612,9 @@ select.instrument-input option {
   border-bottom: 1px solid #e4e9f1;
 }
 
+.experience-entry:last-of-type {
+  border-bottom: none;
+}
 .experience-entry p {
   margin: 4px 0;
 }

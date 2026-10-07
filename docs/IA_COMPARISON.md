@@ -26,6 +26,27 @@ LinkedIn — the products visitors most often anchor to — and records the rule
   (profiles, companies, posts, jobs) render without an account, so the architecture is inspectable,
   crawlable, and linkable.
 
+## Feature-for-feature vs LinkedIn
+
+LinkedIn is our direct competitor — the incumbent this product replaces. Where its IA and surface
+area make people work, and what VouchNet does instead:
+
+| LinkedIn                                                                     | VouchNet                                                                                                                                                              |
+| ---------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Feed-first: the product is an algorithmic feed you must scroll to understand | Object-first: six named parts on `/about`; the feed is one part, not the product                                                                                      |
+| Endorsements are one-click, weightless, and inflated                         | Vouches are signed, specific, and form an inspectable trust graph                                                                                                     |
+| Company pages: marketing wall, no way to verify who runs it                  | `/company/<slug>` is claimable by the real team via verified-email invites, with a `DOMAIN_VERIFIED` badge                                                            |
+| Skills are a flat list anyone can claim                                      | Work experience with employment-type, location-type, and month/year selectors; languages picked from a curated catalog                                                |
+| "Services" buried in a marketplace flow                                      | Services + hourly rate live on the profile; a formal request lands in an inbox the provider owns                                                                      |
+| Games/engagement tricks to drive time-on-site                                | A small arcade (`/games`) of actual strategy games — a daily puzzle, Connect Four, Nim — no ads, no streak pressure                                                   |
+| Login wall for everything; public pages are teaser fragments                 | Profiles, companies, projects, jobs, and posts render publicly and are indexable (JSON-LD, sitemap, IndexNow)                                                         |
+| AI features surface as the product ("AI can write this")                     | One rule: humans participate; AI is an explicitly authorized tool via scoped credentials                                                                              |
+| Settings model scattered across dozens of pages                              | Privacy and visibility live under `/settings`, public surface documented in `sitemap.xml`                                                                             |
+| Profile chrome crowded by ads and "People also viewed" modules               | Same stacked-card profile layout (banner, overlapping avatar, section cards: About, Languages, Experience, Services, Badges, Trust graph) — minus the ads and upsells |
+
+Deliberate non-goals: no reaction inflation, no follower leaderboards, no infinite-scroll-bait
+layout, no promoted content. Anything that exists only to raise a metric is out of scope.
+
 ## Rules we enforce
 
 1. **One canonical URL shape per entity** — person `/vouch/<slug>`, organization `/company/<slug>`,
