@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { VerifiedWorkBadge } from './components/verified-work-badge';
 import { ButtonLink } from './components/ui/button';
+import { PublicFooter } from './components/public-footer';
 import { useMotionPreference } from './lib/motion';
 
 function reveal(reducedMotion: boolean, delay = 0) {
@@ -279,6 +280,7 @@ export default function HomePage() {
           Create your profile
         </ButtonLink>
       </motion.section>
+      <PublicFooter />
     </main>
   );
 }

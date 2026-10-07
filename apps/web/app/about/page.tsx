@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { PublicFooter } from '../components/public-footer';
 
 export const metadata: Metadata = {
   title: 'About VouchNet | How the network is organized',
@@ -108,6 +109,7 @@ export default function AboutPage() {
           </p>
         </section>
       </article>
+      <PublicFooter />
     </main>
   );
 }

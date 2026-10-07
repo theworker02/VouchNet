@@ -13,6 +13,7 @@ const navigation = [
   { href: '/jobs', label: 'Jobs', icon: 'briefcase' },
   { href: '/messaging', label: 'Messages', icon: 'message' },
   { href: '/notifications', label: 'Alerts', icon: 'bell' },
+  { href: '/games', label: 'Games', icon: 'game' },
 ] as const;
 
 type IconName = (typeof navigation)[number]['icon'];
@@ -40,6 +41,9 @@ function NavigationIcon({ name }: { name: IconName }) {
       <path d="M20 15a3 3 0 0 1-3 3H9l-5 3v-3a3 3 0 0 1-2-3V6a3 3 0 0 1 3-3h12a3 3 0 0 1 3 3v9Z" />
     ),
     bell: <path d="M18 9a6 6 0 1 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8 12h4" />,
+    game: (
+      <path d="M6 12h4m-2-2v4m7-4h.01M18 12h.01M7.5 6h9a4.5 4.5 0 0 1 4.4 5.4l-1 5a3.2 3.2 0 0 1-5.5 1.6L13 16.6h-2l-1.4 1.4a3.2 3.2 0 0 1-5.5-1.6l-1-5A4.5 4.5 0 0 1 7.5 6Z" />
+    ),
   };
   return (
     <svg
@@ -55,7 +59,11 @@ function NavigationIcon({ name }: { name: IconName }) {
 }
 
 function isActive(pathname: string, href: string) {
-  return pathname === href || (href === '/mynetwork' && pathname.startsWith('/network'));
+  return (
+    pathname === href ||
+    (href === '/mynetwork' && pathname.startsWith('/network')) ||
+    (href === '/games' && pathname.startsWith('/games'))
+  );
 }
 
 export function PrimaryNavigation({

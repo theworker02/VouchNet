@@ -7,7 +7,7 @@ import { getVisibleProfile } from '../../lib/people';
 import { RelationshipActions } from '../../components/relationship-actions';
 import { ProfileVouchRoster } from '../../components/profile-vouch-roster';
 import { getProfileVouches } from '../../lib/vouches';
-import { recordProfileView } from '../../lib/profile-analytics';
+import { getProfileAnalytics, recordProfileView } from '../../lib/profile-analytics';
 import { listFeaturedProofNodes } from '../../lib/featured-proof';
 import { projectStatusLabels } from '../../lib/project-model';
 import { listProfileProjects } from '../../lib/projects';
@@ -97,6 +97,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
     services,
     profileRate,
     serviceRequests,
+    analytics,
   ] = await Promise.all([
     getProfileVouches(viewerId, profile.userId),
     listFeaturedProofNodes(profile.userId),
@@ -114,6 +115,7 @@ export default async function ProfilePage({ params }: { params: Promise<{ slug: 
     listProfileServices(profile.userId, isOwner).catch(() => []),
     getProfileRate(profile.userId).catch(() => null),
     isOwner ? listServiceRequests(profile.userId, 'received').catch(() => []) : Promise.resolve([]),
+    isOwner ? getProfileAnalytics(profile.userId).catch(() => null) : Promise.resolve(null),
   ]);
   const intentLabel = intent === null ? null : profileIntentLabels[intent];
   const recipient = {
