@@ -11,7 +11,9 @@ export default function robots(): MetadataRoute.Robots {
       disallow: [
         '/api/',
         '/auth/',
-        '/developers/',
+        // Public developer documentation is intentionally crawlable. Authenticated client
+        // management stays out of search results below.
+        '/developers/apps',
         '/feed',
         '/home',
         '/in/*/analytics',

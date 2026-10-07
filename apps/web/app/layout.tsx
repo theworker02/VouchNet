@@ -44,12 +44,14 @@ export const metadata: Metadata = {
     title: 'VouchNet | Professional context, not professional noise',
     description:
       'A professional identity built around work, peer context, and transparent opportunities.',
+    images: [{ url: '/opengraph-image', width: 1200, height: 630, alt: 'VouchNet' }],
   },
   twitter: {
     card: 'summary',
     title: 'VouchNet | Professional context, not professional noise',
     description:
       'A professional identity built around work, peer context, and transparent opportunities.',
+    images: ['/opengraph-image'],
   },
   verification:
     process.env.GOOGLE_SITE_VERIFICATION === undefined ||
