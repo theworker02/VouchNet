@@ -1,6 +1,7 @@
 import { AuthForm } from '../components/auth-form';
 import { AuthShell } from '../components/auth-shell';
 import { OAuthButtons } from '../components/oauth-buttons';
+import Link from 'next/link';
 
 const oauthErrors: Record<string, string> = {
   INVALID_CREDENTIALS:
@@ -31,9 +32,9 @@ export default async function Login({
       footer={
         <>
           New to VouchNet? <a href="/signup">Create your profile</a>
-          <a className="auth-secondary-link" href="/claim">
+          <Link className="auth-secondary-link" href="/claim">
             Claim an existing profile
-          </a>
+          </Link>
           <a className="auth-secondary-link" href="/forgot-password">
             Forgot password?
           </a>

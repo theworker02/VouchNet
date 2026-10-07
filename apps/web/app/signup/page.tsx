@@ -30,9 +30,9 @@ export default async function Signup({
       footer={
         <>
           Already have an account? <a href="/login">Sign in</a>
-          <a className="auth-secondary-link" href="/claim">
+          <Link className="auth-secondary-link" href="/claim">
             Claim an existing profile
-          </a>
+          </Link>
         </>
       }
     >
