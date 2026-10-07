@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://vouchnet.dev"><img src="https://img.shields.io/badge/Live-vouchnet.dev-2457D6?style=flat-square" alt="Live site" /></a>
-  <a href="https://github.com/theworker02/VouchNet/releases/tag/v0.1.0"><img src="https://img.shields.io/github/v/release/theworker02/VouchNet?display_name=tag&sort=semver&style=flat-square" alt="Latest release" /></a>
+  <a href="https://github.com/theworker02/VouchNet/releases"><img src="https://img.shields.io/github/v/release/theworker02/VouchNet?display_name=tag&sort=semver&style=flat-square" alt="Latest release" /></a>
   <img src="https://img.shields.io/badge/Next.js-16-111827?style=flat-square&logo=nextdotjs" alt="Next.js 16" />
   <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white" alt="TypeScript" />
   <img src="https://img.shields.io/badge/PostgreSQL-17-4169E1?style=flat-square&logo=postgresql&logoColor=white" alt="PostgreSQL" />
@@ -120,6 +120,9 @@ VouchNet is an active early-stage product. The current vertical slices include:
 - A responsive Signal Desk application shell with a unified home, network, feed, and credential flow
 - Public, SEO-ready profile and project pages; project publishing; copyable, dynamic SVG profile badges
 - A source-reviewed organization directory and transparent external-job directory with salary ranges
+- A secure organization-claim system: explicitly labelled Unclaimed records, verified company-domain
+  eligibility, human review, Owner/Admin/Editor/Member boundaries, immutable governance events, and
+  a review-only outreach queue that cannot send mail on its own
 - Employer role intake and human-reviewed Greenhouse/Lever public-board sourcing, with a
   no-card two-calendar-month founding employer window
 - A platform-owned daily technical challenge, published by an explicit system actor rather than a fake member
@@ -132,9 +135,10 @@ VouchNet is an active early-stage product. The current vertical slices include:
   refresh storage, deep links, command palette, and a service-backed feed
 
 Incomplete routes intentionally show unavailable states rather than pretend the feature works.
-Internal job applications, organization administration, full notifications, moderation, the MCP
+Internal job applications, broader organization services/job publishing, full notifications, the MCP
 gateway, and the signed desktop installer/updater remain in development. Public directory records
-are expressly not official organization pages unless a future domain-verification workflow confirms ownership. See the
+are expressly not official organization pages until the domain-email and human-review claim workflow
+confirms control. See the
 [implementation matrix](docs/IMPLEMENTATION_MATRIX.md) for authoritative feature-by-feature status.
 
 ## A note on early content
@@ -155,6 +159,7 @@ apps/
   desktop/         Tauri/Rust/React installed client for the same VouchNet service
   worker/          Future attributable background-work boundary
 packages/
+  api-client/      Published, typed OAuth client for external VouchNet integrations
   auth/            Session and identity contracts
   db/              Drizzle schema and SQL migrations
   permissions/     Human and machine actor/action vocabulary
@@ -171,6 +176,13 @@ maintainable now while preserving a path to extract services later without coupl
 to React components. VouchNet Web and VouchNet Desktop are clients of the same account, network,
 and service; Desktop does not introduce another backend or a separate registration flow.
 
+## API client package
+
+External employers and ATS integrations can use the published typed OAuth client,
+[`@theworker02/vouchnet-api-client`](docs/API_CLIENT.md). It only calls the public VouchNet API;
+it does not bypass OAuth scopes, API credits, or service-side rate limits. Package publishing is
+an explicit, versioned GitHub Actions release operation.
+
 ## Security principles
 
 - **Server-first authorization** — protected routes resolve sessions and permissions on the server.
@@ -182,7 +194,8 @@ and service; Desktop does not introduce another backend or a separate registrati
 
 Read the [architecture](docs/ARCHITECTURE.md), [authentication](docs/AUTH.md),
 [automation policy](docs/AUTOMATION_POLICY.md), [threat model](docs/THREAT_MODEL.md), and
-[security guide](docs/SECURITY.md) for the underlying decisions.
+[security guide](docs/SECURITY.md) for the underlying decisions. Organization claims and role
+boundaries are documented in [docs/ORGANIZATION_CLAIMS.md](docs/ORGANIZATION_CLAIMS.md).
 
 ## Run locally
 

@@ -2,6 +2,14 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { getOrganization, listPublicJobs } from '../../lib/directory';
+import { getCurrentActor } from '../../lib/identity';
+import { canManageOrganization } from '../../lib/organization-admin';
+import { OrganizationProfileEditor } from '../../components/organization-profile-editor';
+import { OrganizationMembersPanel } from '../../components/organization-members-panel';
+import {
+  canManageOrganizationMembers,
+  listOrganizationMembers,
+} from '../../lib/organization-governance';
 
 export async function generateMetadata({
   params,
@@ -24,9 +32,20 @@ export async function generateMetadata({
 
 export default async function CompanyPage({ params }: { params: Promise<{ slug: string }> }) {
   const slug = (await params).slug;
-  const [organization, jobs] = await Promise.all([getOrganization(slug), listPublicJobs()]);
+  const actor = await getCurrentActor();
+  const [organization, jobs, canManage, canManageMembers] = await Promise.all([
+    getOrganization(slug),
+    listPublicJobs(),
+    actor === null
+      ? Promise.resolve(false)
+      : canManageOrganization(slug, actor.userId).catch(() => false),
+    actor === null
+      ? Promise.resolve(false)
+      : canManageOrganizationMembers(slug, actor.userId).catch(() => false),
+  ]);
   if (organization === null) notFound();
   const organizationJobs = jobs.filter((job) => job.organizationSlug === slug);
+  const members = canManageMembers ? await listOrganizationMembers(slug).catch(() => []) : [];
   const siteUrl = process.env.APP_URL?.trim() || 'https://vouchnet.dev';
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -40,12 +59,12 @@ export default async function CompanyPage({ params }: { params: Promise<{ slug: 
       ? {}
       : { address: { '@type': 'PostalAddress', addressLocality: organization.headquarters } }),
   };
+  // Organization content is editable after verification. Escape `<` so no stored value can close
+  // the JSON-LD script tag despite React's intentionally raw script output.
+  const jsonLdMarkup = JSON.stringify(jsonLd).replaceAll('<', '\\u003c');
   return (
     <main className="directory-page">
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdMarkup }} />
       <header className="public-nav">
         <Link className="brand" href="/">
           VouchNet
@@ -69,7 +88,7 @@ export default async function CompanyPage({ params }: { params: Promise<{ slug: 
             {organization.verificationStatus === 'DOMAIN_VERIFIED' ? (
               <span className="company-verified-badge">✓ Verified organization</span>
             ) : (
-              <span className="source-review">Source reviewed</span>
+              <span className="organization-unclaimed-badge">Unclaimed</span>
             )}
           </div>
           <h1>{organization.name}</h1>
@@ -82,17 +101,21 @@ export default async function CompanyPage({ params }: { params: Promise<{ slug: 
           <h2>About</h2>
           <p>{organization.description}</p>
           <p className="directory-disclaimer">
-            This is a public directory record, not an official company page. VouchNet has not
-            verified administrative ownership.
+            {organization.verificationStatus === 'DOMAIN_VERIFIED'
+              ? 'This is a verified organization page. Verification establishes control of the organization profile; it is not a VouchNet endorsement.'
+              : 'This is an unclaimed public directory record, not an official company page. VouchNet has not verified administrative ownership.'}
           </p>
           {organization.verificationStatus === 'DOMAIN_VERIFIED' ? null : (
             <div className="company-claim-card">
+              <span className="organization-unclaimed-badge">Unclaimed</span>
               <strong>Is this your organization?</strong>
               <p>
-                Claimed profiles can manage the official page, post roles directly, and represent
-                the organization on VouchNet. A current admin or VouchNet moderator can email you a
-                claim invite.
+                Verify control through your company-domain email and a human review. A VouchNet
+                account, matching name, or public-page edit never establishes ownership.
               </p>
+              <Link className="secondary" href={`/company/${organization.slug}/claim`}>
+                Claim this organization
+              </Link>
             </div>
           )}
           <div className="company-links">
@@ -139,6 +162,25 @@ export default async function CompanyPage({ params }: { params: Promise<{ slug: 
           </p>
         </aside>
       </section>
+      {canManage ? (
+        <OrganizationProfileEditor
+          slug={organization.slug}
+          initial={{
+            name: organization.name,
+            tagline: organization.tagline,
+            description: organization.description,
+            headquarters: organization.headquarters,
+            websiteUrl: organization.websiteUrl,
+            careersUrl: organization.careersUrl,
+            engineeringUrl: organization.engineeringUrl,
+            repositoryUrl: organization.repositoryUrl,
+            technologies: organization.technologies,
+          }}
+        />
+      ) : null}
+      {canManageMembers ? (
+        <OrganizationMembersPanel slug={organization.slug} members={members} />
+      ) : null}
       <section className="company-jobs">
         <div className="section-heading">
           <div>

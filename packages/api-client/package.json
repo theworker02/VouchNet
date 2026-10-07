@@ -1,0 +1,40 @@
+{
+  "name": "@theworker02/vouchnet-api-client",
+  "version": "1.0.0",
+  "description": "Typed OAuth 2.0 client for the VouchNet API.",
+  "license": "MIT",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://npm.pkg.github.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/theworker02/VouchNet.git",
+    "directory": "packages/api-client"
+  },
+  "bugs": {
+    "url": "https://github.com/theworker02/VouchNet/issues"
+  },
+  "homepage": "https://vouchnet.dev/developers/docs/apply-with-vouch",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --max-warnings=0",
+    "test": "vitest run --passWithNoTests"
+  }
+}

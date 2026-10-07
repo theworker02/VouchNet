@@ -260,6 +260,13 @@
       "when": 1791777600001,
       "tag": "0035_profile_languages",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1791864000000,
+      "tag": "0036_organization_claim_governance",
+      "breakpoints": true
     }
   ]
 }

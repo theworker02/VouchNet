@@ -5,6 +5,22 @@ All notable changes to VouchNet are documented here. This project follows
 
 ## Unreleased
 
+### Organization control and API client
+
+- Added a secure, human-reviewed organization-claim path. Public directory entries explicitly show
+  **Unclaimed** until a verified company-domain email request is approved by a VouchNet
+  administrator; verified ownership is not an endorsement.
+- Added explicit Owner, Admin, Editor, and Member boundaries, ownership transfer, compromised
+  non-owner revocation, append-only organization governance events, and a review-only outreach
+  candidate queue. No campaign email or claim invitation is sent automatically.
+- Added `@theworker02/vouchnet-api-client`, a typed GitHub Packages client for the public VouchNet
+  OAuth API. It surfaces `429 Retry-After` and API-credit `402` responses and does not bypass
+  server-side rate limits, scopes, PKCE, or billing checks.
+- Added the intentionally tagged GitHub Packages publishing workflow. It validates and publishes
+  only after an explicit `api-client-v*` release tag or manually version-matched dispatch.
+- Added server-side general API rate limiting to OAuth userinfo and applicant-data endpoints.
+- Updated Nodemailer to `10.0.9`, clearing production dependency audit advisories.
+
 ### Prepaid API and MCP credits
 
 - Added prepaid credits for the public API and MCP. Developers buy credits with one-time Stripe

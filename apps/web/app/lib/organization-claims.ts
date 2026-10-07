@@ -1,6 +1,7 @@
 import 'server-only';
 import { createSecretToken, hashOpaqueToken, normalizeEmail } from '@nexus/auth';
 import { createSqlClient } from '@nexus/db';
+import { emailControlsOrganizationDomain, emailDomain } from './organization-claim-policy';
 
 /**
  * Organization claim invitations. Public directory records start unowned; a representative
@@ -10,7 +11,7 @@ import { createSqlClient } from '@nexus/db';
  */
 
 export class ClaimInviteError extends Error {
-  constructor(readonly code: 'NOT_AUTHORIZED' | 'ALREADY_OWNED') {
+  constructor(readonly code: 'NOT_AUTHORIZED' | 'ALREADY_OWNED' | 'DOMAIN_EMAIL_REQUIRED') {
     super(code);
   }
 }
@@ -31,7 +32,7 @@ async function canInvite(client: SqlClient, organizationId: string, userId: stri
     SELECT EXISTS (
       SELECT 1 FROM organization_members m
       WHERE m.organization_id=${organizationId} AND m.user_id=${userId}
-        AND m.role IN ('OWNER','ADMIN')
+        AND m.status='ACTIVE' AND m.role IN ('OWNER','ADMIN')
     ) OR EXISTS (
       SELECT 1 FROM users u WHERE u.id=${userId} AND u.role='ADMIN'
     ) AS allowed
@@ -48,13 +49,15 @@ export async function createClaimInvite(input: {
   const email = normalizeEmail(input.email);
   const token = createSecretToken(inviteTtlMs);
   try {
-    const organizations = await client<{ id: string; name: string }[]>`
-      SELECT id,name FROM organizations WHERE slug=${input.organizationSlug} AND deleted_at IS NULL
+    const organizations = await client<{ id: string; name: string; website_url: string }[]>`
+      SELECT id,name,website_url FROM organizations WHERE slug=${input.organizationSlug} AND deleted_at IS NULL
     `;
     const organization = organizations[0];
     if (organization === undefined) return null;
     if (!(await canInvite(client, organization.id, input.invitedBy)))
       throw new ClaimInviteError('NOT_AUTHORIZED');
+    if (!emailControlsOrganizationDomain(email, organization.website_url))
+      throw new ClaimInviteError('DOMAIN_EMAIL_REQUIRED');
     return await client.begin(async (transaction) => {
       await transaction`
         UPDATE organization_claim_invites SET status='REVOKED'
@@ -137,7 +140,22 @@ export async function claimOrganization(
         INSERT INTO organization_members (organization_id,user_id,role)
         VALUES (${invite.organization_id},${userId},'OWNER')
         ON CONFLICT (organization_id,user_id)
-        DO UPDATE SET role='OWNER',updated_at=now()
+        DO UPDATE SET role='OWNER',status='ACTIVE',updated_at=now(),revoked_at=NULL,revoked_by=NULL,revoke_reason=NULL
+      `;
+      await transaction`
+        UPDATE organizations SET verification_status='DOMAIN_VERIFIED',updated_at=now()
+        WHERE id=${invite.organization_id}
+      `;
+      const verifiedEmails = await transaction<{ email_normalized: string }[]>`
+        SELECT email_normalized FROM user_emails WHERE user_id=${userId} AND is_primary=true
+      `;
+      await transaction`
+        INSERT INTO organization_governance_events
+          (organization_id,actor_id,subject_user_id,event_type,metadata)
+        VALUES (${invite.organization_id},${userId},${userId},'CLAIM_APPROVED',${JSON.stringify({
+          domain: emailDomain(verifiedEmails[0]?.email_normalized ?? ''),
+          method: 'DIRECT_DOMAIN_INVITE',
+        })}::jsonb)
       `;
       return { organizationSlug: invite.slug };
     });

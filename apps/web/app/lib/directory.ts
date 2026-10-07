@@ -1,5 +1,9 @@
 import 'server-only';
 import { createSqlClient } from '@nexus/db';
+import {
+  organizationTechnologyCategories,
+  type OrganizationTechnologyCategory,
+} from './organization-profile-schema';
 
 export type OrganizationRecord = {
   slug: string;
@@ -14,7 +18,7 @@ export type OrganizationRecord = {
   verificationStatus: 'UNVERIFIED' | 'SOURCE_REVIEWED' | 'DOMAIN_VERIFIED';
   sourceUrl: string | null;
   sourceCheckedAt: Date | null;
-  technologies: { name: string; category: string; sourceUrl: string }[];
+  technologies: { name: string; category: OrganizationTechnologyCategory; sourceUrl: string }[];
 };
 
 export type JobRecord = {
@@ -64,6 +68,10 @@ function sql() {
   return createSqlClient(url);
 }
 
+function isOrganizationTechnologyCategory(value: string): value is OrganizationTechnologyCategory {
+  return organizationTechnologyCategories.some((category) => category === value);
+}
+
 export async function getOrganization(slug: string): Promise<OrganizationRecord | null> {
   const client = sql();
   try {
@@ -75,10 +83,20 @@ export async function getOrganization(slug: string): Promise<OrganizationRecord 
     `;
     const organization = organizations[0];
     if (organization === undefined) return null;
-    const technologies = await client<{ name: string; category: string; sourceUrl: string }[]>`
+    const technologyRows = await client<{ name: string; category: string; sourceUrl: string }[]>`
       SELECT name,category,source_url AS "sourceUrl" FROM organization_technologies
       WHERE organization_id=(SELECT id FROM organizations WHERE slug=${slug}) ORDER BY category,name
     `;
+    const technologies = technologyRows.flatMap((technology) => {
+      if (!isOrganizationTechnologyCategory(technology.category)) return [];
+      return [
+        {
+          name: technology.name,
+          category: technology.category,
+          sourceUrl: technology.sourceUrl,
+        },
+      ];
+    });
     return { ...organization, technologies };
   } finally {
     await client.end({ timeout: 1 });

@@ -44,8 +44,12 @@ export async function POST(
     });
     return NextResponse.json({ sent: true });
   } catch (error) {
-    if (error instanceof ClaimInviteError && error.code === 'NOT_AUTHORIZED')
-      return NextResponse.json({ error: 'NOT_AUTHORIZED' }, { status: 403 });
+    if (error instanceof ClaimInviteError) {
+      if (error.code === 'NOT_AUTHORIZED')
+        return NextResponse.json({ error: 'NOT_AUTHORIZED' }, { status: 403 });
+      if (error.code === 'DOMAIN_EMAIL_REQUIRED')
+        return NextResponse.json({ error: 'DOMAIN_EMAIL_REQUIRED' }, { status: 422 });
+    }
     return NextResponse.json({ error: 'INVITE_FAILED' }, { status: 503 });
   }
 }

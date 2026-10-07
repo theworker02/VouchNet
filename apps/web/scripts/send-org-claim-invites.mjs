@@ -5,6 +5,8 @@
  *   node apps/web/scripts/send-org-claim-invites.mjs <inviter-user-id> <slug:email> [<slug:email> ...]
  *
  * inviter-user-id must be a site ADMIN or an existing OWNER/ADMIN member of each org.
+ * This is intentionally disabled unless ORGANIZATION_OUTREACH_APPROVED=true is supplied for a
+ * specific, human-approved recipient batch. It cannot be used as an automatic campaign sender.
  * EMAIL_FROM overrides the sender; falls back to "VouchNet <GMAIL_USER>".
  * Resend (RESEND_API_KEY + EMAIL_FROM) is used when Gmail credentials are absent.
  */
@@ -15,6 +17,12 @@ import nodemailer from 'nodemailer';
 const [, , inviterUserId, ...pairs] = process.argv;
 if (inviterUserId === undefined || pairs.length === 0) {
   console.error('usage: send-org-claim-invites.mjs <inviter-user-id> <slug:email> [...]');
+  process.exit(1);
+}
+if (process.env.ORGANIZATION_OUTREACH_APPROVED !== 'true') {
+  console.error(
+    'Set ORGANIZATION_OUTREACH_APPROVED=true only for an explicitly approved recipient batch.',
+  );
   process.exit(1);
 }
 const appUrl = (process.env.APP_URL ?? 'https://vouchnet.dev').replace(/\/$/, '');
@@ -62,7 +70,7 @@ try {
       .trim()
       .toLowerCase();
     const org = (
-      await sql`SELECT id,name FROM organizations WHERE slug=${slug} AND deleted_at IS NULL`
+      await sql`SELECT id,name,website_url FROM organizations WHERE slug=${slug} AND deleted_at IS NULL`
     )[0];
     if (org === undefined) {
       console.log(`${slug}: organization not found — skipped`);
@@ -72,11 +80,19 @@ try {
       await sql`SELECT EXISTS (
         SELECT 1 FROM organization_members m
         WHERE m.organization_id=${org.id} AND m.user_id=${inviterUserId}
-          AND m.role IN ('OWNER','ADMIN')
+          AND m.status='ACTIVE' AND m.role IN ('OWNER','ADMIN')
       ) OR EXISTS (SELECT 1 FROM users u WHERE u.id=${inviterUserId} AND u.role='ADMIN') AS ok`
     )[0].ok;
     if (!allowed) {
       console.log(`${slug}: inviter not authorized — skipped`);
+      continue;
+    }
+    const organizationHost = new URL(org.website_url).hostname.toLowerCase().replace(/^www\./, '');
+    const recipientDomain = email.slice(email.lastIndexOf('@') + 1);
+    if (!(
+      recipientDomain === organizationHost || recipientDomain.endsWith(`.${organizationHost}`)
+    )) {
+      console.log(`${slug}: recipient must use the organization website domain — skipped`);
       continue;
     }
     const token = randomBytes(24).toString('base64url');

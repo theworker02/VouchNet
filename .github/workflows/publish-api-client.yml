@@ -1,0 +1,42 @@
+name: Publish VouchNet API Client
+
+on:
+  push:
+    tags:
+      - 'api-client-v*'
+  workflow_dispatch:
+    inputs:
+      package_version:
+        description: 'Expected package version (for an intentional manual publish)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: github-package-publish
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://npm.pkg.github.com
+          scope: '@theworker02'
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: pnpm --filter @theworker02/vouchnet-api-client typecheck
+      - run: pnpm --filter @theworker02/vouchnet-api-client lint
+      - run: pnpm --filter @theworker02/vouchnet-api-client test
+      - run: pnpm --filter @theworker02/vouchnet-api-client build
+      - name: Verify manually requested version
+        if: github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: test "$(node -p \"require('./packages/api-client/package.json').version\")" = "${{ inputs.package_version }}"
+      - run: pnpm --filter @theworker02/vouchnet-api-client publish --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
