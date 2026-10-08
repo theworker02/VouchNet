@@ -15,6 +15,16 @@ The Stripe webhook must receive `checkout.session.completed` and
 event ID, marks a matching Studio request paid, and creates retryable administrator/customer email
 deliveries. Do not treat the return URL as payment confirmation.
 
+## Apple Pay
+
+Studio uses Stripe-hosted Checkout, so Apple Pay is selected by Stripe only for eligible customers
+and browsers. Netlify invokes the idempotent registration script during production builds whenever
+`STRIPE_SECRET_KEY` and `APP_URL` are configured; it verifies that Stripe reports Apple Pay as
+active. Local and preview builds without those values skip the action safely. Do not put Stripe
+secrets in browser code or Git. Stripe requires an active payment method domain before Apple Pay
+appears in Elements or Embedded Checkout; see Stripe's
+[payment-method domain reference](https://docs.stripe.com/api/payment_method_domains/create).
+
 ## Required production configuration
 
 - `STRIPE_SECRET_KEY`

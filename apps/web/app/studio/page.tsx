@@ -89,7 +89,7 @@ export default function StudioPage() {
             <b>2. Reserve with a deposit</b>
             <span>
               Packages use a server-verified Stripe Checkout deposit. Custom work receives a written
-              quote first.
+              quote first. Apple Pay appears automatically on supported iPhone and iPad browsers.
             </span>
           </li>
           <li>
@@ -115,6 +115,13 @@ export default function StudioPage() {
           <p>
             No. Checkout collects only the stated package deposit or an approved custom deposit. Any
             remaining balance is agreed in the written scope.
+          </p>
+        </details>
+        <details>
+          <summary>Can I use Apple Pay?</summary>
+          <p>
+            Yes, when Apple Pay is available on your device and enabled for VouchNet&apos;s Stripe
+            payment domain. It appears as an option on the secure Stripe Checkout page.
           </p>
         </details>
         <details>

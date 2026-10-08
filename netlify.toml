@@ -1,5 +1,5 @@
 [build]
-  command = "node packages/db/scripts/migrate-if-configured.mjs && pnpm build"
+  command = "node packages/db/scripts/migrate-if-configured.mjs && node apps/web/scripts/register-stripe-payment-domain.mjs --if-configured && pnpm build"
   publish = "apps/web/.next"
 
 [build.environment]
