@@ -5,6 +5,7 @@ import {
   OrganizationGovernanceError,
   reviewOrganizationClaimRequest,
 } from '../../../../lib/organization-governance';
+import { sendOrganizationClaimDecisionEmail } from '../../../../lib/email';
 import { reviewOrganizationClaimSchema } from '../../../../lib/organization-claim-schema';
 import { hasSameOrigin } from '../../../../lib/request-security';
 
@@ -21,14 +22,21 @@ export async function POST(request: NextRequest, context: { params: Promise<{ id
       decision: form.get('decision'),
       reviewNote: form.get('reviewNote') || undefined,
     });
-    await reviewOrganizationClaimRequest({
+    const notifications = await reviewOrganizationClaimRequest({
       actorId: actor.userId,
       claimRequestId: z.uuid().parse((await context.params).id),
       decision: input.decision,
       reviewNote: input.reviewNote ?? null,
     });
+    const delivery = await Promise.allSettled(
+      notifications.map((notification) => sendOrganizationClaimDecisionEmail(notification)),
+    );
+    const deliveryFailed = delivery.some((result) => result.status === 'rejected');
     return NextResponse.redirect(
-      new URL('/admin/organization-claims?updated=true', request.url),
+      new URL(
+        `/admin/organization-claims?updated=true${deliveryFailed ? '&email=delivery_failed' : ''}`,
+        request.url,
+      ),
       303,
     );
   } catch (error) {

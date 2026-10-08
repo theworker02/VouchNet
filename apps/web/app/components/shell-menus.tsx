@@ -186,6 +186,10 @@ export function WorkMenu() {
           <strong>Developer portal</strong>
           <span>Apply with VouchNet integrations</span>
         </Link>
+        <Link href="/studio" role="menuitem">
+          <strong>VouchNet Studio</strong>
+          <span>Web design and development engagements</span>
+        </Link>
         <Link href="/moderation" role="menuitem">
           <strong>Volunteer moderation</strong>
           <span>Help shape accountable community safety</span>

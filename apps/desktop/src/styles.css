@@ -1355,6 +1355,37 @@ textarea:focus-visible {
   vertical-align: middle;
   cursor: default;
 }
+.desktop-plus-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  border: 1px solid #5dd9ae80;
+  border-radius: 6px;
+  color: #b8f8dd !important;
+  background: #0d513d;
+  font-size: 0.62rem !important;
+  font-weight: 800;
+  vertical-align: middle;
+  cursor: default;
+}
+.premium-panel.active {
+  border-color: #42c993;
+  background: linear-gradient(145deg, #123e36, #142b3b);
+}
+.premium-action {
+  width: 100%;
+  margin-top: 13px;
+  min-height: 32px;
+  border: 1px solid #6ee5b8;
+  border-radius: 9px;
+  color: #062b21;
+  background: linear-gradient(135deg, #c5ffe1, #74ddb2);
+  font-size: 0.67rem;
+  font-weight: 900;
+}
+.premium-action:hover {
+  filter: brightness(1.06);
+}
 .desktop-rate {
   display: block;
   color: #7a5a12;

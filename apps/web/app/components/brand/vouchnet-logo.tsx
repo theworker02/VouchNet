@@ -55,3 +55,20 @@ export function VouchPlusBadge({ className }: { className?: string }) {
     </span>
   );
 }
+
+/** The canonical paid-tier lockup. It keeps the VouchNet mark intact and adds a clear Plus cue. */
+export function VouchPlusLogo({
+  className,
+  compact = false,
+}: {
+  className?: string;
+  compact?: boolean;
+}) {
+  return (
+    <span className={className} aria-label="VouchNet Plus">
+      <VouchNetSymbol size="md" />
+      {compact ? null : <span>VouchNet</span>}
+      <b aria-hidden="true">+</b>
+    </span>
+  );
+}

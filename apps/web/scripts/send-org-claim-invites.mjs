@@ -48,6 +48,17 @@ const transport =
 
 const esc = (s) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
+function addBusinessDays(from, days) {
+  const result = new Date(from.getTime());
+  let remaining = days;
+  while (remaining > 0) {
+    result.setUTCDate(result.getUTCDate() + 1);
+    const day = result.getUTCDay();
+    if (day !== 0 && day !== 6) remaining -= 1;
+  }
+  return result;
+}
+
 async function sendMail(to, subject, text, html) {
   if (transport !== null) {
     await transport.sendMail({ from: emailFrom, to, subject, text, html });
@@ -97,19 +108,20 @@ try {
     }
     const token = randomBytes(24).toString('base64url');
     const tokenHash = createHash('sha256').update(token).digest('hex');
+    const expiresAt = addBusinessDays(new Date(), 5);
     await sql.begin(async (tx) => {
       await tx`UPDATE organization_claim_invites SET status='REVOKED'
         WHERE organization_id=${org.id} AND status='PENDING' AND email_normalized=${email}`;
       await tx`INSERT INTO organization_claim_invites
         (organization_id,email_normalized,token_hash,invited_by,expires_at)
-        VALUES (${org.id},${email},${tokenHash},${inviterUserId},now() + interval '7 days')`;
+        VALUES (${org.id},${email},${tokenHash},${inviterUserId},${expiresAt})`;
     });
     const claimUrl = `${appUrl}/claim/${token}`;
     await sendMail(
       email,
       `${org.name}: claim your organization profile on VouchNet`,
-      `You've been invited to claim the ${org.name} organization profile on VouchNet.\n\nClaim it here: ${claimUrl}\n\nThe link expires in 7 days. Sign in (or create an account) with this email address to complete the claim.`,
-      `<p>You've been invited to claim the <strong>${esc(org.name)}</strong> organization profile on VouchNet.</p><p><a href="${claimUrl}">Claim ${esc(org.name)}</a></p><p>The link expires in 7 days. Sign in (or create an account) with this email address to complete the claim.</p>`,
+      `You've been invited to claim the ${org.name} organization profile on VouchNet.\n\nClaim it here: ${claimUrl}\n\nThe link expires after five business days. Sign in (or create an account) with this email address to complete the claim.`,
+      `<p>You've been invited to claim the <strong>${esc(org.name)}</strong> organization profile on VouchNet.</p><p><a href="${claimUrl}">Claim ${esc(org.name)}</a></p><p>The link expires after five business days. Sign in (or create an account) with this email address to complete the claim.</p>`,
     );
     console.log(`${slug}: invite sent to ${email}`);
   }

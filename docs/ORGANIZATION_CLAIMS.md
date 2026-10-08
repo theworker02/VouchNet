@@ -33,9 +33,20 @@ Individual profile claims use the same `profile_claims` lifecycle and must remai
 
 Owners can promote a profile to Admin, Editor, or Member by VouchNet profile slug. A transfer makes the target an Owner and demotes the current owner to Admin in the same transaction. Owners cannot revoke another Owner; they must transfer ownership first. An owner or site administrator can revoke non-owner access for a compromised account, retaining the event in the append-only ledger.
 
-## Existing owner invitation links
+## Invitation expiry and removal
 
-An existing Owner/Admin or a site administrator can create a one-time, seven-day claim invitation for a known representative. The recipient must still authenticate with the invited **company-domain, verified primary email**. Invitation links store only token hashes. The batch script is disabled by default and requires `ORGANIZATION_OUTREACH_APPROVED=true` for a specific approved recipient batch.
+An existing Owner/Admin or a site administrator can create a one-time claim invitation for a known representative. The recipient must still authenticate with the invited **company-domain, verified primary email**. Invitation links store only token hashes and expire after **five business days**.
+
+The production Netlify scheduled function `expire-unclaimed-organization-invites` runs each weekday. It only soft-removes a public directory record when all of the following are true:
+
+- a sent invitation has expired;
+- the organization remains unclaimed and has no active Owner;
+- no other valid invitation remains; and
+- no claim request is awaiting human review.
+
+It never deletes member accounts, verified organizations, or uninvited directory records. The removal and expiry are immutable governance events, and the organization row remains recoverable through its `deleted_at` timestamp. A verified representative can ask VouchNet to restore the record for human review after removal.
+
+Administrators' approval and rejection decisions send a transactional VouchNet email to every affected verified claimant. The batch script is disabled by default and requires `ORGANIZATION_OUTREACH_APPROVED=true` for a specific approved recipient batch.
 
 ## Outreach is separate
 
@@ -43,7 +54,7 @@ An existing Owner/Admin or a site administrator can create a one-time, seven-day
 
 ## Migrations
 
-Apply migrations `0036_organization_claim_governance` and `0037_profile_claims` before enabling the review queue or organization role management:
+Apply migrations through `0038_expiring_unclaimed_organization_invites` before enabling the review queue, role management, and scheduled expiry:
 
 ```bash
 pnpm db:migrate

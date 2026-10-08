@@ -41,6 +41,7 @@ export async function POST(
       email,
       organizationName: invite.organizationName,
       token: invite.token,
+      expiresAt: invite.expiresAt,
     });
     return NextResponse.json({ sent: true });
   } catch (error) {

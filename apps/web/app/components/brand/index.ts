@@ -1,1 +1,1 @@
-export { VouchNetLogo, VouchNetSymbol, VouchPlusBadge } from './vouchnet-logo';
+export { VouchNetLogo, VouchNetSymbol, VouchPlusBadge, VouchPlusLogo } from './vouchnet-logo';

@@ -5,6 +5,7 @@ import { isApiCreditCheckout } from '../../../lib/api-credits-checkout';
 import { stripeClient, webhookSecret } from '../../../lib/stripe';
 import { stripeEntitlementStatus } from '../../../lib/stripe-entitlement';
 import { syncStripeDeveloperAccess, syncStripeSubscription } from '../../../lib/subscription';
+import { confirmStudioPayment, deliverStudioPaymentEmails } from '../../../lib/studio';
 
 export const runtime = 'nodejs';
 
@@ -56,6 +57,13 @@ export async function POST(request: NextRequest) {
         // Credits are granted only here, from a signed event, once Stripe reports the payment as
         // paid. The ledger is keyed on the Checkout Session id, so redelivery cannot double-credit.
         await creditCheckoutSession(session);
+      } else if (session.metadata?.product === 'vouchnet_studio_deposit') {
+        // Both persistence and delivery are retry-safe: Stripe's event id is immutable, while the
+        // per-request delivery records retry until an administrator and customer are notified.
+        if (await confirmStudioPayment(event.id, session)) {
+          const requestId = session.metadata.studioRequestId;
+          if (requestId !== undefined) await deliverStudioPaymentEmails(requestId);
+        }
       } else if (event.type === 'checkout.session.completed') {
         const subscriptionId = asId(session.subscription);
         if (subscriptionId !== null)

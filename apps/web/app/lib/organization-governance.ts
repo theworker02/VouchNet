@@ -39,6 +39,13 @@ export type OrganizationOutreachCandidate = {
   createdAt: Date;
 };
 
+export type OrganizationClaimDecisionNotification = {
+  email: string;
+  organizationName: string;
+  decision: 'APPROVED' | 'REJECTED';
+  reviewNote: string | null;
+};
+
 export class OrganizationGovernanceError extends Error {
   constructor(
     readonly code:
@@ -256,22 +263,27 @@ export async function reviewOrganizationClaimRequest(input: {
   claimRequestId: string;
   decision: 'APPROVE' | 'REJECT';
   reviewNote: string | null;
-}): Promise<void> {
+}): Promise<OrganizationClaimDecisionNotification[]> {
   const sql = database();
   try {
-    await sql.begin(async (transaction) => {
+    return await sql.begin(async (transaction) => {
       if (!(await isSiteAdministrator(transaction, input.actorId)))
         throw new OrganizationGovernanceError('NOT_AUTHORIZED');
       const rows = await transaction<
         {
           organization_id: string;
+          organization_name: string;
           claimant_user_id: string;
+          verified_email: string;
           status: OrganizationClaimRequest['status'];
           profile_claim_id: string | null;
         }[]
       >`
-        SELECT organization_id,claimant_user_id,status,profile_claim_id FROM organization_claim_requests
-        WHERE id=${input.claimRequestId} FOR UPDATE
+        SELECT request.organization_id,organization.name AS organization_name,request.claimant_user_id,
+          request.verified_email,request.status,request.profile_claim_id
+        FROM organization_claim_requests request
+        JOIN organizations organization ON organization.id=request.organization_id
+        WHERE request.id=${input.claimRequestId} FOR UPDATE OF request
       `;
       const request = rows[0];
       if (request === undefined || !['PENDING', 'UNDER_REVIEW'].includes(request.status))
@@ -280,6 +292,7 @@ export async function reviewOrganizationClaimRequest(input: {
         SELECT id FROM organizations WHERE id=${request.organization_id} FOR UPDATE
       `;
       if (organizations[0] === undefined) throw new OrganizationGovernanceError('NOT_FOUND');
+      const notifications: OrganizationClaimDecisionNotification[] = [];
       if (input.decision === 'APPROVE') {
         const activeOwners = await transaction<{ user_id: string }[]>`
           SELECT user_id FROM organization_members
@@ -297,6 +310,12 @@ export async function reviewOrganizationClaimRequest(input: {
           UPDATE organizations SET verification_status='DOMAIN_VERIFIED',updated_at=now()
           WHERE id=${request.organization_id}
         `;
+        const competingRequests = await transaction<{ verified_email: string }[]>`
+          SELECT verified_email FROM organization_claim_requests
+          WHERE organization_id=${request.organization_id} AND id<>${input.claimRequestId}
+            AND status IN ('PENDING','UNDER_REVIEW')
+          FOR UPDATE
+        `;
         await transaction`
           UPDATE organization_claim_requests
           SET status='APPROVED',reviewed_by=${input.actorId},reviewed_at=now(),review_note=${input.reviewNote},updated_at=now()
@@ -313,6 +332,14 @@ export async function reviewOrganizationClaimRequest(input: {
           WHERE organization_id=${request.organization_id} AND id<>${input.claimRequestId}
             AND status IN ('PENDING','UNDER_REVIEW')
         `;
+        notifications.push(
+          ...competingRequests.map((competing) => ({
+            email: competing.verified_email,
+            organizationName: request.organization_name,
+            decision: 'REJECTED' as const,
+            reviewNote: 'Another verified representative was approved first.',
+          })),
+        );
       } else {
         await transaction`
           UPDATE organization_claim_requests
@@ -343,6 +370,13 @@ export async function reviewOrganizationClaimRequest(input: {
         resourceId: input.claimRequestId,
         policyDecision: 'SITE_ADMIN_HUMAN_REVIEW',
       });
+      notifications.unshift({
+        email: request.verified_email,
+        organizationName: request.organization_name,
+        decision: input.decision === 'APPROVE' ? 'APPROVED' : 'REJECTED',
+        reviewNote: input.reviewNote,
+      });
+      return notifications;
     });
   } finally {
     await sql.end({ timeout: 1 });

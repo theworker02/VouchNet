@@ -1,6 +1,7 @@
 import 'server-only';
 import { createSecretToken, hashOpaqueToken, normalizeEmail } from '@nexus/auth';
 import { createSqlClient } from '@nexus/db';
+import { addBusinessDays } from './business-days';
 import { emailControlsOrganizationDomain, emailDomain } from './organization-claim-policy';
 
 /**
@@ -22,8 +23,6 @@ function sql() {
   return createSqlClient(url);
 }
 
-const inviteTtlMs = 7 * 24 * 60 * 60 * 1000;
-
 type SqlClient = ReturnType<typeof createSqlClient>;
 
 /** Only an existing OWNER/ADMIN member (or a site admin) may invite someone to claim an org. */
@@ -44,10 +43,13 @@ export async function createClaimInvite(input: {
   organizationSlug: string;
   email: string;
   invitedBy: string;
-}): Promise<{ token: string; organizationName: string } | null> {
+}): Promise<{ token: string; organizationName: string; expiresAt: Date } | null> {
   const client = sql();
   const email = normalizeEmail(input.email);
-  const token = createSecretToken(inviteTtlMs);
+  // Five business days gives recipients a full work week without silently expiring an invite over
+  // a weekend. The expiry timestamp is stored with the invite and enforced server-side.
+  const expiresAt = addBusinessDays(new Date(), 5);
+  const token = createSecretToken(expiresAt.getTime() - Date.now());
   try {
     const organizations = await client<{ id: string; name: string; website_url: string }[]>`
       SELECT id,name,website_url FROM organizations WHERE slug=${input.organizationSlug} AND deleted_at IS NULL
@@ -68,7 +70,11 @@ export async function createClaimInvite(input: {
           (organization_id,email_normalized,token_hash,invited_by,expires_at)
         VALUES (${organization.id},${email},${token.tokenHash},${input.invitedBy},${token.expiresAt})
       `;
-      return { token: token.token, organizationName: organization.name };
+      return {
+        token: token.token,
+        organizationName: organization.name,
+        expiresAt: token.expiresAt,
+      };
     });
   } finally {
     await client.end({ timeout: 1 });

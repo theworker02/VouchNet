@@ -14,3 +14,10 @@
   SECRETS_SCAN_OMIT_KEYS = "EMAIL_FROM,NEXUS_ENV,APP_URL,VOUCHNET_OAUTH_ISSUER"
 
 # Secrets belong in Netlify's environment-variable settings, never in this file.
+
+[functions]
+  directory = "netlify/functions"
+
+[functions."expire-unclaimed-organization-invites"]
+  # Weekdays at 15:00 UTC. Scheduled Functions only run on production deploys.
+  schedule = "0 15 * * 1-5"

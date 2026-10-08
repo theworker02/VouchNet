@@ -18,12 +18,11 @@ invite (`organization_claim_invites`, migration 0031):
 - `POST /api/organizations/:slug/claim-invites` — OWNER/ADMIN member or site admin sends an
   invite to an email; a fresh invite revokes prior pending ones for that email and org. The
   email (`sendOrganizationClaimEmail` in `lib/email.ts`) links to `/claim/<token>` and expires
-  in 7 days.
+  after five business days.
 - `/claim/<token>` — shows the invited org and email; the invitee signs in and claims.
 - `POST /api/organizations/claim` — atomically marks the invite CLAIMED only when the
   invitee's verified primary email matches the invite email (a forwarded token never grants
   ownership), then upserts an `organization_members` row with role `OWNER`.
 
-Claiming makes someone the org's owner but does not change `verification_status`; the
-`DOMAIN_VERIFIED` path is a separate check shown on `/company/[slug]` as "Verified
-organization".
+Claiming makes someone the org's owner and promotes the record to `DOMAIN_VERIFIED`; both the
+invited-email flow and the self-service flow still require a verified company-domain address.

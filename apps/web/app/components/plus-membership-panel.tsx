@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { ApiCreditsPanel } from './api-credits-panel';
+import { VouchPlusLogo } from './brand';
 
 type BillingStatus = {
   isConfigured: boolean;
@@ -77,14 +78,22 @@ export function PlusMembershipPanel() {
   return (
     <section className="plus-membership-panel">
       <div>
-        <p className="eyebrow">VouchNet+ · {price}/month</p>
+        <VouchPlusLogo className="plus-wordmark" />
+        <p className="eyebrow">Membership · {price}/month</p>
         <h2>
           {billing.isPlus ? 'Your VouchNet+ membership is active.' : 'Bring your signal forward.'}
         </h2>
         <p>
-          Includes 90-day profile analytics, three featured proof nodes, ten priority outreach
-          credits each month, an emerald signal, and advanced feed controls.
+          The core network stays free. Plus unlocks advanced signal tools across VouchNet Web and
+          every signed-in desktop device.
         </p>
+        <ul className="plus-feature-list">
+          <li>90-day profile analytics with attributable professional context</li>
+          <li>Three featured proof-of-work nodes on your public profile</li>
+          <li>Ten priority outreach credits each month</li>
+          <li>Emerald member signal in discovery, feed, and application surfaces</li>
+          <li>Advanced keyword and regex feed controls</li>
+        </ul>
       </div>
       {billing.isPlus && billing.subscription.canManage ? (
         <button

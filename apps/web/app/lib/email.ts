@@ -25,6 +25,7 @@ async function sendViaGmail(input: {
   subject: string;
   html: string;
   text: string;
+  attachment?: { filename: string; content: Buffer };
 }): Promise<boolean> {
   const user = process.env.GMAIL_USER;
   const appPassword = process.env.GMAIL_APP_PASSWORD;
@@ -42,6 +43,10 @@ async function sendViaGmail(input: {
     subject: input.subject,
     text: input.text,
     html: input.html,
+    attachments:
+      input.attachment === undefined
+        ? undefined
+        : [{ filename: input.attachment.filename, content: input.attachment.content }],
   });
   return true;
 }
@@ -51,6 +56,7 @@ async function sendEmail(input: {
   subject: string;
   html: string;
   text: string;
+  attachment?: { filename: string; content: Buffer };
 }): Promise<void> {
   // Gmail SMTP is preferred when configured; Resend remains the fallback provider.
   if (await sendViaGmail(input)) return;
@@ -66,9 +72,41 @@ async function sendEmail(input: {
       subject: input.subject,
       html: input.html,
       text: input.text,
+      attachments:
+        input.attachment === undefined
+          ? undefined
+          : [
+              {
+                filename: input.attachment.filename,
+                content: input.attachment.content.toString('base64'),
+              },
+            ],
     }),
   });
   if (!response.ok) throw new Error('EMAIL_DELIVERY_FAILED');
+}
+
+/** Payment notifications are sent only after the signed Stripe webhook records a paid request. */
+export async function sendStudioProjectEmail(input: {
+  to: string;
+  orderNumber: string;
+  customerName: string;
+  isAdmin: boolean;
+  attachment: { filename: string; content: Buffer };
+}): Promise<void> {
+  const title = input.isAdmin
+    ? `New paid Studio project ${input.orderNumber}`
+    : `Your VouchNet Studio project ${input.orderNumber}`;
+  const safeName = htmlEscape(input.customerName);
+  await sendEmail({
+    to: input.to,
+    subject: title,
+    attachment: input.attachment,
+    text: input.isAdmin
+      ? `A VouchNet Studio project deposit was confirmed. Order: ${input.orderNumber}. The complete project summary is attached.`
+      : `Hi ${input.customerName},\n\nYour VouchNet Studio deposit is confirmed for order ${input.orderNumber}. We will review the brief and contact you with the next milestone. Your submitted summary is attached.`,
+    html: `<!doctype html><html><body style="margin:0;background:#f2f5f9;color:#172033;font-family:Inter,Arial,sans-serif"><main style="max-width:600px;margin:0 auto;padding:36px 16px"><section style="overflow:hidden;border:1px solid #d9e1ee;border-radius:20px;background:#ffffff;box-shadow:0 12px 36px rgba(15,35,70,.10)"><header style="padding:28px 32px;background:linear-gradient(135deg,#103372,#2463d4);color:#ffffff"><strong style="font-size:19px">VouchNet Studio</strong></header><div style="padding:34px 32px"><p style="margin:0 0 14px;color:#2463d4;font-size:12px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase">${input.isAdmin ? 'New paid request' : 'Deposit confirmed'}</p><h1 style="margin:0 0 14px;font-size:30px;line-height:1.18">${input.isAdmin ? 'A Studio project is ready to review.' : `Thanks, ${safeName}.`}</h1><p style="margin:0;color:#526174;font-size:16px;line-height:1.65">${input.isAdmin ? `Order <strong>${input.orderNumber}</strong> has a verified payment record. The complete project summary is attached.` : `Your deposit for order <strong>${input.orderNumber}</strong> has been confirmed. We will review the requirements and contact you with next steps.`}</p><p style="margin:24px 0 0;color:#778397;font-size:13px;line-height:1.5">Keep this order number for your records. The attached PDF contains the submitted project brief.</p></div></section></main></body></html>`,
+  });
 }
 
 export async function sendVerificationEmail(input: {
@@ -106,14 +144,45 @@ export async function sendOrganizationClaimEmail(input: {
   email: string;
   organizationName: string;
   token: string;
+  expiresAt: Date;
 }): Promise<void> {
   const claimUrl = new URL(`/claim/${input.token}`, appUrl());
   const organizationName = htmlEscape(input.organizationName);
+  const expiresOn = new Intl.DateTimeFormat('en-US', {
+    dateStyle: 'long',
+    timeStyle: 'short',
+    timeZone: 'America/New_York',
+  }).format(input.expiresAt);
   await sendEmail({
     to: input.email,
     subject: `Claim the ${input.organizationName} profile on VouchNet`,
-    text: `${input.organizationName} has a public profile on VouchNet and you've been invited to claim it.\n\nClaim it at ${claimUrl.toString()}\n\nThis link expires in 7 days. Sign in with this email address to complete the claim. If you are not affiliated with ${input.organizationName}, you can ignore this email.`,
-    html: `<!doctype html><html><body style="margin:0;background:#f2f5f9;color:#172033;font-family:Inter,Arial,sans-serif"><main style="max-width:600px;margin:0 auto;padding:36px 16px"><section style="overflow:hidden;border:1px solid #d9e1ee;border-radius:20px;background:#ffffff;box-shadow:0 12px 36px rgba(15,35,70,.10)"><header style="padding:28px 32px;background:linear-gradient(135deg,#103372,#2463d4);color:#ffffff"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="width:38px;height:38px;border-radius:11px;background:#ffffff;color:#1d56be;font-size:23px;font-weight:800;text-align:center">V</td><td style="padding-left:11px;font-size:19px;font-weight:800;letter-spacing:-.3px">VouchNet</td></tr></table></header><div style="padding:34px 32px"><p style="margin:0 0 14px;color:#2463d4;font-size:12px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase">Organization profile claim</p><h1 style="margin:0 0 14px;font-size:30px;line-height:1.18;letter-spacing:-.6px">Claim ${organizationName}.</h1><p style="margin:0;color:#526174;font-size:16px;line-height:1.65">${organizationName} has a public directory profile on VouchNet. Claim it to manage the official page, post roles, and represent the organization.</p><a href="${claimUrl.toString()}" style="display:inline-block;margin-top:26px;padding:13px 18px;border-radius:9px;background:#2463d4;color:#ffffff;font-size:15px;font-weight:700;text-decoration:none">Claim this profile</a><p style="margin:24px 0 0;color:#778397;font-size:13px;line-height:1.5">The link expires in 7 days. You must sign in with this email address to complete the claim. If you are not affiliated with ${organizationName}, you can safely ignore this email.</p></div></section></main></body></html>`,
+    text: `${input.organizationName} has a public profile on VouchNet and you've been invited to claim it.\n\nClaim it at ${claimUrl.toString()}\n\nThis link expires after five business days (${expiresOn} Eastern Time). Sign in with this email address to complete the claim. If you are not affiliated with ${input.organizationName}, you can ignore this email.`,
+    html: `<!doctype html><html><body style="margin:0;background:#f2f5f9;color:#172033;font-family:Inter,Arial,sans-serif"><main style="max-width:600px;margin:0 auto;padding:36px 16px"><section style="overflow:hidden;border:1px solid #d9e1ee;border-radius:20px;background:#ffffff;box-shadow:0 12px 36px rgba(15,35,70,.10)"><header style="padding:28px 32px;background:linear-gradient(135deg,#103372,#2463d4);color:#ffffff"><table role="presentation" cellpadding="0" cellspacing="0"><tr><td style="width:38px;height:38px;border-radius:11px;background:#ffffff;color:#1d56be;font-size:23px;font-weight:800;text-align:center">V</td><td style="padding-left:11px;font-size:19px;font-weight:800;letter-spacing:-.3px">VouchNet</td></tr></table></header><div style="padding:34px 32px"><p style="margin:0 0 14px;color:#2463d4;font-size:12px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase">Organization profile claim</p><h1 style="margin:0 0 14px;font-size:30px;line-height:1.18;letter-spacing:-.6px">Claim ${organizationName}.</h1><p style="margin:0;color:#526174;font-size:16px;line-height:1.65">${organizationName} has a public directory profile on VouchNet. Claim it to manage the official page, post roles, and represent the organization.</p><a href="${claimUrl.toString()}" style="display:inline-block;margin-top:26px;padding:13px 18px;border-radius:9px;background:#2463d4;color:#ffffff;font-size:15px;font-weight:700;text-decoration:none">Claim this profile</a><p style="margin:24px 0 0;color:#778397;font-size:13px;line-height:1.5">This link expires after five business days: ${htmlEscape(expiresOn)} Eastern Time. You must sign in with this email address to complete the claim. If you are not affiliated with ${organizationName}, you can safely ignore this email.</p></div></section></main></body></html>`,
+  });
+}
+
+export async function sendOrganizationClaimDecisionEmail(input: {
+  email: string;
+  organizationName: string;
+  decision: 'APPROVED' | 'REJECTED';
+  reviewNote: string | null;
+}): Promise<void> {
+  const approved = input.decision === 'APPROVED';
+  const name = htmlEscape(input.organizationName);
+  const note = input.reviewNote === null ? '' : `\n\nReview note: ${input.reviewNote}`;
+  const htmlNote =
+    input.reviewNote === null
+      ? ''
+      : `<p style="margin:18px 0 0;color:#526174;font-size:14px;line-height:1.55"><strong>Review note:</strong> ${htmlEscape(input.reviewNote)}</p>`;
+  await sendEmail({
+    to: input.email,
+    subject: approved
+      ? `${input.organizationName} is now verified on VouchNet`
+      : `VouchNet claim decision for ${input.organizationName}`,
+    text: approved
+      ? `Your claim for ${input.organizationName} has been approved. You can now manage its verified organization profile on VouchNet.${note}`
+      : `Your claim for ${input.organizationName} was not approved. The organization page remains unclaimed and no ownership privileges were granted.${note}`,
+    html: `<!doctype html><html><body style="margin:0;background:#f2f5f9;color:#172033;font-family:Inter,Arial,sans-serif"><main style="max-width:600px;margin:0 auto;padding:36px 16px"><section style="overflow:hidden;border:1px solid #d9e1ee;border-radius:20px;background:#ffffff;box-shadow:0 12px 36px rgba(15,35,70,.10)"><header style="padding:28px 32px;background:linear-gradient(135deg,#103372,#2463d4);color:#ffffff"><strong style="font-size:19px">VouchNet</strong></header><div style="padding:34px 32px"><p style="margin:0 0 14px;color:#2463d4;font-size:12px;font-weight:800;letter-spacing:1.4px;text-transform:uppercase">Organization claim decision</p><h1 style="margin:0 0 14px;font-size:30px;line-height:1.18">${approved ? 'Claim approved.' : 'Claim not approved.'}</h1><p style="margin:0;color:#526174;font-size:16px;line-height:1.65">${approved ? `You can now manage the verified <strong>${name}</strong> organization profile.` : `No ownership privileges were granted for <strong>${name}</strong>. The organization page remains unclaimed.`}</p>${htmlNote}</div></section></main></body></html>`,
   });
 }
 

@@ -21,6 +21,7 @@ type Profile = {
   hourlyRateCurrency?: string;
   hourlyRateVisible?: boolean;
   services?: ProfileService[];
+  isPlus?: boolean;
 } | null;
 
 function verifiedDateLabel(iso: string) {
@@ -358,6 +359,14 @@ export function App() {
                   ✦ Early member
                 </span>
               ) : null}
+              {profile?.isPlus ? (
+                <span
+                  className="desktop-plus-badge"
+                  title="VouchNet+ active across web and desktop"
+                >
+                  VouchNet+
+                </span>
+              ) : null}
             </strong>
             <span>{profile?.headline ?? 'Your professional network'}</span>
             {profile?.hourlyRateVisible && profile.hourlyRateAmount ? (
@@ -471,14 +480,28 @@ export function App() {
         )}
       </section>
       <aside className="context-pane">
-        <section className="context-panel premium-panel">
-          <div className="context-icon">⌁</div>
-          <p className="eyebrow">Desktop advantage</p>
-          <h2>Stay close to the work.</h2>
+        <section
+          className={
+            profile?.isPlus ? 'context-panel premium-panel active' : 'context-panel premium-panel'
+          }
+        >
+          <div className="context-icon">V+</div>
+          <p className="eyebrow">VouchNet+</p>
+          <h2>
+            {profile?.isPlus ? 'Your Plus signal is active.' : 'Make the network work harder.'}
+          </h2>
           <p>
-            Messages, feed updates, and professional context—without keeping another browser tab
-            open.
+            {profile?.isPlus
+              ? 'Advanced analytics, featured proof, priority outreach, and feed controls are synced to this desktop device.'
+              : 'VouchNet stays free. Plus adds advanced signal tools on the web and every connected desktop device.'}
           </p>
+          <button
+            className="premium-action"
+            onClick={() => void openWeb('/settings/account')}
+            type="button"
+          >
+            {profile?.isPlus ? 'Manage VouchNet+' : 'Explore VouchNet+'}
+          </button>
         </section>
         <section className="context-panel">
           <div className="context-heading">

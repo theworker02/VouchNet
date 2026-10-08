@@ -1139,6 +1139,384 @@ a {
   margin: 0;
 }
 
+.plus-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.42rem;
+  margin-bottom: 0.7rem;
+  color: var(--foreground);
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+.plus-wordmark svg {
+  width: 1.5rem;
+  height: 1.5rem;
+}
+
+.plus-wordmark b {
+  display: grid;
+  width: 1.05rem;
+  height: 1.05rem;
+  place-items: center;
+  border-radius: 999px;
+  color: #fff;
+  background: #07865d;
+  font-size: 0.84rem;
+  line-height: 1;
+}
+
+.plus-feature-list {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0.85rem 0 0;
+  padding: 0;
+  color: var(--muted-foreground);
+  list-style: none;
+  font-size: 0.88rem;
+}
+
+/* VouchNet Studio: deliberately editorial rather than another dashboard grid. */
+.studio-page {
+  min-height: 100vh;
+  background: linear-gradient(160deg, #f7faff 0%, #fff 45%, #f4fbf8 100%);
+  color: #152033;
+  padding: 0 6vw 5rem;
+}
+.studio-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  max-width: 1180px;
+  margin: auto;
+  padding: 1.4rem 0;
+  border-bottom: 1px solid #dce5f2;
+}
+.studio-nav svg {
+  width: 130px;
+  height: auto;
+}
+.studio-nav > div {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+.studio-nav a:not(.primary-button) {
+  color: #38506f;
+  font-weight: 700;
+  text-decoration: none;
+}
+.studio-hero {
+  max-width: 950px;
+  margin: 0 auto;
+  padding: 8rem 0 6rem;
+  text-align: center;
+}
+.studio-hero h1 {
+  max-width: 850px;
+  margin: 0.6rem auto 1.25rem;
+  font-size: clamp(2.6rem, 6vw, 5.6rem);
+  line-height: 0.98;
+  letter-spacing: -0.065em;
+}
+.studio-hero > p:not(.eyebrow) {
+  max-width: 700px;
+  margin: auto;
+  color: #526174;
+  font-size: clamp(1.08rem, 2vw, 1.35rem);
+  line-height: 1.65;
+}
+.studio-hero > div {
+  display: flex;
+  justify-content: center;
+  gap: 0.75rem;
+  margin: 2rem 0 1rem;
+}
+.studio-hero small {
+  color: #66778f;
+}
+.studio-section {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 5rem 0;
+  border-top: 1px solid #dce5f2;
+}
+.studio-section h2 {
+  margin: 0.4rem 0 2rem;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  letter-spacing: -0.05em;
+}
+.studio-package-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+.studio-package {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  padding: 1.35rem;
+  border: 1px solid #cedaeb;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 12px 35px rgba(27, 56, 100, 0.06);
+}
+.studio-package strong {
+  font-size: 1.05rem;
+}
+.studio-package p,
+.studio-package span {
+  margin: 0;
+  color: #5e6e83;
+  line-height: 1.5;
+}
+.studio-package b {
+  color: #087a56;
+  font-family: var(--font-mono, ui-monospace, monospace);
+}
+.studio-deliverables {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+}
+.studio-deliverables ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.studio-deliverables li {
+  padding: 1rem 0;
+  border-bottom: 1px solid #dce5f2;
+  color: #40526b;
+}
+.studio-steps {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.studio-steps li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 1.25rem 0;
+}
+.studio-steps b {
+  font-size: 1.1rem;
+}
+.studio-steps span {
+  color: #5e6e83;
+  line-height: 1.55;
+}
+.studio-section details {
+  padding: 1rem 0;
+  border-top: 1px solid #dce5f2;
+}
+.studio-section summary {
+  cursor: pointer;
+  font-weight: 750;
+}
+.studio-section details p {
+  color: #526174;
+  line-height: 1.6;
+}
+.studio-request-page,
+.studio-dashboard {
+  max-width: 1000px;
+  margin: 2.5rem auto;
+  padding: 2rem;
+  border: 1px solid var(--border, #dce5f2);
+  border-radius: 22px;
+  background: var(--surface, #fff);
+  box-shadow: 0 20px 55px rgba(18, 40, 75, 0.08);
+}
+.studio-request-page > p:not(.eyebrow),
+.studio-dashboard > p:not(.eyebrow) {
+  max-width: 720px;
+  color: #5d6d80;
+  line-height: 1.6;
+}
+.studio-form {
+  display: grid;
+  gap: 1.1rem;
+  margin-top: 2rem;
+}
+.studio-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+.studio-form label,
+.studio-form fieldset {
+  display: grid;
+  gap: 0.45rem;
+  font-weight: 750;
+  color: #2b3a50;
+}
+.studio-form input,
+.studio-form textarea,
+.studio-form select,
+.studio-admin-form input,
+.studio-admin-form select {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid #b9c8da;
+  border-radius: 11px;
+  background: #fff;
+  color: #172033;
+  font: inherit;
+}
+.studio-form textarea {
+  min-height: 118px;
+  resize: vertical;
+}
+.studio-form label > span,
+.studio-upload span {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #697a91;
+}
+.studio-form fieldset {
+  padding: 0;
+  border: 0;
+}
+.studio-form legend {
+  margin-bottom: 0.7rem;
+}
+.studio-package {
+  cursor: pointer;
+}
+.studio-package.selected {
+  border-color: #2b67d3;
+  box-shadow: 0 0 0 3px rgba(43, 103, 211, 0.12);
+}
+.studio-package input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.studio-upload {
+  padding: 1rem;
+  border: 1px dashed #9fb4d0;
+  border-radius: 14px;
+  background: #f7faff;
+}
+.studio-upload input {
+  border: 0;
+  padding: 0.2rem 0;
+  background: transparent;
+}
+.studio-required-note {
+  margin: 0;
+  color: #805d10;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.studio-project-list {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 2rem;
+}
+.studio-project-list article {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 1rem;
+  align-items: start;
+  padding: 1.1rem 1.2rem;
+  border: 1px solid #d9e3f0;
+  border-radius: 15px;
+  background: #fff;
+}
+.studio-project-list article > div {
+  display: grid;
+  gap: 0.25rem;
+}
+.studio-project-list article span,
+.studio-project-list article time,
+.studio-project-list article p {
+  margin: 0;
+  color: #67778d;
+  font-size: 0.9rem;
+}
+.studio-project-list article > b {
+  padding: 0.35rem 0.6rem;
+  border-radius: 999px;
+  background: #edf5ff;
+  color: #2456a9;
+  font-size: 0.76rem;
+  letter-spacing: 0.04em;
+}
+.studio-admin-form {
+  grid-column: 1/-1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+.studio-admin-form input,
+.studio-admin-form select {
+  flex: 1 1 190px;
+}
+.studio-admin-form button {
+  white-space: nowrap;
+}
+@media (max-width: 760px) {
+  .studio-page {
+    padding: 0 1.2rem 3rem;
+  }
+  .studio-nav {
+    align-items: flex-start;
+  }
+  .studio-nav > div {
+    flex-direction: column;
+    align-items: flex-end;
+  }
+  .studio-hero {
+    padding: 5rem 0 4rem;
+    text-align: left;
+  }
+  .studio-hero h1 {
+    font-size: clamp(2.6rem, 12vw, 4.2rem);
+  }
+  .studio-hero > div {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+  .studio-package-grid,
+  .studio-steps,
+  .studio-form-grid,
+  .studio-deliverables {
+    grid-template-columns: 1fr;
+  }
+  .studio-request-page,
+  .studio-dashboard {
+    margin: 1rem;
+    padding: 1.2rem;
+  }
+  .studio-project-list article {
+    grid-template-columns: 1fr;
+  }
+  .studio-project-list article > b {
+    justify-self: start;
+  }
+}
+
+.plus-feature-list li {
+  display: flex;
+  gap: 0.45rem;
+  align-items: flex-start;
+}
+
+.plus-feature-list li::before {
+  content: '✓';
+  color: #07865d;
+  font-weight: 900;
+}
+
 /* Prepaid API credits reuse the billing card, primary buttons, and developer list rows. */
 .api-credit-topups {
   display: grid;
@@ -3489,6 +3867,43 @@ button.signal-cell:focus-visible {
     grid-column: 2;
     justify-self: start;
   }
+}
+
+.studio-conversation {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #dce5f2;
+}
+.studio-conversation > div {
+  display: grid;
+  gap: 0.75rem;
+}
+.studio-conversation article {
+  padding: 1rem;
+  border-radius: 13px;
+  background: #f5f8fd;
+}
+.studio-conversation article p {
+  margin: 0.35rem 0;
+  color: #34465f;
+  white-space: pre-wrap;
+}
+.studio-conversation article time {
+  color: #728198;
+  font-size: 0.78rem;
+}
+.studio-conversation form {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+.studio-conversation textarea {
+  min-height: 90px;
+  padding: 0.75rem;
+  border: 1px solid #b9c8da;
+  border-radius: 11px;
+  font: inherit;
+  resize: vertical;
 }
 
 @media (prefers-reduced-motion: reduce) {

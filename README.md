@@ -117,6 +117,9 @@ VouchNet is an active early-stage product. The current vertical slices include:
 - People discovery, search, follows, Contact requests, blocks, and network management
 - High-signal posts/feed with persisted, keyboard-accessible reactions and optimistic failure rollback
 - Account settings, session controls, and production Resend/Netlify configuration paths
+- VouchNet+ cross-client entitlements: the free network remains available to everyone, while active
+  members receive analytics, featured proof, priority outreach, emerald identity signals, and
+  advanced feed controls on both web and desktop
 - A responsive Signal Desk application shell with a unified home, network, feed, and credential flow
 - Public, SEO-ready profile and project pages; project publishing; copyable, dynamic SVG profile badges
 - A source-reviewed organization directory and transparent external-job directory with salary ranges
@@ -300,6 +303,7 @@ where applicable, and audit handling without exposing secrets or unnecessary per
 - [Analytics](docs/ANALYTICS.md)
 - [Job sourcing and employer launch](docs/JOBS.md)
 - [Volunteer moderation](docs/MODERATION.md)
+- [VouchNet Studio service workflow](docs/STUDIO.md)
 - [Build in Public: projects, vouches, opportunities, discovery](docs/BUILD_IN_PUBLIC.md)
 - [Release notes](CHANGELOG.md)
 - [MIT License](LICENSE)
