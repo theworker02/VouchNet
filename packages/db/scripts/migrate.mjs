@@ -15,11 +15,12 @@ try {
   const files = new Set(await readdir(migrationDirectory));
   await sql`CREATE SCHEMA IF NOT EXISTS drizzle`;
   await sql`CREATE TABLE IF NOT EXISTS drizzle.__drizzle_migrations (id serial PRIMARY KEY, hash text NOT NULL, created_at bigint)`;
-  const applied =
-    await sql`SELECT created_at FROM drizzle.__drizzle_migrations ORDER BY created_at DESC LIMIT 1`;
-  const lastApplied = Number(applied[0]?.created_at ?? 0);
+  // Migrations are identified by their content hash, not journal timestamp. A past hand-authored
+  // migration can legitimately have an out-of-order timestamp; skipping on the newest timestamp
+  // would silently leave its schema absent in a fresh or repaired environment.
+  const appliedRows = await sql`SELECT hash FROM drizzle.__drizzle_migrations`;
+  const appliedHashes = new Set(appliedRows.map((row) => row.hash));
   for (const migration of journal.entries) {
-    if (migration.when <= lastApplied) continue;
     const filename = `${migration.tag}.sql`;
     if (!files.has(filename)) throw new Error(`Migration file is missing: ${filename}`);
     const source = await readFile(join(migrationDirectory, filename), 'utf8');
@@ -28,10 +29,12 @@ try {
       .map((statement) => statement.trim())
       .filter(Boolean);
     const hash = createHash('sha256').update(source).digest('hex');
+    if (appliedHashes.has(hash)) continue;
     await sql.begin(async (transaction) => {
       for (const statement of statements) await transaction.unsafe(statement);
       await transaction`INSERT INTO drizzle.__drizzle_migrations (hash,created_at) VALUES (${hash},${migration.when})`;
     });
+    appliedHashes.add(hash);
     process.stdout.write(`Applied ${migration.tag}\n`);
   }
   process.stdout.write('Migrations are current.\n');
