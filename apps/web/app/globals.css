@@ -10306,7 +10306,7 @@ body {
   height: 30px;
 }
 
-.brand::before {
+.brand--canonical::before {
   display: none;
 }
 

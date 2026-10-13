@@ -13,16 +13,24 @@ const commentSchema = z
   })
   .strict();
 
+const postParamsSchema = z.object({ id: z.string().uuid() }).strict();
+
 type Context = { params: Promise<{ id: string }> };
 
 export async function GET(request: NextRequest, context: Context) {
   try {
     const actor = await actorFromRequest(request);
     if (actor === null) return NextResponse.json({ error: 'UNAUTHENTICATED' }, { status: 401 });
-    const comments = await listPostComments((await context.params).id, actor.userId);
+    const rateLimit = await enforceRateLimit(request, 'generalApi', actor.userId);
+    if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
+    const { id: postId } = postParamsSchema.parse(await context.params);
+    const comments = await listPostComments(postId, actor.userId);
     return NextResponse.json({ comments });
-  } catch {
-    return NextResponse.json({ error: 'COMMENTS_UNAVAILABLE' }, { status: 503 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof z.ZodError ? 'INVALID_POST_ID' : 'COMMENTS_UNAVAILABLE' },
+      { status: error instanceof z.ZodError ? 400 : 503 },
+    );
   }
 }
 
@@ -34,9 +42,12 @@ export async function POST(request: NextRequest, context: Context) {
     if (actor === null) return NextResponse.json({ error: 'UNAUTHENTICATED' }, { status: 401 });
     const rateLimit = await enforceRateLimit(request, 'socialWrite', actor.userId);
     if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
-    const input = commentSchema.parse(await request.json());
+    const [input, { id: postId }] = await Promise.all([
+      commentSchema.parseAsync(await request.json()),
+      postParamsSchema.parseAsync(await context.params),
+    ]);
     const comment = await addPostComment(
-      (await context.params).id,
+      postId,
       actor.userId,
       input.bodyMarkdown,
       input.parentCommentId ?? null,

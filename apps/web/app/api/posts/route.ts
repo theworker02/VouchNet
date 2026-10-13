@@ -6,6 +6,7 @@ import { submitToIndexNow } from '../../lib/indexnow';
 import { interactivePostContentSchema } from '../../modules/experiences/model';
 import {
   createPost,
+  getFeed,
   postCategories,
   postTypes,
   postVisibilities,
@@ -55,6 +56,37 @@ const createPostSchema = z
         message: 'Only interactive posts may include an Experience payload.',
       });
   });
+
+const listPostsQuerySchema = z
+  .object({
+    mode: z.enum(['CHRONOLOGICAL', 'PEER_VERIFIED']).default('CHRONOLOGICAL'),
+    hide: z.array(z.enum(postCategories)).max(postCategories.length).default([]),
+  })
+  .strict();
+
+/**
+ * Authenticated post feed read. This is the canonical content-only counterpart to POST /api/posts;
+ * /api/feed remains available for the Signal Desk's discovery-enriched response.
+ */
+export async function GET(request: NextRequest) {
+  try {
+    const actor = await actorFromRequest(request);
+    if (actor === null) return NextResponse.json({ error: 'UNAUTHENTICATED' }, { status: 401 });
+    const rateLimit = await enforceRateLimit(request, 'generalApi', actor.userId);
+    if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
+    const query = listPostsQuerySchema.parse({
+      mode: request.nextUrl.searchParams.get('mode') ?? undefined,
+      hide: request.nextUrl.searchParams.getAll('hide'),
+    });
+    const posts = await getFeed(actor.userId, query.mode, query.hide);
+    return NextResponse.json({ posts });
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof z.ZodError ? 'INVALID_POST_QUERY' : 'POSTS_UNAVAILABLE' },
+      { status: error instanceof z.ZodError ? 400 : 503 },
+    );
+  }
+}
 
 export async function POST(request: NextRequest) {
   if (!hasSameOrigin(request))

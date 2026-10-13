@@ -27,7 +27,7 @@ export async function Shell({ children }: { children: React.ReactNode }) {
         Skip to main content
       </a>
       <header className="topbar">
-        <Link className="brand" href="/home">
+        <Link className="brand brand--canonical" href="/home">
           <VouchNetLogo className="topbar-brand-logo" />
         </Link>
         <form className="topbar-search" action="/search" role="search">
