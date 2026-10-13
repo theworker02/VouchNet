@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
+import { VouchNetLogo } from './brand';
 
 type AuthShellProps = {
   eyebrow: string;
@@ -15,10 +16,7 @@ export function AuthShell({ eyebrow, title, description, children, footer }: Aut
     <main className="auth-shell">
       <section className="auth-story" aria-label="About VouchNet">
         <Link className="auth-brand" href="/" aria-label="VouchNet home">
-          <span aria-hidden="true" className="auth-brand-mark">
-            V
-          </span>
-          <span>VouchNet</span>
+          <VouchNetLogo />
         </Link>
         <div className="auth-story-copy">
           <p className="eyebrow">A better professional starting point</p>
@@ -50,16 +48,16 @@ export function AuthShell({ eyebrow, title, description, children, footer }: Aut
         </div>
       </section>
       <section className="auth-panel">
-        <div className="auth-card">
+        <div className="auth-card vn-surface vn-surface--raised">
           <p className="eyebrow">{eyebrow}</p>
           <h2>{title}</h2>
           <p className="auth-description">{description}</p>
           <div className="auth-card-assurance" aria-label="Sign-in protections">
-            <span>
+            <span className="vn-status vn-status--positive">
               <i aria-hidden="true" />
               Secure session
             </span>
-            <span>Private by default</span>
+            <span className="vn-status">Private by default</span>
           </div>
           {children}
           <div className="auth-footer">{footer}</div>

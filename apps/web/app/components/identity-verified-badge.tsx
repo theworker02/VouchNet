@@ -34,7 +34,7 @@ export function IdentityVerifiedBadge({
     <span className="identity-badge-wrap" ref={wrapRef}>
       <button
         type="button"
-        className="identity-verified-badge"
+        className="identity-verified-badge vn-badge vn-badge--accent"
         aria-expanded={open}
         onClick={() => setOpen((value) => !value)}
       >

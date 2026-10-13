@@ -5,6 +5,8 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { VerifiedWorkBadge } from './components/verified-work-badge';
+import { VouchNetLogo, VouchNetSymbol } from './components/brand';
+import { Badge } from './components/ui/badge';
 import { ButtonLink } from './components/ui/button';
 import { PublicFooter } from './components/public-footer';
 import { useMotionPreference } from './lib/motion';
@@ -148,8 +150,8 @@ export default function HomePage() {
   return (
     <main className="landing landing--refined">
       <motion.header className="public-nav public-nav--refined" {...reveal(reducedMotion)}>
-        <Link className="brand" href="/">
-          VouchNet
+        <Link aria-label="VouchNet home" className="brand" href="/">
+          <VouchNetLogo className="brand-lockup" />
         </Link>
         <nav aria-label="Public navigation" className="public-nav-links">
           <Link href="/about">About</Link>
@@ -225,10 +227,12 @@ export default function HomePage() {
         >
           <div className="workspace-topline">
             <span className="workspace-brand-mark" aria-hidden="true">
-              V
+              <VouchNetSymbol size="sm" />
             </span>
             <span>Professional identity</span>
-            <span className="workspace-status">Live profile</span>
+            <Badge className="workspace-status" tone="positive">
+              Live profile
+            </Badge>
           </div>
           <div className="workspace-profile">
             <span className="workspace-avatar" aria-hidden="true">
@@ -274,7 +278,9 @@ export default function HomePage() {
               <strong>Ready when an opportunity fits</strong>
               <span>Share only the profile details you approve.</span>
             </div>
-            <span className="workspace-application-state">Approved</span>
+            <Badge className="workspace-application-state" tone="positive">
+              Approved
+            </Badge>
           </div>
         </motion.div>
       </section>

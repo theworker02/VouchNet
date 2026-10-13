@@ -76,7 +76,7 @@ export function PlusMembershipPanel() {
     billing.priceCents / 100,
   );
   return (
-    <section className="plus-membership-panel">
+    <section className="plus-membership-panel vn-surface vn-surface--raised">
       <div>
         <VouchPlusLogo className="plus-wordmark" />
         <p className="eyebrow">Membership · {price}/month</p>

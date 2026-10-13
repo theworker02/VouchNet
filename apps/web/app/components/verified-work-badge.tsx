@@ -1,8 +1,13 @@
+import { Badge } from './ui/badge';
+
 export function VerifiedWorkBadge({ compact = false }: { compact?: boolean }) {
   return (
-    <span className={compact ? 'verified-work-badge compact' : 'verified-work-badge'}>
+    <Badge
+      className={compact ? 'verified-work-badge compact' : 'verified-work-badge'}
+      tone="positive"
+    >
       <span aria-hidden="true">✓</span>
       Verified work
-    </span>
+    </Badge>
   );
 }
