@@ -15,11 +15,13 @@ try {
   const files = new Set(await readdir(migrationDirectory));
   await sql`CREATE SCHEMA IF NOT EXISTS drizzle`;
   await sql`CREATE TABLE IF NOT EXISTS drizzle.__drizzle_migrations (id serial PRIMARY KEY, hash text NOT NULL, created_at bigint)`;
-  // Migrations are identified by their content hash, not journal timestamp. A past hand-authored
-  // migration can legitimately have an out-of-order timestamp; skipping on the newest timestamp
-  // would silently leave its schema absent in a fresh or repaired environment.
-  const appliedRows = await sql`SELECT hash FROM drizzle.__drizzle_migrations`;
+  // Prefer the content hash, but also honor Drizzle's historical journal timestamp. Older
+  // deployments may have been applied by Drizzle itself, which records a different hash format
+  // for the same migration. Treating those rows as unknown would replay already-applied DDL on
+  // every production build.
+  const appliedRows = await sql`SELECT hash, created_at FROM drizzle.__drizzle_migrations`;
   const appliedHashes = new Set(appliedRows.map((row) => row.hash));
+  const appliedTimes = new Set(appliedRows.map((row) => Number(row.created_at)));
   for (const migration of journal.entries) {
     const filename = `${migration.tag}.sql`;
     if (!files.has(filename)) throw new Error(`Migration file is missing: ${filename}`);
@@ -29,12 +31,13 @@ try {
       .map((statement) => statement.trim())
       .filter(Boolean);
     const hash = createHash('sha256').update(source).digest('hex');
-    if (appliedHashes.has(hash)) continue;
+    if (appliedHashes.has(hash) || appliedTimes.has(Number(migration.when))) continue;
     await sql.begin(async (transaction) => {
       for (const statement of statements) await transaction.unsafe(statement);
       await transaction`INSERT INTO drizzle.__drizzle_migrations (hash,created_at) VALUES (${hash},${migration.when})`;
     });
     appliedHashes.add(hash);
+    appliedTimes.add(Number(migration.when));
     process.stdout.write(`Applied ${migration.tag}\n`);
   }
   process.stdout.write('Migrations are current.\n');
