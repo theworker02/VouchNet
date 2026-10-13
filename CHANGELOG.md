@@ -5,6 +5,29 @@ All notable changes to VouchNet are documented here. This project follows
 
 ## Unreleased
 
+## 1.4.0 - 2026-10-13
+
+### Desktop distribution and public discovery
+
+- Published the VouchNet Desktop 1.4.0 Windows release surface with direct setup, MSI, and
+  checksum paths on VouchNet and matching GitHub Release automation.
+- Kept installer availability honest: the published artifacts are unsigned and the download
+  surfaces explicitly direct members to verify SHA-256 checksums before installing.
+- Reused the canonical VouchNet package mark for the Windows application, installer, taskbar, and
+  package resources.
+- Added a real landing-page preview of public source-reviewed organizations and salary-forward
+  roles, with loading and availability states rather than fabricated activity.
+- Added `ItemList` structured data to the public jobs directory and source-backed `JobPosting`
+  structured data to individual role pages.
+
+### Search visibility
+
+- Confirmed the `vouchnet.dev` Search Console property, sitemap, robots policy, and verification
+  metadata are configured. The sitemap reports a successful read of 42 discovered URLs.
+- Recorded the present indexing baseline: 7 indexed pages, 31 pages in Google’s normal
+  “Discovered — currently not indexed” queue, and 3 redirects. No robots relaxation was made for
+  intentionally private routes.
+
 ### Organization control and API client
 
 - Added a secure, human-reviewed organization-claim path. Public directory entries explicitly show

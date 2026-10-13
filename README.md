@@ -139,7 +139,7 @@ VouchNet is an active early-stage product. The current vertical slices include:
 
 Incomplete routes intentionally show unavailable states rather than pretend the feature works.
 Internal job applications, broader organization services/job publishing, full notifications, the MCP
-gateway, and the signed desktop installer/updater remain in development. Public directory records
+gateway, desktop code signing, and the automatic updater remain in development. Public directory records
 are expressly not official organization pages until the domain-email and human-review claim workflow
 confirms control. See the
 [implementation matrix](docs/IMPLEMENTATION_MATRIX.md) for authoritative feature-by-feature status.
@@ -317,7 +317,8 @@ than opening public issues. Contributor expectations are in [CONTRIBUTING.md](CO
 
 ## Status
 
-The current source release is [v1.3.0](docs/releases/v1.3.0.md). No signed binaries are distributed with
-this release.
+The current release is [v1.4.0](docs/releases/v1.4.0.md). Windows Desktop downloads are available
+from `/download/windows` and the matching GitHub release, with SHA-256 checksums. The current
+installer is unsigned; verify its checksum before installing.
 VouchNet is not yet a production-complete social network; the implementation matrix is the source
 of truth for capability readiness and deliberate scope boundaries.

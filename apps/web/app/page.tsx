@@ -9,6 +9,43 @@ import { ButtonLink } from './components/ui/button';
 import { PublicFooter } from './components/public-footer';
 import { useMotionPreference } from './lib/motion';
 
+type LandingOrganization = {
+  slug: string;
+  name: string;
+  tagline: string | null;
+  headquarters: string | null;
+  verificationStatus: 'UNVERIFIED' | 'SOURCE_REVIEWED' | 'DOMAIN_VERIFIED';
+  technologies: string[];
+};
+
+type LandingJob = {
+  slug: string;
+  title: string;
+  workplaceType: 'REMOTE' | 'HYBRID' | 'ONSITE' | 'UNSPECIFIED';
+  salaryMin: number | null;
+  salaryMax: number | null;
+  salaryCurrency: string;
+  organizationName: string;
+};
+
+type LandingSnapshot = { organizations: LandingOrganization[]; jobs: LandingJob[] };
+
+function isLandingSnapshot(value: unknown): value is LandingSnapshot {
+  if (typeof value !== 'object' || value === null) return false;
+  const candidate = value as { organizations?: unknown; jobs?: unknown };
+  return Array.isArray(candidate.organizations) && Array.isArray(candidate.jobs);
+}
+
+function salaryRange(job: LandingJob) {
+  if (job.salaryMin === null || job.salaryMax === null) return 'Salary not disclosed';
+  const format = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: job.salaryCurrency,
+    maximumFractionDigits: 0,
+  });
+  return `${format.format(job.salaryMin)} – ${format.format(job.salaryMax)}`;
+}
+
 function reveal(reducedMotion: boolean, delay = 0) {
   if (reducedMotion) return {};
   return {
@@ -86,6 +123,28 @@ function PublicNavigationMenu() {
 export default function HomePage() {
   const motionPreference = useMotionPreference();
   const reducedMotion = motionPreference.reducedMotion;
+  const [directorySnapshot, setDirectorySnapshot] = useState<LandingSnapshot | null>(null);
+  const [directoryState, setDirectoryState] = useState<'loading' | 'ready' | 'unavailable'>(
+    'loading',
+  );
+
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetch('/api/public/home', { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) throw new Error('PUBLIC_DIRECTORY_UNAVAILABLE');
+        const payload: unknown = await response.json();
+        if (!isLandingSnapshot(payload)) throw new Error('PUBLIC_DIRECTORY_INVALID');
+        setDirectorySnapshot(payload);
+        setDirectoryState('ready');
+      })
+      .catch((error: unknown) => {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+        setDirectoryState('unavailable');
+      });
+    return () => controller.abort();
+  }, []);
+
   return (
     <main className="landing landing--refined">
       <motion.header className="public-nav public-nav--refined" {...reveal(reducedMotion)}>
@@ -281,6 +340,98 @@ export default function HomePage() {
         </motion.div>
       </motion.section>
 
+      <motion.section
+        className="landing-directory-preview"
+        aria-labelledby="landing-directory-title"
+        {...reveal(reducedMotion)}
+      >
+        <header className="landing-directory-preview__header">
+          <div>
+            <p className="eyebrow">Open for discovery</p>
+            <h2 id="landing-directory-title">Start with work that is already public.</h2>
+          </div>
+          <p>
+            Browse source-reviewed organizations and salary-forward roles before creating an
+            account. No invented activity, no gated directory.
+          </p>
+        </header>
+        <div className="landing-directory-preview__grid">
+          <section aria-labelledby="landing-companies-title">
+            <div className="landing-directory-preview__section-heading">
+              <div>
+                <span>Organizations</span>
+                <h3 id="landing-companies-title">Teams worth knowing</h3>
+              </div>
+              <Link href="/companies">All companies →</Link>
+            </div>
+            {directoryState === 'loading' ? (
+              <div
+                aria-label="Loading public organizations"
+                className="landing-directory-skeletons"
+              >
+                <span />
+                <span />
+                <span />
+              </div>
+            ) : directorySnapshot !== null && directorySnapshot.organizations.length > 0 ? (
+              <div className="landing-directory-list">
+                {directorySnapshot.organizations.map((organization) => (
+                  <Link href={`/company/${organization.slug}`} key={organization.slug}>
+                    <span className="landing-directory-mark" aria-hidden="true">
+                      {organization.name.slice(0, 1).toUpperCase()}
+                    </span>
+                    <span>
+                      <strong>{organization.name}</strong>
+                      <small>
+                        {organization.technologies.slice(0, 2).join(' · ') ||
+                          organization.headquarters ||
+                          'Public organization profile'}
+                      </small>
+                    </span>
+                    <i aria-hidden="true">→</i>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <DirectoryFallback href="/companies" label="Browse public companies" />
+            )}
+          </section>
+          <section aria-labelledby="landing-jobs-title">
+            <div className="landing-directory-preview__section-heading">
+              <div>
+                <span>Opportunities</span>
+                <h3 id="landing-jobs-title">Compensation in view</h3>
+              </div>
+              <Link href="/jobs">All roles →</Link>
+            </div>
+            {directoryState === 'loading' ? (
+              <div aria-label="Loading public roles" className="landing-directory-skeletons">
+                <span />
+                <span />
+                <span />
+              </div>
+            ) : directorySnapshot !== null && directorySnapshot.jobs.length > 0 ? (
+              <div className="landing-directory-list">
+                {directorySnapshot.jobs.map((job) => (
+                  <Link href={`/jobs/${job.slug}`} key={job.slug}>
+                    <span>
+                      <strong>{job.title}</strong>
+                      <small>
+                        {job.organizationName} · {job.workplaceType.toLowerCase()} ·{' '}
+                        {salaryRange(job)}
+                      </small>
+                    </span>
+                    <i aria-hidden="true">→</i>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <DirectoryFallback href="/jobs" label="Browse transparent jobs" />
+            )}
+          </section>
+        </div>
+      </motion.section>
+
       <motion.section className="landing-close landing-close--refined" {...reveal(reducedMotion)}>
         <div>
           <p className="eyebrow">A more credible next step</p>
@@ -292,5 +443,14 @@ export default function HomePage() {
       </motion.section>
       <PublicFooter />
     </main>
+  );
+}
+
+function DirectoryFallback({ href, label }: { href: string; label: string }) {
+  return (
+    <div className="landing-directory-empty">
+      <p>Directory updates are temporarily unavailable.</p>
+      <Link href={href}>{label} →</Link>
+    </div>
   );
 }

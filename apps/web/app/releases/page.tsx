@@ -14,22 +14,22 @@ export default function ReleasesPage() {
         <h1>VouchNet releases</h1>
         <article>
           <span className="release-tag">Current</span>
-          <h2>Version 1.3.0</h2>
+          <h2>Version 1.4.0</h2>
           <p>
-            A responsive public-surface release: complete compact navigation, updated product
-            previews, and source release notes that clearly distinguish web updates from pending
-            signed Desktop installers.
+            The first downloadable Windows release: a real NSIS setup and MSI, canonical VouchNet
+            branding, public SHA-256 verification, richer public discovery, and structured SEO for
+            transparent jobs.
           </p>
-          <Link href="/releases/1.3.0">Read version 1.3.0 notes →</Link>
+          <Link href="/releases/1.4.0">Read version 1.4.0 notes →</Link>
         </article>
         <article>
-          <span className="release-tag">Desktop foundation</span>
-          <h2>Desktop 1.0.0</h2>
+          <span className="release-tag">Previous platform release</span>
+          <h2>Version 1.3.0</h2>
           <p>
-            The first installed VouchNet client: shared account and service, native shell, PKCE
-            browser sign-in, deep links, and a desktop-focused feed.
+            Responsive public navigation, current product previews, and truthful source-release
+            availability before the Windows installer became downloadable.
           </p>
-          <Link href="/releases/1.0.0">View release notes →</Link>
+          <Link href="/releases/1.3.0">View release notes →</Link>
         </article>
       </section>
     </main>

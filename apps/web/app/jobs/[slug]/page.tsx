@@ -37,12 +37,45 @@ export async function generateMetadata({
 export default async function JobDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const job = await getPublicJob((await params).slug);
   if (job === null) notFound();
+  const siteUrl = process.env.APP_URL?.trim() || 'https://vouchnet.dev';
+  const jobPosting = {
+    '@context': 'https://schema.org',
+    '@type': 'JobPosting',
+    title: job.title,
+    description: job.description,
+    employmentType: job.employmentType,
+    hiringOrganization: {
+      '@type': 'Organization',
+      name: job.organizationName,
+      url: `${siteUrl}/company/${job.organizationSlug}`,
+    },
+    jobLocationType: job.workplaceType === 'REMOTE' ? 'TELECOMMUTE' : undefined,
+    url: `${siteUrl}/jobs/${job.slug}`,
+    directApply: job.nativeApplicationEnabled,
+    ...(job.publishedAt === null ? {} : { datePosted: job.publishedAt.toISOString() }),
+    ...(job.salaryMin === null || job.salaryMax === null
+      ? {}
+      : {
+          baseSalary: {
+            '@type': 'MonetaryAmount',
+            currency: job.salaryCurrency,
+            value: {
+              '@type': 'QuantitativeValue',
+              minValue: job.salaryMin,
+              maxValue: job.salaryMax,
+              unitText: 'YEAR',
+            },
+          },
+        }),
+  };
+  const jobPostingMarkup = JSON.stringify(jobPosting).replaceAll('<', '\\u003c');
   const salary =
     job.salaryMin === null || job.salaryMax === null
       ? 'Salary was not disclosed by the source.'
       : `${money(job.salaryMin, job.salaryCurrency)} – ${money(job.salaryMax, job.salaryCurrency)} per year`;
   return (
     <main className="directory-page job-detail-page">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jobPostingMarkup }} />
       <header className="public-nav">
         <Link className="brand" href="/">
           VouchNet

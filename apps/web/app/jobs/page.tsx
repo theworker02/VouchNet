@@ -28,8 +28,20 @@ export default async function JobsPage({
 }) {
   const query = (await searchParams).q?.trim();
   const jobs = await listPublicJobs(query);
+  const itemListJson = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'VouchNet transparent technical jobs',
+    itemListElement: jobs.map((job, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: `${job.title} at ${job.organizationName}`,
+      url: `https://vouchnet.dev/jobs/${job.slug}`,
+    })),
+  }).replaceAll('<', '\\u003c');
   return (
     <main className="directory-page jobs-page">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: itemListJson }} />
       <header className="public-nav">
         <Link className="brand" href="/">
           VouchNet
