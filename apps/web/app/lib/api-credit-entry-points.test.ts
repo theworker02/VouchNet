@@ -46,6 +46,7 @@ function isGated(file: string, seen = new Set<string>()): boolean {
   // Shared helpers such as oauth-api.ts own the chargeApiCall / spendCredits call site.
   const helpers = [...source.matchAll(/from '(\.[^']+)'/g)]
     .map((match) => match[1])
+    .filter((specifier): specifier is string => typeof specifier === 'string')
     .filter((specifier) => !specifier.endsWith('/route'))
     .flatMap((specifier) => {
       const base = join(file, '..', specifier);
