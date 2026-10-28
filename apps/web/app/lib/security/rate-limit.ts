@@ -9,6 +9,8 @@ export const rateLimitTiers = {
   auth: { maxRequests: 5, windowSeconds: 60 },
   generalApi: { maxRequests: 100, windowSeconds: 60 },
   socialWrite: { maxRequests: 20, windowSeconds: 60 },
+  /** Desktop Bearer reads (search/jobs/opportunities) — tighter than general API. */
+  desktopRead: { maxRequests: 60, windowSeconds: 60 },
 } as const;
 
 export type RateLimitTier = keyof typeof rateLimitTiers;

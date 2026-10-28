@@ -5,13 +5,37 @@ All notable changes to VouchNet are documented here. This project follows
 
 ## Unreleased
 
-### Saved posts and notification inbox
+## 1.6.0 - 2026-10-28
 
-- Added saved posts as a real vertical slice: migration `0040_saved_posts`, `/api/saved`, feed Save
-  controls, and a private `/saved` page that re-checks visibility and block rules on every read.
-- Added mark-all-as-read for member notifications at `/api/notifications/read-all`.
-- Updated the implementation matrix and authenticated-app docs so messaging and saved content are
-  no longer described as missing stubs.
+### Desktop expansion
+
+- Native Desktop Network: contacts overview, pending invitations (accept/decline), and mutual-context
+  recommendations with Connect actions via `/api/desktop/network` and `/api/desktop/network/connect`.
+- Native Desktop Jobs and Organizations directories backed by `/api/desktop/jobs` with in-app search.
+- Native Opportunities rail (`/api/desktop/opportunities`) with remote filter and brief cards.
+- Native Saved posts (`/api/desktop/saved`) with unsave, plus command-palette people/jobs/company
+  search through `/api/desktop/search`.
+- Desktop version bumped to **1.6.0** (Windows NSIS/MSI when the release workflow publishes).
+
+### Security hardening
+
+- Production CSP adds `upgrade-insecure-requests` (Experience `srcDoc` iframes remain allowed).
+- Permissions-Policy denies payment, USB, Bluetooth, and Topics APIs; API routes emit `nosniff`.
+- New `desktopRead` rate-limit tier (60/min) on Desktop search/jobs/opportunities; connection and
+  saved writes reuse `socialWrite` with device Bearer auth.
+- Desktop Tauri CSP tightened (`frame-ancestors 'none'`, `worker-src 'none'`, `script-src 'self'`,
+  `upgrade-insecure-requests`).
+
+### LinkedIn parity documentation
+
+- Expanded `docs/IA_COMPARISON.md` with a JTBD side-by-side matrix (feed, network, messaging,
+  notifications, jobs, companies, saved, opportunities, desktop).
+- Implementation matrix Desktop row updated for the authenticated native surfaces.
+
+### Earlier unreleased notes folded in
+
+- Saved posts vertical slice (`0040_saved_posts`, `/api/saved`, `/saved`) and notifications
+  mark-all-read shipped on main ahead of this Desktop expansion.
 
 ## 1.5.0 - 2026-10-28
 

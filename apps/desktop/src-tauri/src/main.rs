@@ -245,7 +245,37 @@ async fn authenticated_post(
         return Err("Your desktop session needs to be reconnected.".into());
     }
     if !response.status().is_success() {
-        return Err("VouchNet could not send that message.".into());
+        return Err("VouchNet could not complete that request.".into());
+    }
+    response
+        .json()
+        .await
+        .map_err(|_| "VouchNet returned an invalid response.".into())
+}
+async fn authenticated_delete(
+    state: &DesktopState,
+    path: &str,
+    payload: serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    let token = access(state).await?;
+    let response = reqwest::Client::new()
+        .delete(format!("{}{}", base_url(), path))
+        .bearer_auth(token)
+        .json(&payload)
+        .send()
+        .await
+        .map_err(|_| {
+            "VouchNet is temporarily unavailable. Check your connection and retry.".to_string()
+        })?;
+    if response.status().as_u16() == 401 {
+        *state
+            .access_token
+            .lock()
+            .map_err(|_| "Desktop session lock failed.")? = None;
+        return Err("Your desktop session needs to be reconnected.".into());
+    }
+    if !response.status().is_success() {
+        return Err("VouchNet could not complete that request.".into());
     }
     response
         .json()
@@ -374,6 +404,115 @@ async fn desktop_mark_activity_read(
     .await
 }
 #[tauri::command]
+async fn desktop_network(state: State<'_, DesktopState>) -> Result<serde_json::Value, String> {
+    authenticated_get(&state, "/api/desktop/network").await
+}
+#[tauri::command]
+async fn desktop_connect(
+    state: State<'_, DesktopState>,
+    payload: serde_json::Value,
+) -> Result<serde_json::Value, String> {
+    authenticated_post(&state, "/api/desktop/network/connect", payload).await
+}
+fn desktop_query_path(base: &str, pairs: &[(&str, &str)]) -> Result<String, String> {
+    let mut url = Url::parse(&format!("https://vouchnet.local{base}")).map_err(|e| e.to_string())?;
+    {
+        let mut query = url.query_pairs_mut();
+        for (key, value) in pairs {
+            query.append_pair(key, value);
+        }
+    }
+    Ok(format!("{}{}", url.path(), url.query().map(|q| format!("?{q}")).unwrap_or_default()))
+}
+#[tauri::command]
+async fn desktop_search(
+    state: State<'_, DesktopState>,
+    query: String,
+) -> Result<serde_json::Value, String> {
+    let trimmed = query.trim();
+    if trimmed.chars().count() > 80 {
+        return Err("Search query is too long.".into());
+    }
+    let path = desktop_query_path("/api/desktop/search", &[("q", trimmed)])?;
+    authenticated_get(&state, &path).await
+}
+#[tauri::command]
+async fn desktop_jobs(
+    state: State<'_, DesktopState>,
+    query: Option<String>,
+) -> Result<serde_json::Value, String> {
+    let trimmed = query.unwrap_or_default();
+    let trimmed = trimmed.trim();
+    if trimmed.is_empty() {
+        return authenticated_get(&state, "/api/desktop/jobs").await;
+    }
+    if trimmed.chars().count() > 80 {
+        return Err("Search query is too long.".into());
+    }
+    let path = desktop_query_path("/api/desktop/jobs", &[("q", trimmed)])?;
+    authenticated_get(&state, &path).await
+}
+#[tauri::command]
+async fn desktop_opportunities(
+    state: State<'_, DesktopState>,
+    query: Option<String>,
+    remote_only: Option<bool>,
+) -> Result<serde_json::Value, String> {
+    let mut pairs: Vec<(&str, String)> = Vec::new();
+    if let Some(value) = query {
+        let trimmed = value.trim().to_string();
+        if !trimmed.is_empty() {
+            if trimmed.chars().count() > 80 {
+                return Err("Search query is too long.".into());
+            }
+            pairs.push(("q", trimmed));
+        }
+    }
+    if remote_only.unwrap_or(false) {
+        pairs.push(("remote", "1".into()));
+    }
+    if pairs.is_empty() {
+        return authenticated_get(&state, "/api/desktop/opportunities").await;
+    }
+    let borrowed: Vec<(&str, &str)> = pairs.iter().map(|(k, v)| (*k, v.as_str())).collect();
+    let path = desktop_query_path("/api/desktop/opportunities", &borrowed)?;
+    authenticated_get(&state, &path).await
+}
+#[tauri::command]
+async fn desktop_saved(state: State<'_, DesktopState>) -> Result<serde_json::Value, String> {
+    authenticated_get(&state, "/api/desktop/saved").await
+}
+#[tauri::command]
+async fn desktop_save_post(
+    state: State<'_, DesktopState>,
+    post_id: String,
+) -> Result<serde_json::Value, String> {
+    if !is_uuid(&post_id) {
+        return Err("Invalid post.".into());
+    }
+    authenticated_post(
+        &state,
+        "/api/desktop/saved",
+        serde_json::json!({ "postId": post_id }),
+    )
+    .await
+}
+#[tauri::command]
+async fn desktop_unsave_post(
+    state: State<'_, DesktopState>,
+    post_id: String,
+) -> Result<serde_json::Value, String> {
+    if !is_uuid(&post_id) {
+        return Err("Invalid post.".into());
+    }
+    authenticated_delete(
+        &state,
+        "/api/desktop/saved",
+        serde_json::json!({ "postId": post_id }),
+    )
+    .await
+}
+#[tauri::command]
 fn desktop_sign_out(state: State<DesktopState>) -> Result<(), String> {
     *state
         .access_token
@@ -398,6 +537,14 @@ fn main() {
             desktop_send_message,
             desktop_activity,
             desktop_mark_activity_read,
+            desktop_network,
+            desktop_connect,
+            desktop_search,
+            desktop_jobs,
+            desktop_opportunities,
+            desktop_saved,
+            desktop_save_post,
+            desktop_unsave_post,
             desktop_sign_out
         ])
         .run(tauri::generate_context!())

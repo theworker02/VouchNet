@@ -10,7 +10,9 @@ Implemented product routes include `/home`, `/network`, `/network/discover`, `/s
 
 Messaging is a real vertical slice: conversation persistence, membership authorization, delivery
 and seen markers, and the Desktop device-token routes. Saved posts are private to the member who
-saved them and re-check visibility and block rules on every read.
+saved them and re-check visibility and block rules on every read. Desktop 1.6 also exposes native
+Bearer routes for network, search, jobs, opportunities, and saved content so the Windows client
+does not depend on browser session cookies for those surfaces.
 
 The avatar menu links to the real profile, projects, saved items, settings, and the real POST logout
 route. The protected shell includes responsive primary navigation, an accessible keyboard skip link,

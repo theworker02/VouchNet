@@ -7,6 +7,8 @@ describe('createContentSecurityPolicy', () => {
     expect(policy).toContain("script-src 'self' 'nonce-c2VjdXJlLW5vbmNl' 'strict-dynamic'");
     expect(policy).toContain("object-src 'none'");
     expect(policy).toContain("frame-ancestors 'none'");
+    expect(policy).toContain('upgrade-insecure-requests');
+    expect(policy).not.toContain("frame-src 'none'");
   });
 
   it('rejects nonce values that could inject a policy directive', () => {

@@ -10,6 +10,7 @@ export function createContentSecurityPolicy(nonce: string): string {
     "default-src 'self'",
     "base-uri 'self'",
     "frame-ancestors 'none'",
+    // Experiences render in opaque-origin srcDoc iframes; do not set frame-src 'none'.
     "form-action 'self'",
     "img-src 'self' data: blob: https:",
     "object-src 'none'",
@@ -20,5 +21,6 @@ export function createContentSecurityPolicy(nonce: string): string {
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic' https://static.cloudflareinsights.com`,
     "style-src 'self' 'unsafe-inline'",
     "connect-src 'self' https://cloudflareinsights.com",
+    'upgrade-insecure-requests',
   ].join('; ');
 }
