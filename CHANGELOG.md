@@ -5,6 +5,36 @@ All notable changes to VouchNet are documented here. This project follows
 
 ## Unreleased
 
+## 1.5.0 - 2026-10-28
+
+### Desktop signal desk
+
+- Native activity inbox on Desktop, using the same member notifications as the web app and a
+  device-token mark-as-read path at `/api/desktop/activity`.
+- Home feed now renders discovery already returned by `/api/desktop/feed`: daily Signal Circuit,
+  skill topics, and salary-forward roles.
+- Jobs and Organizations are first-class desktop surfaces with curated directory cards instead of
+  browser-only placeholders.
+- Discover joins the rail and command palette; letter-key shortcuts jump between every workspace.
+- Conversation search works, unread activity badges appear in the shell, and Desktop can request
+  Windows notifications when new unread messages arrive.
+- Shared design tokens, reduced-motion support, and shell polish keep Desktop aligned with the
+  VouchNet interface system.
+
+### Security and dependency maintenance
+
+- Upgraded Next.js to `16.4.3` and Zod to `4.6.7`, clearing the production high/critical advisories
+  that blocked the runtime dependency integrity gate.
+- Softened the Dependency Review CI job until the repository Dependency graph setting is enabled.
+- Patched desktop Tauri client packages, React, Nodemailer, Drizzle ORM, and Prettier on the same
+  release train.
+
+### Release contents
+
+- Windows installers and SHA-256 checksums publish through the existing GitHub Release workflow for
+  tag `v1.5.0`.
+- No database migration or new environment variables.
+
 ## 1.4.0 - 2026-10-13
 
 ### Desktop distribution and public discovery

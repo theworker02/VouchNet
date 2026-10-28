@@ -355,6 +355,25 @@ async fn desktop_send_message(
     .await
 }
 #[tauri::command]
+async fn desktop_activity(state: State<'_, DesktopState>) -> Result<serde_json::Value, String> {
+    authenticated_get(&state, "/api/desktop/activity").await
+}
+#[tauri::command]
+async fn desktop_mark_activity_read(
+    state: State<'_, DesktopState>,
+    notification_id: String,
+) -> Result<serde_json::Value, String> {
+    if !is_uuid(&notification_id) {
+        return Err("Invalid notification.".into());
+    }
+    authenticated_post(
+        &state,
+        &format!("/api/desktop/activity/{notification_id}/read"),
+        serde_json::json!({}),
+    )
+    .await
+}
+#[tauri::command]
 fn desktop_sign_out(state: State<DesktopState>) -> Result<(), String> {
     *state
         .access_token
@@ -377,6 +396,8 @@ fn main() {
             desktop_conversations,
             desktop_messages,
             desktop_send_message,
+            desktop_activity,
+            desktop_mark_activity_read,
             desktop_sign_out
         ])
         .run(tauri::generate_context!())

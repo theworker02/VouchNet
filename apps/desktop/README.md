@@ -21,8 +21,13 @@ replay revokes the complete device token family server-side.
 ## Native capabilities
 
 - Secure session restore using the existing VouchNet account
-- Chronological feed from `/api/desktop/feed`
-- Synced conversations, read markers, delivery/seen indicators, and HTTPS link attachments
+- Chronological feed plus discovery panels from `/api/desktop/feed`
+- Native activity inbox from `/api/desktop/activity`, with mark-as-read
+- Curated jobs and organizations rendered in the desktop shell
+- Synced conversations, conversation search, read markers, delivery/seen indicators, and HTTPS
+  link attachments
+- Optional Windows notifications when unread messages increase
+- Letter-key workspace shortcuts and a Ctrl/Cmd+K command palette
 - System-browser navigation for richer web workflows that do not yet have a dedicated native surface
 - Deep links via `vouchnet://`
 

@@ -1,6 +1,6 @@
 [package]
 name = "vouchnet-desktop"
-version = "1.4.0"
+version = "1.5.0"
 description = "The installed VouchNet client"
 authors = ["VouchNet"]
 edition = "2021"

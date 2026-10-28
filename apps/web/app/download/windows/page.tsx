@@ -29,11 +29,11 @@ export default function WindowsDownloadPage() {
         <div className="download-integrity">
           <strong>Verify before installing</strong>
           <span>
-            Download the <a href={desktopRelease.checksumsHref}>SHA-256 checksums</a>. This first
-            public installer is unsigned, so Windows may show a publisher warning.
+            Download the <a href={desktopRelease.checksumsHref}>SHA-256 checksums</a>. The installer
+            is unsigned, so Windows may show a publisher warning.
           </span>
         </div>
-        <Link href="/releases/1.4.0">Read the release notes</Link>
+        <Link href={desktopRelease.notesPath}>Read the release notes</Link>
       </section>
     </main>
   );
