@@ -1,12 +1,22 @@
-import { ProductArea } from '../components/product-area';
 import { Shell } from '../components/shell';
-export default function SavedPage() {
+import { getCurrentActor } from '../lib/identity';
+import { listSavedPosts } from '../lib/saved-posts';
+import { SavedClient } from './saved-client';
+
+export const dynamic = 'force-dynamic';
+
+export default async function SavedPage() {
+  const actor = await getCurrentActor();
+  if (actor === null) return null;
+  const posts = await listSavedPosts(actor.userId);
   return (
     <Shell>
-      <ProductArea
-        eyebrow="Saved"
-        title="Saved content is not available yet."
-        detail="Posts and private saved records have not been implemented, so this page does not present placeholder items."
+      <SavedClient
+        initialPosts={posts.map((post) => ({
+          ...post,
+          createdAt: post.createdAt.toISOString(),
+          savedAt: post.savedAt.toISOString(),
+        }))}
       />
     </Shell>
   );

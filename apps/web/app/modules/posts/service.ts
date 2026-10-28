@@ -47,6 +47,7 @@ export interface FeedPost {
   bodyMarkdown: string;
   codeSnippets: CodeSnippet[];
   mediaUrls: string[];
+  viewerSaved: boolean;
   category: PostCategory;
   visibility: PostVisibility;
   createdAt: Date;
@@ -159,6 +160,7 @@ export async function getFeed(
         COALESCE((SELECT sum(CASE r.reaction_type WHEN 'VERIFY' THEN 4 WHEN 'BENCHMARK' THEN 3 WHEN 'INSIGHTFUL' THEN 2 ELSE 1 END)::int FROM post_reactions r JOIN connections c ON c.state='ACCEPTED' AND ((c.requester_id=r.user_id AND c.recipient_id=p.author_id) OR (c.recipient_id=r.user_id AND c.requester_id=p.author_id)) WHERE r.post_id=p.id),0) AS "peerSignal",
         (SELECT count(*)::int FROM post_comments pc WHERE pc.post_id=p.id AND pc.deleted_at IS NULL) AS "commentCount",
         (SELECT reaction_type FROM post_reactions vr WHERE vr.post_id=p.id AND vr.user_id=${viewerId}) AS "viewerReaction",
+        EXISTS (SELECT 1 FROM saved_posts sp WHERE sp.post_id=p.id AND sp.user_id=${viewerId}) AS "viewerSaved",
         jsonb_build_object(
           'LIKE',(SELECT count(*)::int FROM post_reactions rr WHERE rr.post_id=p.id AND rr.reaction_type='LIKE'),
           'LOVE',(SELECT count(*)::int FROM post_reactions rr WHERE rr.post_id=p.id AND rr.reaction_type='LOVE'),

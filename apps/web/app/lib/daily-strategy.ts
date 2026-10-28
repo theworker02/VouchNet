@@ -188,3 +188,17 @@ export async function markMemberNotificationRead(
     await sql.end({ timeout: 1 });
   }
 }
+
+export async function markAllMemberNotificationsRead(userId: string): Promise<number> {
+  const sql = createSqlClient(databaseUrl());
+  try {
+    const rows = await sql<{ id: string }[]>`
+      UPDATE member_notifications SET read_at=now()
+      WHERE user_id=${userId} AND read_at IS NULL
+      RETURNING id
+    `;
+    return rows.length;
+  } finally {
+    await sql.end({ timeout: 1 });
+  }
+}
