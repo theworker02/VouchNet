@@ -51,10 +51,10 @@ export default function DownloadPage() {
       <section className="download-capabilities">
         <h2>Everything you use on VouchNet.</h2>
         <ul>
-          <li>Network and profiles</li>
-          <li>Feed and Interactive Experiences</li>
-          <li>Organizations and jobs</li>
-          <li>Notifications and secure desktop sign-in</li>
+          <li>Signal-first feed with discovery panels</li>
+          <li>Messages with search and unread badges</li>
+          <li>Native activity, organizations, and jobs</li>
+          <li>Secure desktop sign-in with Windows Credential Manager</li>
         </ul>
       </section>
       <section className="download-platforms">

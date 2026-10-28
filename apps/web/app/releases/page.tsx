@@ -14,6 +14,15 @@ export default function ReleasesPage() {
         <h1>VouchNet releases</h1>
         <article>
           <span className="release-tag">Current</span>
+          <h2>Version 1.5.0</h2>
+          <p>
+            Desktop signal desk: native activity, feed discovery, curated jobs and organizations,
+            Discover navigation, conversation search, and optional Windows message notifications.
+          </p>
+          <Link href="/releases/1.5.0">Read version 1.5.0 notes →</Link>
+        </article>
+        <article>
+          <span className="release-tag">Previous platform release</span>
           <h2>Version 1.4.0</h2>
           <p>
             The first downloadable Windows release: a real NSIS setup and MSI, canonical VouchNet
@@ -23,7 +32,7 @@ export default function ReleasesPage() {
           <Link href="/releases/1.4.0">Read version 1.4.0 notes →</Link>
         </article>
         <article>
-          <span className="release-tag">Previous platform release</span>
+          <span className="release-tag">Earlier release</span>
           <h2>Version 1.3.0</h2>
           <p>
             Responsive public navigation, current product previews, and truthful source-release

@@ -317,7 +317,7 @@ than opening public issues. Contributor expectations are in [CONTRIBUTING.md](CO
 
 ## Status
 
-The current release is [v1.4.0](docs/releases/v1.4.0.md). Windows Desktop downloads are available
+The current release is [v1.5.0](docs/releases/v1.5.0.md). Windows Desktop downloads are available
 from `/download/windows` and the matching GitHub release, with SHA-256 checksums. The current
 installer is unsigned; verify its checksum before installing.
 VouchNet is not yet a production-complete social network; the implementation matrix is the source

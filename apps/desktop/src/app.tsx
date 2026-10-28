@@ -1,6 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { invoke } from '@tauri-apps/api/core';
 import { onOpenUrl } from '@tauri-apps/plugin-deep-link';
+import {
+  isPermissionGranted,
+  requestPermission,
+  sendNotification,
+} from '@tauri-apps/plugin-notification';
 import { openUrl } from '@tauri-apps/plugin-opener';
 
 type IdentityVerification = { method: string; verifiedAt: string };
@@ -24,12 +29,6 @@ type Profile = {
   isPlus?: boolean;
 } | null;
 
-function verifiedDateLabel(iso: string) {
-  const date = new Date(iso);
-  return Number.isNaN(date.getTime())
-    ? ''
-    : date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-}
 type FeedPost = {
   id: string;
   authorName: string;
@@ -37,6 +36,30 @@ type FeedPost = {
   bodyMarkdown: string;
   createdAt: string;
   peerSignal: number;
+};
+type DiscoveryJob = {
+  slug: string;
+  title: string;
+  organizationName: string;
+  organizationSlug: string;
+  location: string;
+  salaryMin: number | null;
+  salaryMax: number | null;
+  salaryCurrency: string;
+  skillTags: string[];
+};
+type DiscoveryOrganization = {
+  slug: string;
+  name: string;
+  tagline: string | null;
+  technologies: string[];
+  openRoleCount: number;
+};
+type FeedDiscovery = {
+  jobs: DiscoveryJob[];
+  organizations: DiscoveryOrganization[];
+  topics: string[];
+  dailyChallenge: { title: string; difficultyLabel: string; moveBudget: number };
 };
 type Attachment = {
   id?: string;
@@ -61,7 +84,15 @@ type Message = {
   seenAt: string | null;
   attachments: Attachment[];
 };
-type View = 'home' | 'network' | 'messages' | 'activity' | 'jobs' | 'organizations';
+type ActivityItem = {
+  id: string;
+  title: string;
+  body: string;
+  href: string;
+  readAt: string | null;
+  createdAt: string;
+};
+type View = 'home' | 'network' | 'messages' | 'activity' | 'jobs' | 'organizations' | 'discover';
 type AppStatus = 'connecting' | 'signed-out' | 'ready' | 'error';
 
 const views: Array<{ id: View; label: string; icon: string; shortcut: string }> = [
@@ -71,8 +102,15 @@ const views: Array<{ id: View; label: string; icon: string; shortcut: string }> 
   { id: 'activity', label: 'Activity', icon: '◌', shortcut: 'A' },
   { id: 'jobs', label: 'Jobs', icon: '▣', shortcut: 'J' },
   { id: 'organizations', label: 'Organizations', icon: '◇', shortcut: 'O' },
+  { id: 'discover', label: 'Discover', icon: '◈', shortcut: 'D' },
 ];
 
+function verifiedDateLabel(iso: string) {
+  const date = new Date(iso);
+  return Number.isNaN(date.getTime())
+    ? ''
+    : date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+}
 function initials(value: string) {
   return value
     .split(' ')
@@ -93,23 +131,54 @@ function formatDate(value: string) {
     ? formatTime(value)
     : new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(date);
 }
+function formatSalary(job: DiscoveryJob) {
+  if (job.salaryMin === null && job.salaryMax === null) return 'Compensation on source';
+  const currency = job.salaryCurrency || 'USD';
+  const format = (amount: number) =>
+    new Intl.NumberFormat(undefined, {
+      style: 'currency',
+      currency,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  if (job.salaryMin !== null && job.salaryMax !== null) {
+    return `${format(job.salaryMin)}–${format(job.salaryMax)}`;
+  }
+  return format(job.salaryMin ?? job.salaryMax ?? 0);
+}
 function webRoute(view: View) {
-  return view === 'network'
-    ? '/mynetwork'
-    : view === 'activity'
-      ? '/notifications'
-      : view === 'organizations'
-        ? '/search?type=companies'
-        : `/${view}`;
+  switch (view) {
+    case 'network':
+      return '/mynetwork';
+    case 'activity':
+      return '/notifications';
+    case 'organizations':
+      return '/search?type=companies';
+    case 'discover':
+      return '/discover';
+    case 'home':
+      return '/feed';
+    default:
+      return `/${view}`;
+  }
+}
+function emptyDiscovery(): FeedDiscovery {
+  return {
+    jobs: [],
+    organizations: [],
+    topics: [],
+    dailyChallenge: { title: 'Signal Circuit', difficultyLabel: 'Steady', moveBudget: 12 },
+  };
 }
 
 export function App() {
   const [profile, setProfile] = useState<Profile>(null);
   const [view, setView] = useState<View>('home');
   const [feed, setFeed] = useState<FeedPost[]>([]);
+  const [discovery, setDiscovery] = useState<FeedDiscovery>(emptyDiscovery());
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [composer, setComposer] = useState('');
   const [attachmentUrl, setAttachmentUrl] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -117,17 +186,61 @@ export function App() {
   const [notice, setNotice] = useState<string | null>(null);
   const [commandOpen, setCommandOpen] = useState(false);
   const [commandQuery, setCommandQuery] = useState('');
+  const [threadQuery, setThreadQuery] = useState('');
   const [messageLoading, setMessageLoading] = useState(false);
+  const [activityLoading, setActivityLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const knownUnreadRef = useRef(0);
   const selectedConversation = useMemo(
     () => conversations.find((item) => item.id === selectedConversationId) ?? null,
     [conversations, selectedConversationId],
   );
   const unreadCount = conversations.reduce((total, item) => total + item.unreadCount, 0);
-  const commandItems = useMemo(
-    () => views.filter((item) => item.label.toLowerCase().includes(commandQuery.toLowerCase())),
-    [commandQuery],
-  );
+  const unreadActivity = activity.filter((item) => item.readAt === null).length;
+  const filteredConversations = useMemo(() => {
+    const query = threadQuery.trim().toLowerCase();
+    if (!query) return conversations;
+    return conversations.filter((conversation) => {
+      const haystack = [
+        conversation.counterpart.fullName,
+        conversation.counterpart.headline ?? '',
+        conversation.lastMessage?.body ?? '',
+      ]
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [conversations, threadQuery]);
+  const commandItems = useMemo(() => {
+    const query = commandQuery.trim().toLowerCase();
+    const navigation = views.filter((item) => item.label.toLowerCase().includes(query));
+    const extras = [
+      { id: 'compose', label: 'Create a post', icon: '＋', path: '/feed/create' },
+      { id: 'profile', label: 'Open my profile', icon: '◉', path: `/vouch/${profile?.slug ?? ''}` },
+      { id: 'games', label: 'Play today’s puzzle', icon: '▦', path: '/games' },
+      { id: 'settings', label: 'Account settings', icon: '⚙', path: '/settings/account' },
+    ].filter((item) => item.label.toLowerCase().includes(query));
+    return { navigation, extras };
+  }, [commandQuery, profile?.slug]);
+
+  async function notifyUnread(count: number) {
+    if (count <= knownUnreadRef.current) {
+      knownUnreadRef.current = count;
+      return;
+    }
+    knownUnreadRef.current = count;
+    try {
+      let granted = await isPermissionGranted();
+      if (!granted) granted = (await requestPermission()) === 'granted';
+      if (!granted) return;
+      await sendNotification({
+        title: 'VouchNet',
+        body: count === 1 ? 'You have a new message.' : `You have ${count} unread messages.`,
+      });
+    } catch {
+      // Notifications are optional on locked-down Windows installs.
+    }
+  }
 
   async function restore() {
     setStatus('connecting');
@@ -139,15 +252,25 @@ export function App() {
         setStatus('signed-out');
         return;
       }
-      const [feedPayload, conversationPayload] = await Promise.all([
-        invoke<{ posts: FeedPost[] }>('desktop_feed'),
+      const [feedPayload, conversationPayload, activityPayload] = await Promise.all([
+        invoke<{ posts: FeedPost[]; discovery?: FeedDiscovery }>('desktop_feed'),
         invoke<{ conversations: Conversation[] }>('desktop_conversations'),
+        invoke<{ notifications: ActivityItem[] }>('desktop_activity').catch(() => ({
+          notifications: [] as ActivityItem[],
+        })),
       ]);
       setFeed(feedPayload.posts);
+      setDiscovery(feedPayload.discovery ?? emptyDiscovery());
       setConversations(conversationPayload.conversations);
+      setActivity(activityPayload.notifications);
       setSelectedConversationId(
         (current) => current ?? conversationPayload.conversations[0]?.id ?? null,
       );
+      const nextUnread = conversationPayload.conversations.reduce(
+        (total, item) => total + item.unreadCount,
+        0,
+      );
+      void notifyUnread(nextUnread);
       setStatus('ready');
     } catch (error) {
       setStatus('error');
@@ -171,12 +294,31 @@ export function App() {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
         setCommandOpen(true);
+        return;
       }
-      if (event.key === 'Escape') setCommandOpen(false);
+      if (event.key === 'Escape') {
+        setCommandOpen(false);
+        return;
+      }
+      if (commandOpen || event.ctrlKey || event.metaKey || event.altKey) return;
+      const target = event.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'INPUT' ||
+          target.tagName === 'TEXTAREA' ||
+          target.isContentEditable)
+      ) {
+        return;
+      }
+      const match = views.find((item) => item.shortcut.toLowerCase() === event.key.toLowerCase());
+      if (match) {
+        event.preventDefault();
+        setView(match.id);
+      }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, []);
+  }, [commandOpen]);
   useEffect(() => {
     if (!selectedConversationId || view !== 'messages' || status !== 'ready') return;
     setMessageLoading(true);
@@ -199,6 +341,32 @@ export function App() {
       )
       .finally(() => setMessageLoading(false));
   }, [selectedConversationId, status, view]);
+  useEffect(() => {
+    if (view !== 'activity' || status !== 'ready') return;
+    setActivityLoading(true);
+    void invoke<{ notifications: ActivityItem[] }>('desktop_activity')
+      .then((payload) => setActivity(payload.notifications))
+      .catch((error: unknown) =>
+        setNotice(error instanceof Error ? error.message : 'Activity could not be refreshed.'),
+      )
+      .finally(() => setActivityLoading(false));
+  }, [status, view]);
+  useEffect(() => {
+    if (status !== 'ready') return;
+    const timer = window.setInterval(() => {
+      void invoke<{ conversations: Conversation[] }>('desktop_conversations')
+        .then((payload) => {
+          setConversations(payload.conversations);
+          const nextUnread = payload.conversations.reduce(
+            (total, item) => total + item.unreadCount,
+            0,
+          );
+          void notifyUnread(nextUnread);
+        })
+        .catch(() => undefined);
+    }, 45_000);
+    return () => window.clearInterval(timer);
+  }, [status]);
 
   async function startAuthentication() {
     setNotice(null);
@@ -227,8 +395,11 @@ export function App() {
     await invoke('desktop_sign_out');
     setProfile(null);
     setFeed([]);
+    setDiscovery(emptyDiscovery());
     setConversations([]);
     setMessages([]);
+    setActivity([]);
+    knownUnreadRef.current = 0;
     setStatus('signed-out');
   }
   async function sendMessage() {
@@ -280,6 +451,21 @@ export function App() {
       setNotice('Add an HTTPS link. Portfolios, documents, and image links are supported.');
     }
   }
+  async function openActivity(item: ActivityItem) {
+    setActivity((current) =>
+      current.map((entry) =>
+        entry.id === item.id && entry.readAt === null
+          ? { ...entry, readAt: new Date().toISOString() }
+          : entry,
+      ),
+    );
+    try {
+      await invoke('desktop_mark_activity_read', { notificationId: item.id });
+    } catch {
+      // Opening the linked surface still helps even if the read marker fails.
+    }
+    await openWeb(item.href);
+  }
 
   if (status === 'connecting') return <Splash />;
   if (status === 'signed-out')
@@ -320,11 +506,12 @@ export function App() {
               className={view === item.id ? 'rail-item active' : 'rail-item'}
               key={item.id}
               onClick={() => setView(item.id)}
-              title={item.label}
+              title={`${item.label} (${item.shortcut})`}
               type="button"
             >
               <span>{item.icon}</span>
               {item.id === 'messages' && unreadCount ? <i>{unreadCount}</i> : null}
+              {item.id === 'activity' && unreadActivity ? <i>{unreadActivity}</i> : null}
               <small>{item.label}</small>
             </button>
           ))}
@@ -425,7 +612,9 @@ export function App() {
               {view === 'home' ? 'Your signal desk' : views.find((item) => item.id === view)?.label}
             </p>
             <h1>
-              {view === 'home' ? 'Good to see you.' : views.find((item) => item.id === view)?.label}
+              {view === 'home'
+                ? 'Good to see you.'
+                : (views.find((item) => item.id === view)?.label ?? 'VouchNet')}
             </h1>
           </div>
           <div className="stage-actions">
@@ -439,22 +628,28 @@ export function App() {
               type="button"
             >
               ◌
+              {unreadActivity ? <i>{unreadActivity}</i> : null}
             </button>
           </div>
         </header>
         {notice ? <p className="inline-notice">{notice}</p> : null}
         {view === 'home' ? (
           <HomeView
+            challenge={discovery.dailyChallenge}
             feed={feed}
+            jobs={discovery.jobs}
             onCompose={() => void openWeb('/feed/create')}
+            onOpenChallenge={() => void openWeb('/games')}
+            onOpenJob={(slug) => void openWeb(`/jobs/${slug}`)}
             onOpenPost={(id) => void openWeb(`/feed?post=${id}`)}
+            topics={discovery.topics}
           />
         ) : view === 'messages' ? (
           <MessagesView
             attachments={attachments}
             attachmentUrl={attachmentUrl}
             composer={composer}
-            conversations={conversations}
+            conversations={filteredConversations}
             currentUserName={profile?.fullName ?? 'You'}
             loading={messageLoading}
             messages={messages}
@@ -466,10 +661,32 @@ export function App() {
             }
             onSelectConversation={setSelectedConversationId}
             onSend={() => void sendMessage()}
+            onThreadQueryChange={setThreadQuery}
             onViewProfile={(slug) => void openWeb(`/vouch/${slug}`)}
             selectedConversation={selectedConversation}
             selectedConversationId={selectedConversationId}
             sending={sending}
+            threadQuery={threadQuery}
+            totalConversations={conversations.length}
+          />
+        ) : view === 'activity' ? (
+          <ActivityView
+            items={activity}
+            loading={activityLoading}
+            onOpen={(item) => void openActivity(item)}
+            onOpenAll={() => void openWeb('/notifications')}
+          />
+        ) : view === 'jobs' ? (
+          <JobsView
+            jobs={discovery.jobs}
+            onBrowse={() => void openWeb('/jobs')}
+            onOpenJob={(slug) => void openWeb(`/jobs/${slug}`)}
+          />
+        ) : view === 'organizations' ? (
+          <OrganizationsView
+            organizations={discovery.organizations}
+            onBrowse={() => void openWeb('/companies')}
+            onOpenOrganization={(slug) => void openWeb(`/company/${slug}`)}
           />
         ) : (
           <NativeSurface
@@ -512,22 +729,25 @@ export function App() {
             <li>
               <b>01</b>
               <span>
-                <strong>Signal-first feed</strong>
-                <small>Chronological by default</small>
+                <strong>{discovery.dailyChallenge.title}</strong>
+                <small>
+                  {discovery.dailyChallenge.difficultyLabel} · {discovery.dailyChallenge.moveBudget}{' '}
+                  moves
+                </small>
               </span>
             </li>
             <li>
               <b>02</b>
               <span>
-                <strong>Proof-of-work profiles</strong>
-                <small>Show the useful details</small>
+                <strong>{discovery.jobs.length} transparent roles</strong>
+                <small>Salary-forward discovery</small>
               </span>
             </li>
             <li>
               <b>03</b>
               <span>
-                <strong>Transparent roles</strong>
-                <small>Salary-forward job discovery</small>
+                <strong>{unreadCount} unread messages</strong>
+                <small>Synced to this device</small>
               </span>
             </li>
           </ul>
@@ -560,12 +780,13 @@ export function App() {
               />
             </div>
             <p className="command-label">Navigate</p>
-            {commandItems.map((item) => (
+            {commandItems.navigation.map((item) => (
               <button
                 key={item.id}
                 onClick={() => {
                   setView(item.id);
                   setCommandOpen(false);
+                  setCommandQuery('');
                 }}
                 type="button"
               >
@@ -573,7 +794,22 @@ export function App() {
                 <kbd>{item.shortcut}</kbd>
               </button>
             ))}
-            <p className="command-footer">Esc to close</p>
+            {commandItems.extras.length ? <p className="command-label">Actions</p> : null}
+            {commandItems.extras.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setCommandOpen(false);
+                  setCommandQuery('');
+                  void openWeb(item.path);
+                }}
+                type="button"
+              >
+                <span>{item.icon}</span> {item.label}
+                <kbd>↗</kbd>
+              </button>
+            ))}
+            <p className="command-footer">Esc to close · letter keys jump between spaces</p>
           </section>
         </div>
       ) : null}
@@ -586,7 +822,7 @@ function Splash() {
     <main className="desktop-splash">
       <div className="splash-grid" />
       <div className="splash-content">
-        <div className="brand-orb">V</div>
+        <div className="brand-orb brand-pulse">V</div>
         <p className="eyebrow">VouchNet Desktop</p>
         <h1>Connecting your workspace</h1>
         <div className="loading-line">
@@ -597,12 +833,13 @@ function Splash() {
     </main>
   );
 }
+
 function Welcome({ onContinue, message }: { onContinue: () => void; message: string | null }) {
   return (
     <main className="desktop-welcome">
       <div className="welcome-glow" />
       <section className="welcome-card">
-        <div className="brand-orb">V</div>
+        <div className="brand-orb brand-pulse">V</div>
         <p className="eyebrow">VouchNet Desktop</p>
         <h1>
           Your network,
@@ -672,14 +909,25 @@ function Welcome({ onContinue, message }: { onContinue: () => void; message: str
     </main>
   );
 }
+
 function HomeView({
   feed,
+  jobs,
+  topics,
+  challenge,
   onCompose,
   onOpenPost,
+  onOpenJob,
+  onOpenChallenge,
 }: {
   feed: FeedPost[];
+  jobs: DiscoveryJob[];
+  topics: string[];
+  challenge: FeedDiscovery['dailyChallenge'];
   onCompose: () => void;
   onOpenPost: (id: string) => void;
+  onOpenJob: (slug: string) => void;
+  onOpenChallenge: () => void;
 }) {
   return (
     <div className="home-layout">
@@ -741,12 +989,52 @@ function HomeView({
           )}
         </div>
       </section>
+      <aside className="home-aside">
+        <section className="discovery-panel">
+          <p className="eyebrow">Daily challenge</p>
+          <h3>{challenge.title}</h3>
+          <p>
+            {challenge.difficultyLabel} · solve in {challenge.moveBudget} moves or fewer.
+          </p>
+          <button onClick={onOpenChallenge} type="button">
+            Play Signal Circuit →
+          </button>
+        </section>
+        {topics.length ? (
+          <section className="discovery-panel soft">
+            <p className="eyebrow">Topics in view</p>
+            <div className="topic-row">
+              {topics.map((topic) => (
+                <span key={topic}>{topic}</span>
+              ))}
+            </div>
+          </section>
+        ) : null}
+        {jobs.length ? (
+          <section className="discovery-panel soft">
+            <p className="eyebrow">Transparent roles</p>
+            <ul className="mini-job-list">
+              {jobs.slice(0, 3).map((job) => (
+                <li key={job.slug}>
+                  <button onClick={() => onOpenJob(job.slug)} type="button">
+                    <strong>{job.title}</strong>
+                    <small>
+                      {job.organizationName} · {formatSalary(job)}
+                    </small>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
+      </aside>
     </div>
   );
 }
 
 function MessagesView(props: {
   conversations: Conversation[];
+  totalConversations: number;
   selectedConversationId: string | null;
   selectedConversation: Conversation | null;
   messages: Message[];
@@ -754,11 +1042,13 @@ function MessagesView(props: {
   composer: string;
   attachments: Attachment[];
   attachmentUrl: string;
+  threadQuery: string;
   loading: boolean;
   sending: boolean;
   onSelectConversation: (id: string) => void;
   onComposerChange: (value: string) => void;
   onAttachmentUrlChange: (value: string) => void;
+  onThreadQueryChange: (value: string) => void;
   onAddAttachment: () => void;
   onRemoveAttachment: (url: string) => void;
   onSend: () => void;
@@ -766,6 +1056,7 @@ function MessagesView(props: {
 }) {
   const {
     conversations,
+    totalConversations,
     selectedConversationId,
     selectedConversation,
     messages,
@@ -773,11 +1064,13 @@ function MessagesView(props: {
     composer,
     attachments,
     attachmentUrl,
+    threadQuery,
     loading,
     sending,
     onSelectConversation,
     onComposerChange,
     onAttachmentUrlChange,
+    onThreadQueryChange,
     onAddAttachment,
     onRemoveAttachment,
     onSend,
@@ -794,13 +1087,23 @@ function MessagesView(props: {
           <span>{conversations.reduce((total, item) => total + item.unreadCount, 0)} unread</span>
         </div>
         <div className="thread-search">
-          ⌕ <input placeholder="Search conversations" />
+          ⌕{' '}
+          <input
+            aria-label="Search conversations"
+            onChange={(event) => onThreadQueryChange(event.target.value)}
+            placeholder="Search conversations"
+            value={threadQuery}
+          />
         </div>
         {conversations.length === 0 ? (
           <div className="conversation-empty">
             <span>✦</span>
-            <h3>No conversations yet</h3>
-            <p>Once a contact opens a thread, your desktop inbox will stay in sync.</p>
+            <h3>{totalConversations === 0 ? 'No conversations yet' : 'No matches'}</h3>
+            <p>
+              {totalConversations === 0
+                ? 'Once a contact opens a thread, your desktop inbox will stay in sync.'
+                : 'Try another name or phrase from the conversation.'}
+            </p>
           </div>
         ) : (
           <div className="threads">
@@ -964,9 +1267,174 @@ function MessagesView(props: {
   );
 }
 
+function ActivityView({
+  items,
+  loading,
+  onOpen,
+  onOpenAll,
+}: {
+  items: ActivityItem[];
+  loading: boolean;
+  onOpen: (item: ActivityItem) => void;
+  onOpenAll: () => void;
+}) {
+  return (
+    <section className="activity-surface">
+      <div className="surface-toolbar">
+        <div>
+          <p className="eyebrow">Useful updates</p>
+          <h2>Activity that deserves attention</h2>
+        </div>
+        <button className="button-quiet" onClick={onOpenAll} type="button">
+          Open full inbox ↗
+        </button>
+      </div>
+      {loading ? (
+        <div className="message-loading padded">
+          <i />
+          <i />
+          <i />
+        </div>
+      ) : items.length === 0 ? (
+        <div className="conversation-empty centered">
+          <span>◌</span>
+          <h3>You’re up to date.</h3>
+          <p>Daily puzzles, security signals, and direct professional updates appear here.</p>
+        </div>
+      ) : (
+        <div className="activity-list">
+          {items.map((item) => (
+            <button
+              className={item.readAt ? 'activity-item' : 'activity-item unread'}
+              key={item.id}
+              onClick={() => onOpen(item)}
+              type="button"
+            >
+              <span>⌁</span>
+              <div>
+                <strong>{item.title}</strong>
+                <p>{item.body}</p>
+                <small>{formatDate(item.createdAt)}</small>
+              </div>
+              <i>Open →</i>
+            </button>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function JobsView({
+  jobs,
+  onBrowse,
+  onOpenJob,
+}: {
+  jobs: DiscoveryJob[];
+  onBrowse: () => void;
+  onOpenJob: (slug: string) => void;
+}) {
+  return (
+    <section className="directory-surface">
+      <div className="surface-toolbar">
+        <div>
+          <p className="eyebrow">Transparent opportunities</p>
+          <h2>Know the work before you apply.</h2>
+        </div>
+        <button className="button-primary" onClick={onBrowse} type="button">
+          Browse all jobs ↗
+        </button>
+      </div>
+      {jobs.length === 0 ? (
+        <div className="conversation-empty centered">
+          <span>▣</span>
+          <h3>No curated roles right now</h3>
+          <p>Open the full jobs directory for salary-forward listings as they are reviewed.</p>
+        </div>
+      ) : (
+        <div className="directory-grid">
+          {jobs.map((job) => (
+            <article className="directory-card" key={job.slug}>
+              <p className="eyebrow">{job.organizationName}</p>
+              <h3>{job.title}</h3>
+              <p>
+                {job.location} · {formatSalary(job)}
+              </p>
+              {job.skillTags.length ? (
+                <div className="topic-row">
+                  {job.skillTags.slice(0, 4).map((tag) => (
+                    <span key={tag}>{tag}</span>
+                  ))}
+                </div>
+              ) : null}
+              <button onClick={() => onOpenJob(job.slug)} type="button">
+                View role →
+              </button>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function OrganizationsView({
+  organizations,
+  onBrowse,
+  onOpenOrganization,
+}: {
+  organizations: DiscoveryOrganization[];
+  onBrowse: () => void;
+  onOpenOrganization: (slug: string) => void;
+}) {
+  return (
+    <section className="directory-surface">
+      <div className="surface-toolbar">
+        <div>
+          <p className="eyebrow">Source-reviewed organizations</p>
+          <h2>Meet the teams behind the work.</h2>
+        </div>
+        <button className="button-primary" onClick={onBrowse} type="button">
+          Browse companies ↗
+        </button>
+      </div>
+      {organizations.length === 0 ? (
+        <div className="conversation-empty centered">
+          <span>◇</span>
+          <h3>Directory quiet for now</h3>
+          <p>Open the company directory for source-reviewed organization records.</p>
+        </div>
+      ) : (
+        <div className="directory-grid">
+          {organizations.map((organization) => (
+            <article className="directory-card" key={organization.slug}>
+              <p className="eyebrow">
+                {organization.openRoleCount} open role
+                {organization.openRoleCount === 1 ? '' : 's'}
+              </p>
+              <h3>{organization.name}</h3>
+              <p>{organization.tagline ?? 'Source-reviewed organization on VouchNet.'}</p>
+              {organization.technologies.length ? (
+                <div className="topic-row">
+                  {organization.technologies.slice(0, 4).map((tech) => (
+                    <span key={tech}>{tech}</span>
+                  ))}
+                </div>
+              ) : null}
+              <button onClick={() => onOpenOrganization(organization.slug)} type="button">
+                View organization →
+              </button>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function NativeSurface({ title, view, onOpen }: { title: string; view: View; onOpen: () => void }) {
   const content: Record<
-    Exclude<View, 'home' | 'messages'>,
+    'network' | 'discover',
     { eyebrow: string; heading: string; body: string; action: string }
   > = {
     network: {
@@ -975,26 +1443,14 @@ function NativeSurface({ title, view, onOpen }: { title: string; view: View; onO
       body: 'Discover people through shared work, clear professional details, and explanations—not noisy suggestions.',
       action: 'Explore your network',
     },
-    activity: {
-      eyebrow: 'Your activity',
-      heading: 'Useful updates stay visible.',
-      body: 'VouchNet keeps activity purposeful: direct messages, application movement, verified work, and security signals.',
-      action: 'Open activity',
-    },
-    jobs: {
-      eyebrow: 'Transparent opportunities',
-      heading: 'Know the work before you apply.',
-      body: 'Browse salary-forward opportunities and manage applications with your VouchNet profile as the source of truth.',
-      action: 'Explore jobs',
-    },
-    organizations: {
-      eyebrow: 'Verified organizations',
-      heading: 'Meet the team behind the work.',
-      body: 'Explore company context, public technical culture, roles, and verified organization information.',
-      action: 'Explore organizations',
+    discover: {
+      eyebrow: 'Build in public',
+      heading: 'See who is shipping useful work.',
+      body: 'People building, project momentum, and open opportunities ranked from recorded activity—with reasons attached.',
+      action: 'Open Discover',
     },
   };
-  const item = content[view as Exclude<View, 'home' | 'messages'>];
+  const item = content[view as 'network' | 'discover'];
   return (
     <section className="native-surface">
       <div className="native-glyph">{views.find((entry) => entry.id === view)?.icon}</div>
@@ -1005,7 +1461,7 @@ function NativeSurface({ title, view, onOpen }: { title: string; view: View; onO
         {item.action} <span>↗</span>
       </button>
       <small>
-        {title} is opened in the full VouchNet workspace to keep desktop and web data unified.
+        {title} opens in the full VouchNet workspace so desktop and web stay on one account.
       </small>
     </section>
   );
