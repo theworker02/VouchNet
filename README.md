@@ -181,10 +181,12 @@ and service; Desktop does not introduce another backend or a separate registrati
 
 ## API client package
 
-External employers and ATS integrations can use the published typed OAuth client,
-[`@theworker02/vouchnet-api-client`](docs/API_CLIENT.md). It only calls the public VouchNet API;
-it does not bypass OAuth scopes, API credits, or service-side rate limits. Package publishing is
-an explicit, versioned GitHub Actions release operation.
+External employers and ATS integrations can use the published typed OAuth + directory client,
+[`@theworker02/vouchnet-api-client`](docs/API_CLIENT.md) on GitHub Packages. It supports Apply with
+VouchNet (userinfo / applicant data) and the `directory:read` people, organizations, and jobs APIs
+documented in [docs/API.md](docs/API.md). It does not bypass OAuth scopes, prepaid API credits, or
+the `oauthApi` rate-limit tier. Package publishing is an explicit `api-client-v*` tag / workflow
+operation.
 
 ## Security principles
 
