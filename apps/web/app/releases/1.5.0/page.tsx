@@ -20,8 +20,8 @@ export default function VouchNet150ReleasePage() {
         <p className="eyebrow">October 28, 2026</p>
         <h1>VouchNet 1.5.0</h1>
         <p>
-          A desktop signal-desk release. VouchNet Desktop now surfaces native activity, curated
-          jobs and organizations, feed discovery, keyboard navigation, and optional Windows message
+          A desktop signal-desk release. VouchNet Desktop now surfaces native activity, curated jobs
+          and organizations, feed discovery, keyboard navigation, and optional Windows message
           notifications while staying on the same account as vouchnet.dev.
         </p>
         <h2>Included</h2>

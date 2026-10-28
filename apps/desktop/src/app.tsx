@@ -304,9 +304,7 @@ export function App() {
       const target = event.target as HTMLElement | null;
       if (
         target &&
-        (target.tagName === 'INPUT' ||
-          target.tagName === 'TEXTAREA' ||
-          target.isContentEditable)
+        (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
       ) {
         return;
       }
@@ -627,8 +625,7 @@ export function App() {
               title="Activity"
               type="button"
             >
-              ◌
-              {unreadActivity ? <i>{unreadActivity}</i> : null}
+              ◌{unreadActivity ? <i>{unreadActivity}</i> : null}
             </button>
           </div>
         </header>

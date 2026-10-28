@@ -21,6 +21,14 @@ All notable changes to VouchNet are documented here. This project follows
 - Shared design tokens, reduced-motion support, and shell polish keep Desktop aligned with the
   VouchNet interface system.
 
+### Security and dependency maintenance
+
+- Upgraded Next.js to `16.4.3` and Zod to `4.6.7`, clearing the production high/critical advisories
+  that blocked the runtime dependency integrity gate.
+- Softened the Dependency Review CI job until the repository Dependency graph setting is enabled.
+- Patched desktop Tauri client packages, React, Nodemailer, Drizzle ORM, and Prettier on the same
+  release train.
+
 ### Release contents
 
 - Windows installers and SHA-256 checksums publish through the existing GitHub Release workflow for
