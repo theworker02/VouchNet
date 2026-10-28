@@ -34,13 +34,24 @@ const gate = /insufficientCreditsResponse|chargeApiCall|spendCredits/;
 function isGated(file: string, seen = new Set<string>()): boolean {
   if (seen.has(file)) return false;
   seen.add(file);
+  if (!existsSync(file)) return false;
   const source = readFileSync(file, 'utf8');
   if (gate.test(source)) return true;
   // Aliases such as candidate-profile and v1/oauth/token delegate to a gated route.
-  const delegates = [...source.matchAll(/from '(\.[^']+\/route)'/g)].map((match) =>
+  const routeDelegates = [...source.matchAll(/from '(\.[^']+\/route)'/g)].map((match) =>
     join(file, '..', `${match[1]}.ts`),
   );
-  return delegates.length > 0 && delegates.every((target) => isGated(target, seen));
+  if (routeDelegates.length > 0 && routeDelegates.every((target) => isGated(target, seen)))
+    return true;
+  // Shared helpers such as oauth-api.ts own the chargeApiCall / spendCredits call site.
+  const helpers = [...source.matchAll(/from '(\.[^']+)'/g)]
+    .map((match) => match[1])
+    .filter((specifier) => !specifier.endsWith('/route'))
+    .flatMap((specifier) => {
+      const base = join(file, '..', specifier);
+      return [`${base}.ts`, join(base, 'index.ts')];
+    });
+  return helpers.some((target) => isGated(target, seen));
 }
 
 describe('public API and MCP entry points', () => {

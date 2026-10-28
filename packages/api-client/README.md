@@ -1,6 +1,6 @@
 # VouchNet API client
 
-`@theworker02/vouchnet-api-client` is the typed JavaScript client for the public VouchNet OAuth 2.0 API. It supports the authorization-code flow with PKCE, token exchange, OpenID-style user information, and the scope-minimized applicant-data response.
+`@theworker02/vouchnet-api-client` is the typed JavaScript client for the public VouchNet OAuth 2.0 and directory API. It supports the authorization-code flow with PKCE, token exchange, OpenID-style user information, applicant data, and `directory:read` lookups for people, organizations, and jobs.
 
 It is a client, not a bypass: VouchNet continues to enforce exact redirect-URI matching, PKCE, OAuth scopes, prepaid API credits, and server-side rate limits. A `429` is represented by `VouchNetApiError` and includes the server's retry interval.
 
@@ -52,12 +52,22 @@ const profile = await client.getUserInfo(token.accessToken);
 
 Never put a VouchNet client secret in browser code, a mobile binary, a public repository, or an issue. Use a backend-for-frontend to perform the token exchange.
 
+## Directory API (`directory:read`)
+
+```ts
+const person = await client.getPerson(token.accessToken, 'ada');
+const organization = await client.getOrganization(token.accessToken, 'vouchnet-labs');
+const { jobs } = await client.listJobs(token.accessToken, { query: 'typescript', limit: 20 });
+```
+
+Request the `directory:read` scope when creating the authorization URL and when registering the integration client.
+
 ## Rate limits and billing
 
 - OAuth token requests: **5 requests/minute** per request fingerprint.
-- API resource reads: **100 requests/minute** per request fingerprint.
-- Every client request is additionally subject to the developer account's API-credit balance.
+- OAuth and directory resource reads: **60 requests/minute** (`oauthApi` tier) with `X-RateLimit-Limit` / `X-RateLimit-Policy`.
+- Every successful client request is additionally subject to the developer account's API-credit balance.
 
 On `429`, read `error.retryAfterSeconds` and wait before retrying. Do not implement parallel retry loops. On `402`, ask the developer account owner to add API credits in VouchNet.
 
-See the hosted integration guide at [vouchnet.dev/developers/docs/apply-with-vouch](https://vouchnet.dev/developers/docs/apply-with-vouch).
+See [docs/API.md](../../docs/API.md) and the Developer Center at [vouchnet.dev/developers](https://vouchnet.dev/developers).

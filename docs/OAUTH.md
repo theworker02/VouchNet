@@ -13,11 +13,12 @@ Client secrets are shown once and retained only as HMAC hashes. Use the followin
 - User info: `GET /api/oauth/userinfo` with `Authorization: Bearer <access token>`.
 - Candidate profile: `GET /api/v1/oauth/candidate-profile` with `Authorization: Bearer <access token>`.
 
-Supported scopes are `profile:read` (profile URL, name, and headline) and `profile:email`
-(verified email). Each member sees and approves the exact requested access before VouchNet sends a
+Supported scopes are `profile:read` (profile URL, name, and headline), `profile:email` (verified
+email), `resume:read`, `skills:verify`, and `directory:read` (public people, companies, and jobs
+directory). Each member sees and approves the exact requested access before VouchNet sends a
 short-lived authorization code. Access tokens expire after one hour; revoking the integration
-invalidates all of its tokens. Resumes, private messages, passwords, browser sessions, and social
-actions are never shared through this flow.
+invalidates all of its tokens. Private messages, passwords, browser sessions, and social actions
+are never shared through this flow.
 
 VouchNet uses server-side OAuth authorization-code flows with state validation and PKCE. Provider
 secrets stay only in the deployment environment; do not expose them in browser code, GitHub,

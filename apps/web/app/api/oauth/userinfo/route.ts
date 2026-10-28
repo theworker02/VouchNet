@@ -8,8 +8,8 @@ import { rateLimitResponse } from '../../../lib/security/rate-limit-response';
 export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
-  const rateLimit = await enforceRateLimit(request, 'generalApi');
-  if (!rateLimit.allowed) return rateLimitResponse(rateLimit);
+  const rateLimit = await enforceRateLimit(request, 'oauthApi');
+  if (!rateLimit.allowed) return rateLimitResponse(rateLimit, 'oauthApi');
   const header = request.headers.get('authorization');
   const token = header?.startsWith('Bearer ') ? header.slice(7) : '';
   if (token.length === 0) return NextResponse.json({ error: 'invalid_token' }, { status: 401 });

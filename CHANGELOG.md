@@ -5,6 +5,16 @@ All notable changes to VouchNet are documented here. This project follows
 
 ## Unreleased
 
+### Public API and GitHub Packages client 1.1.0
+
+- Added LinkedIn-comparable directory API under `/api/v1/people/{slug}`,
+  `/api/v1/organizations/{slug}`, and `/api/v1/jobs` with `directory:read`, prepaid
+  `v1.directory_read` credits, and the dedicated `oauthApi` rate-limit tier (60/min) plus
+  `X-RateLimit-*` headers.
+- Expanded `@theworker02/vouchnet-api-client` to **1.1.0** with `getPerson`, `getOrganization`, and
+  `listJobs`; publish via `api-client-v1.1.0` / the Publish VouchNet API Client workflow.
+- Documented the API surface and LinkedIn JTBD comparison in `docs/API.md`.
+
 ## 1.6.0 - 2026-10-28
 
 ### Desktop expansion

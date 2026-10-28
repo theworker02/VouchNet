@@ -50,11 +50,12 @@ used to report a suspected account, authorization, credential, or data-exposure 
   separately from database-backed services.
 - High-risk authentication/OAuth operations use a Redis-backed atomic sliding window (5 per minute
   per hashed request subject). Social writes use 20 per minute. Desktop Bearer reads
-  (search/jobs/opportunities) use 60 per minute under the `desktopRead` tier. Production fails
-  closed with a 503 if Redis is unavailable; development permits local work without Redis. A
-  rejected quota returns a JSON error envelope, HTTP 429, and `Retry-After`. Desktop connection and
-  saved-post writes reuse the social-write tier and authenticate with the device Bearer token
-  instead of cookie CSRF.
+  (search/jobs/opportunities) use 60 per minute under the `desktopRead` tier. Third-party OAuth
+  resource APIs (userinfo, applicant data, directory) use the `oauthApi` tier at 60 per minute and
+  emit `X-RateLimit-Limit` / `X-RateLimit-Policy`. Production fails closed with a 503 if Redis is
+  unavailable; development permits local work without Redis. A rejected quota returns a JSON error
+  envelope, HTTP 429, and `Retry-After`. Desktop connection and saved-post writes reuse the
+  social-write tier and authenticate with the device Bearer token instead of cookie CSRF.
 - The implementation stores only a hash of the actor-or-anonymous subject, IP address, and a
   bounded user-agent portion in the Redis key. It does not collect TLS JA3/JA4 fingerprints because
   those are not reliably exposed to a Netlify application runtime. Cloudflare is the appropriate

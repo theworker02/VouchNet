@@ -35,6 +35,8 @@ export const apiCallCosts = {
   'oauth.userinfo': 1,
   /** GET /api/v1/oauth/applicant-data and its /api/v1/oauth/candidate-profile alias. */
   'v1.applicant_data': 2,
+  /** Public directory reads: people, organizations, jobs under /api/v1/*. */
+  'v1.directory_read': 1,
   /** Reserved for each MCP tool call once the MCP gateway transport ships. */
   'mcp.tool_call': 1,
 } as const satisfies Record<string, number>;
@@ -45,6 +47,7 @@ export const apiOperationLabels: Record<ApiOperation, string> = {
   'oauth.token': 'Token exchange',
   'oauth.userinfo': 'User info',
   'v1.applicant_data': 'Applicant data',
+  'v1.directory_read': 'Directory read',
   'mcp.tool_call': 'MCP tool call',
 };
 
