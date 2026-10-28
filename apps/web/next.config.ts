@@ -27,7 +27,8 @@ const nextConfig: NextConfig = {
         { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
         {
           key: 'Permissions-Policy',
-          value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
+          value:
+            'camera=(), microphone=(), geolocation=(), payment=(), usb=(), bluetooth=(), interest-cohort=(), browsing-topics=()',
         },
         { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
         { key: 'Cross-Origin-Resource-Policy', value: 'same-origin' },
@@ -43,6 +44,7 @@ const nextConfig: NextConfig = {
       headers: [
         { key: 'Cache-Control', value: 'no-store, max-age=0' },
         { key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' },
+        { key: 'X-Content-Type-Options', value: 'nosniff' },
       ],
     },
   ],

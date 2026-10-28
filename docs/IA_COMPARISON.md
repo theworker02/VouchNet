@@ -43,9 +43,33 @@ area make people work, and what VouchNet does instead:
 | AI features surface as the product ("AI can write this")                     | One rule: humans participate; AI is an explicitly authorized tool via scoped credentials                                                                              |
 | Settings model scattered across dozens of pages                              | Privacy and visibility live under `/settings`, public surface documented in `sitemap.xml`                                                                             |
 | Profile chrome crowded by ads and "People also viewed" modules               | Same stacked-card profile layout (banner, overlapping avatar, section cards: About, Languages, Experience, Services, Badges, Trust graph) — minus the ads and upsells |
+| Desktop / mobile apps centered on feed scroll + ads                          | Windows Desktop 1.6 signal desk: native Home, Network, Messages, Activity, Jobs, Organizations, Opportunities, Saved, and command-palette search over one account     |
+| Jobs behind Premium upsell walls; salary often hidden                        | Public salary-forward `/jobs` + Desktop jobs directory; source URL remains the application authority                                                                  |
+| “My Network” as gamified invitation spam                                     | Network invitations + mutual-context recommendations with reasons; connection cooldowns and rate limits                                                               |
+| Saved items buried; engagement bait to return                                | First-class `/saved` + Desktop Saved rail; visibility/block rules re-checked on every read                                                                            |
+| Messaging as a browser afterthought with notification fatigue                | Web + Desktop inbox on the same device-authorized session; optional Windows unread notifications                                                                      |
+
+## Side-by-side product surface (LinkedIn JTBD → VouchNet)
+
+This is a jobs-to-be-done parity map, not a UI clone. VouchNet keeps original branding, IA, and
+trust semantics.
+
+| Job to be done                         | LinkedIn surface                  | VouchNet surface                                            | Parity   |
+| -------------------------------------- | --------------------------------- | ----------------------------------------------------------- | -------- |
+| Publish and read professional updates  | Feed / posts                      | `/feed`, Desktop Home                                       | Yes      |
+| Find people and reconnect              | My Network / search               | `/mynetwork`, `/search`, Desktop Network + Ctrl+K search    | Yes      |
+| Message contacts                       | Messaging                         | `/messaging`, Desktop Messages                              | Yes      |
+| Track invitations and signals          | Notifications                     | `/notifications`, Desktop Activity                          | Yes      |
+| Browse roles with compensation context | Jobs (often gated / vague pay)    | `/jobs`, Desktop Jobs (salary-forward, source-reviewed)     | Yes      |
+| Research employers                     | Company pages                     | `/company/<slug>`, Desktop Organizations                    | Yes      |
+| Save content for later                 | Saved                             | `/saved`, Desktop Saved                                     | Yes      |
+| Find freelance / project work          | Services / Open to work fragments | `/opportunities`, Desktop Opportunities                     | Yes      |
+| Prove credibility                      | Endorsements / Premium badges     | Signed vouches, identity verification, DOMAIN_VERIFIED orgs | Stronger |
+| Keep a desktop workspace               | LinkedIn Desktop / mobile apps    | VouchNet Desktop (Tauri, PKCE device auth)                  | Yes      |
 
 Deliberate non-goals: no reaction inflation, no follower leaderboards, no infinite-scroll-bait
-layout, no promoted content. Anything that exists only to raise a metric is out of scope.
+layout, no promoted content, no LinkedIn brand or API mimicry. Anything that exists only to raise
+a metric is out of scope.
 
 ## Rules we enforce
 

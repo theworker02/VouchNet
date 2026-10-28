@@ -27,10 +27,16 @@ used to report a suspected account, authorization, credential, or data-exposure 
 - The page response receives a new cryptographic CSP nonce and server-generated request ID from
   Next.js Proxy. `strict-dynamic` limits executable scripts to VouchNet scripts carrying that
   nonce; Cloudflare Web Analytics is the only currently permitted third-party script/connect
-  origin. HSTS, `nosniff`, anti-framing, cross-origin isolation, referrer, and permissions headers
-  are applied to every response.
+  origin. Production CSP also sets `upgrade-insecure-requests` while leaving Experience `srcDoc`
+  iframes available (do not set `frame-src 'none'`). HSTS, `nosniff`, anti-framing, cross-origin
+  isolation, referrer, and permissions headers (including payment/usb/bluetooth/topics denial) are
+  applied to every response.
 - API responses are marked `no-store` and `noindex` to reduce accidental browser/proxy retention
-  and search indexing of authenticated or operational responses.
+  and search indexing of authenticated or operational responses. API routes also emit
+  `X-Content-Type-Options: nosniff`.
+- The installed Desktop client enforces its own CSP (`default-src 'self'`, no workers/frames,
+  connect only to `https://vouchnet.dev`) and stores refresh credentials in Windows Credential
+  Manager rather than app local storage.
 - Cookie-authenticated mutations compare the browser `Origin` with the canonical `APP_URL` when
   it is configured. This is important on Netlify, where an internal deployment hostname can differ
   from the public domain. A request from any other origin is rejected.
@@ -43,9 +49,12 @@ used to report a suspected account, authorization, credential, or data-exposure 
   a client component import path that crosses into them. Browser-safe rules and DTO types are kept
   separately from database-backed services.
 - High-risk authentication/OAuth operations use a Redis-backed atomic sliding window (5 per minute
-  per hashed request subject). Social writes use 20 per minute. Production fails closed with a 503
-  if Redis is unavailable; development permits local work without Redis. A rejected quota returns
-  a JSON error envelope, HTTP 429, and `Retry-After`.
+  per hashed request subject). Social writes use 20 per minute. Desktop Bearer reads
+  (search/jobs/opportunities) use 60 per minute under the `desktopRead` tier. Production fails
+  closed with a 503 if Redis is unavailable; development permits local work without Redis. A
+  rejected quota returns a JSON error envelope, HTTP 429, and `Retry-After`. Desktop connection and
+  saved-post writes reuse the social-write tier and authenticate with the device Bearer token
+  instead of cookie CSRF.
 - The implementation stores only a hash of the actor-or-anonymous subject, IP address, and a
   bounded user-agent portion in the Redis key. It does not collect TLS JA3/JA4 fingerprints because
   those are not reliably exposed to a Netlify application runtime. Cloudflare is the appropriate

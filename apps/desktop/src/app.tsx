@@ -92,7 +92,92 @@ type ActivityItem = {
   readAt: string | null;
   createdAt: string;
 };
-type View = 'home' | 'network' | 'messages' | 'activity' | 'jobs' | 'organizations' | 'discover';
+type NetworkInvitation = {
+  connectionId: string;
+  firstName: string;
+  lastName: string;
+  headline: string | null;
+  slug: string;
+};
+type NetworkPerson = {
+  userId: string;
+  slug: string;
+  firstName: string;
+  lastName: string;
+  headline: string | null;
+  mutualContacts: number;
+  score: number;
+  reasons: string[];
+};
+type NetworkPayload = {
+  overview: {
+    contactCount: number;
+    followingCount: number;
+    pendingReceivedCount: number;
+    pendingReceived: NetworkInvitation[];
+  };
+  recommendations: NetworkPerson[];
+};
+type DirectoryJob = DiscoveryJob & {
+  summary?: string;
+  workplaceType?: string;
+  employmentType?: string;
+  sourceStatus?: string;
+};
+type DirectoryOrganization = {
+  slug: string;
+  name: string;
+  tagline: string | null;
+  headquarters?: string | null;
+  verificationStatus?: string;
+  technologies: string[];
+  openRoleCount?: number;
+};
+type OpportunityCard = {
+  id: string;
+  slug: string;
+  type: string;
+  title: string;
+  summary: string;
+  lookingFor: string;
+  location: string | null;
+  remote: boolean;
+  tags: string[];
+  budgetMin: number | null;
+  budgetMax: number | null;
+  budgetCurrency: string;
+  proposalCount: number;
+  poster: { slug: string; name: string; headline: string | null };
+  project: { slug: string; name: string } | null;
+  createdAt: string;
+};
+type SavedPost = {
+  id: string;
+  authorName: string;
+  authorSlug: string;
+  authorHeadline: string | null;
+  bodyMarkdown: string;
+  category: string;
+  peerSignal: number;
+  commentCount: number;
+  createdAt: string;
+  savedAt: string;
+};
+type SearchResults = {
+  query: string;
+  people: Array<{
+    userId: string;
+    slug: string;
+    fullName: string;
+    headline: string | null;
+    location: string | null;
+    isPlus: boolean;
+  }>;
+  jobs: DiscoveryJob[];
+  organizations: DirectoryOrganization[];
+};
+type View =
+  'home' | 'network' | 'messages' | 'activity' | 'jobs' | 'organizations' | 'discover' | 'saved';
 type AppStatus = 'connecting' | 'signed-out' | 'ready' | 'error';
 
 const views: Array<{ id: View; label: string; icon: string; shortcut: string }> = [
@@ -102,7 +187,8 @@ const views: Array<{ id: View; label: string; icon: string; shortcut: string }> 
   { id: 'activity', label: 'Activity', icon: '◌', shortcut: 'A' },
   { id: 'jobs', label: 'Jobs', icon: '▣', shortcut: 'J' },
   { id: 'organizations', label: 'Organizations', icon: '◇', shortcut: 'O' },
-  { id: 'discover', label: 'Discover', icon: '◈', shortcut: 'D' },
+  { id: 'discover', label: 'Opportunities', icon: '◈', shortcut: 'D' },
+  { id: 'saved', label: 'Saved', icon: '☆', shortcut: 'S' },
 ];
 
 function verifiedDateLabel(iso: string) {
@@ -145,21 +231,19 @@ function formatSalary(job: DiscoveryJob) {
   }
   return format(job.salaryMin ?? job.salaryMax ?? 0);
 }
-function webRoute(view: View) {
-  switch (view) {
-    case 'network':
-      return '/mynetwork';
-    case 'activity':
-      return '/notifications';
-    case 'organizations':
-      return '/search?type=companies';
-    case 'discover':
-      return '/discover';
-    case 'home':
-      return '/feed';
-    default:
-      return `/${view}`;
-  }
+function emptySearch(): SearchResults {
+  return { query: '', people: [], jobs: [], organizations: [] };
+}
+function emptyNetwork(): NetworkPayload {
+  return {
+    overview: {
+      contactCount: 0,
+      followingCount: 0,
+      pendingReceivedCount: 0,
+      pendingReceived: [],
+    },
+    recommendations: [],
+  };
 }
 function emptyDiscovery(): FeedDiscovery {
   return {
@@ -179,6 +263,12 @@ export function App() {
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
+  const [network, setNetwork] = useState<NetworkPayload>(emptyNetwork());
+  const [directoryJobs, setDirectoryJobs] = useState<DirectoryJob[]>([]);
+  const [directoryOrganizations, setDirectoryOrganizations] = useState<DirectoryOrganization[]>([]);
+  const [opportunities, setOpportunities] = useState<OpportunityCard[]>([]);
+  const [savedPosts, setSavedPosts] = useState<SavedPost[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchResults>(emptySearch());
   const [composer, setComposer] = useState('');
   const [attachmentUrl, setAttachmentUrl] = useState('');
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -187,8 +277,16 @@ export function App() {
   const [commandOpen, setCommandOpen] = useState(false);
   const [commandQuery, setCommandQuery] = useState('');
   const [threadQuery, setThreadQuery] = useState('');
+  const [jobsQuery, setJobsQuery] = useState('');
+  const [opportunityQuery, setOpportunityQuery] = useState('');
+  const [remoteOnly, setRemoteOnly] = useState(false);
   const [messageLoading, setMessageLoading] = useState(false);
   const [activityLoading, setActivityLoading] = useState(false);
+  const [networkLoading, setNetworkLoading] = useState(false);
+  const [jobsLoading, setJobsLoading] = useState(false);
+  const [opportunitiesLoading, setOpportunitiesLoading] = useState(false);
+  const [savedLoading, setSavedLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const knownUnreadRef = useRef(0);
   const selectedConversation = useMemo(
@@ -219,6 +317,7 @@ export function App() {
       { id: 'profile', label: 'Open my profile', icon: '◉', path: `/vouch/${profile?.slug ?? ''}` },
       { id: 'games', label: 'Play today’s puzzle', icon: '▦', path: '/games' },
       { id: 'settings', label: 'Account settings', icon: '⚙', path: '/settings/account' },
+      { id: 'web-search', label: 'Open web search', icon: '⌕', path: '/search' },
     ].filter((item) => item.label.toLowerCase().includes(query));
     return { navigation, extras };
   }, [commandQuery, profile?.slug]);
@@ -263,6 +362,8 @@ export function App() {
       setDiscovery(feedPayload.discovery ?? emptyDiscovery());
       setConversations(conversationPayload.conversations);
       setActivity(activityPayload.notifications);
+      setDirectoryJobs(feedPayload.discovery?.jobs ?? []);
+      setDirectoryOrganizations(feedPayload.discovery?.organizations ?? []);
       setSelectedConversationId(
         (current) => current ?? conversationPayload.conversations[0]?.id ?? null,
       );
@@ -350,6 +451,71 @@ export function App() {
       .finally(() => setActivityLoading(false));
   }, [status, view]);
   useEffect(() => {
+    if (view !== 'network' || status !== 'ready') return;
+    setNetworkLoading(true);
+    void invoke<NetworkPayload>('desktop_network')
+      .then((payload) => setNetwork(payload))
+      .catch((error: unknown) =>
+        setNotice(error instanceof Error ? error.message : 'Network could not be loaded.'),
+      )
+      .finally(() => setNetworkLoading(false));
+  }, [status, view]);
+  useEffect(() => {
+    if ((view !== 'jobs' && view !== 'organizations') || status !== 'ready') return;
+    setJobsLoading(true);
+    void invoke<{ jobs: DirectoryJob[]; organizations: DirectoryOrganization[] }>('desktop_jobs', {
+      query: jobsQuery.trim() || null,
+    })
+      .then((payload) => {
+        setDirectoryJobs(payload.jobs);
+        setDirectoryOrganizations(payload.organizations);
+      })
+      .catch((error: unknown) =>
+        setNotice(error instanceof Error ? error.message : 'Jobs directory could not be loaded.'),
+      )
+      .finally(() => setJobsLoading(false));
+  }, [jobsQuery, status, view]);
+  useEffect(() => {
+    if (view !== 'discover' || status !== 'ready') return;
+    setOpportunitiesLoading(true);
+    void invoke<{ opportunities: OpportunityCard[] }>('desktop_opportunities', {
+      query: opportunityQuery.trim() || null,
+      remoteOnly,
+    })
+      .then((payload) => setOpportunities(payload.opportunities))
+      .catch((error: unknown) =>
+        setNotice(error instanceof Error ? error.message : 'Opportunities could not be loaded.'),
+      )
+      .finally(() => setOpportunitiesLoading(false));
+  }, [opportunityQuery, remoteOnly, status, view]);
+  useEffect(() => {
+    if (view !== 'saved' || status !== 'ready') return;
+    setSavedLoading(true);
+    void invoke<{ posts: SavedPost[] }>('desktop_saved')
+      .then((payload) => setSavedPosts(payload.posts))
+      .catch((error: unknown) =>
+        setNotice(error instanceof Error ? error.message : 'Saved posts could not be loaded.'),
+      )
+      .finally(() => setSavedLoading(false));
+  }, [status, view]);
+  useEffect(() => {
+    if (!commandOpen || status !== 'ready') return;
+    const query = commandQuery.trim();
+    if (query.length < 2) {
+      setSearchResults(emptySearch());
+      setSearchLoading(false);
+      return;
+    }
+    setSearchLoading(true);
+    const timer = window.setTimeout(() => {
+      void invoke<SearchResults>('desktop_search', { query })
+        .then((payload) => setSearchResults(payload))
+        .catch(() => setSearchResults(emptySearch()))
+        .finally(() => setSearchLoading(false));
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [commandOpen, commandQuery, status]);
+  useEffect(() => {
     if (status !== 'ready') return;
     const timer = window.setInterval(() => {
       void invoke<{ conversations: Conversation[] }>('desktop_conversations')
@@ -397,8 +563,53 @@ export function App() {
     setConversations([]);
     setMessages([]);
     setActivity([]);
+    setNetwork(emptyNetwork());
+    setDirectoryJobs([]);
+    setDirectoryOrganizations([]);
+    setOpportunities([]);
+    setSavedPosts([]);
+    setSearchResults(emptySearch());
     knownUnreadRef.current = 0;
     setStatus('signed-out');
+  }
+  async function connectWith(userId: string) {
+    try {
+      await invoke('desktop_connect', { payload: { targetUserId: userId } });
+      setNetwork((current) => ({
+        ...current,
+        recommendations: current.recommendations.filter((person) => person.userId !== userId),
+      }));
+      setNotice('Connection request sent.');
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Connection request failed.');
+    }
+  }
+  async function respondInvitation(connectionId: string, action: 'accept' | 'decline') {
+    try {
+      await invoke('desktop_connect', { payload: { connectionId, action } });
+      setNetwork((current) => ({
+        ...current,
+        overview: {
+          ...current.overview,
+          pendingReceived: current.overview.pendingReceived.filter(
+            (item) => item.connectionId !== connectionId,
+          ),
+          pendingReceivedCount: Math.max(0, current.overview.pendingReceivedCount - 1),
+          contactCount:
+            action === 'accept' ? current.overview.contactCount + 1 : current.overview.contactCount,
+        },
+      }));
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Invitation could not be updated.');
+    }
+  }
+  async function unsavePost(postId: string) {
+    try {
+      await invoke('desktop_unsave_post', { postId });
+      setSavedPosts((current) => current.filter((post) => post.id !== postId));
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Could not remove that saved post.');
+    }
   }
   async function sendMessage() {
     if (!selectedConversationId || sending || (!composer.trim() && !attachments.length)) return;
@@ -675,21 +886,50 @@ export function App() {
           />
         ) : view === 'jobs' ? (
           <JobsView
-            jobs={discovery.jobs}
+            jobs={directoryJobs}
+            loading={jobsLoading}
+            query={jobsQuery}
             onBrowse={() => void openWeb('/jobs')}
             onOpenJob={(slug) => void openWeb(`/jobs/${slug}`)}
+            onQueryChange={setJobsQuery}
           />
         ) : view === 'organizations' ? (
           <OrganizationsView
-            organizations={discovery.organizations}
+            loading={jobsLoading}
+            organizations={directoryOrganizations}
+            query={jobsQuery}
             onBrowse={() => void openWeb('/companies')}
             onOpenOrganization={(slug) => void openWeb(`/company/${slug}`)}
+            onQueryChange={setJobsQuery}
+          />
+        ) : view === 'network' ? (
+          <NetworkView
+            loading={networkLoading}
+            network={network}
+            onAccept={(id) => void respondInvitation(id, 'accept')}
+            onConnect={(userId) => void connectWith(userId)}
+            onDecline={(id) => void respondInvitation(id, 'decline')}
+            onOpenAll={() => void openWeb('/mynetwork')}
+            onOpenProfile={(slug) => void openWeb(`/vouch/${slug}`)}
+          />
+        ) : view === 'discover' ? (
+          <OpportunitiesView
+            loading={opportunitiesLoading}
+            opportunities={opportunities}
+            query={opportunityQuery}
+            remoteOnly={remoteOnly}
+            onBrowse={() => void openWeb('/opportunities')}
+            onOpenOpportunity={(slug) => void openWeb(`/opportunities/${slug}`)}
+            onQueryChange={setOpportunityQuery}
+            onRemoteOnlyChange={setRemoteOnly}
           />
         ) : (
-          <NativeSurface
-            title={views.find((item) => item.id === view)?.label ?? 'VouchNet'}
-            view={view}
-            onOpen={() => void openWeb(webRoute(view))}
+          <SavedView
+            loading={savedLoading}
+            posts={savedPosts}
+            onOpenAll={() => void openWeb('/saved')}
+            onOpenPost={(id) => void openWeb(`/feed?post=${id}`)}
+            onUnsave={(id) => void unsavePost(id)}
           />
         )}
       </section>
@@ -806,6 +1046,66 @@ export function App() {
                 <kbd>↗</kbd>
               </button>
             ))}
+            {commandQuery.trim().length >= 2 ? (
+              <>
+                <p className="command-label">
+                  {searchLoading
+                    ? 'Searching VouchNet…'
+                    : `Results for “${searchResults.query || commandQuery.trim()}”`}
+                </p>
+                {searchResults.people.map((person) => (
+                  <button
+                    key={person.userId}
+                    onClick={() => {
+                      setCommandOpen(false);
+                      setCommandQuery('');
+                      void openWeb(`/vouch/${person.slug}`);
+                    }}
+                    type="button"
+                  >
+                    <span>◎</span> {person.fullName}
+                    <kbd>{person.isPlus ? 'Plus' : 'Person'}</kbd>
+                  </button>
+                ))}
+                {searchResults.jobs.map((job) => (
+                  <button
+                    key={job.slug}
+                    onClick={() => {
+                      setCommandOpen(false);
+                      setCommandQuery('');
+                      void openWeb(`/jobs/${job.slug}`);
+                    }}
+                    type="button"
+                  >
+                    <span>▣</span> {job.title}
+                    <kbd>{job.organizationName}</kbd>
+                  </button>
+                ))}
+                {searchResults.organizations.map((organization) => (
+                  <button
+                    key={organization.slug}
+                    onClick={() => {
+                      setCommandOpen(false);
+                      setCommandQuery('');
+                      void openWeb(`/company/${organization.slug}`);
+                    }}
+                    type="button"
+                  >
+                    <span>◇</span> {organization.name}
+                    <kbd>Company</kbd>
+                  </button>
+                ))}
+                {!searchLoading &&
+                searchResults.people.length +
+                  searchResults.jobs.length +
+                  searchResults.organizations.length ===
+                  0 ? (
+                  <p className="command-footer">
+                    No people, jobs, or companies matched that query.
+                  </p>
+                ) : null}
+              </>
+            ) : null}
             <p className="command-footer">Esc to close · letter keys jump between spaces</p>
           </section>
         </div>
@@ -1324,12 +1624,18 @@ function ActivityView({
 
 function JobsView({
   jobs,
+  loading,
+  query,
   onBrowse,
   onOpenJob,
+  onQueryChange,
 }: {
-  jobs: DiscoveryJob[];
+  jobs: DirectoryJob[];
+  loading: boolean;
+  query: string;
   onBrowse: () => void;
   onOpenJob: (slug: string) => void;
+  onQueryChange: (value: string) => void;
 }) {
   return (
     <section className="directory-surface">
@@ -1342,11 +1648,26 @@ function JobsView({
           Browse all jobs ↗
         </button>
       </div>
-      {jobs.length === 0 ? (
+      <div className="thread-search directory-search">
+        ⌕{' '}
+        <input
+          aria-label="Search jobs"
+          onChange={(event) => onQueryChange(event.target.value)}
+          placeholder="Search roles, companies, or skills"
+          value={query}
+        />
+      </div>
+      {loading ? (
+        <div className="message-loading padded">
+          <i />
+          <i />
+          <i />
+        </div>
+      ) : jobs.length === 0 ? (
         <div className="conversation-empty centered">
           <span>▣</span>
-          <h3>No curated roles right now</h3>
-          <p>Open the full jobs directory for salary-forward listings as they are reviewed.</p>
+          <h3>No roles matched</h3>
+          <p>Try another skill, company, or open the full salary-forward jobs directory.</p>
         </div>
       ) : (
         <div className="directory-grid">
@@ -1377,12 +1698,18 @@ function JobsView({
 
 function OrganizationsView({
   organizations,
+  loading,
+  query,
   onBrowse,
   onOpenOrganization,
+  onQueryChange,
 }: {
-  organizations: DiscoveryOrganization[];
+  organizations: DirectoryOrganization[];
+  loading: boolean;
+  query: string;
   onBrowse: () => void;
   onOpenOrganization: (slug: string) => void;
+  onQueryChange: (value: string) => void;
 }) {
   return (
     <section className="directory-surface">
@@ -1395,7 +1722,22 @@ function OrganizationsView({
           Browse companies ↗
         </button>
       </div>
-      {organizations.length === 0 ? (
+      <div className="thread-search directory-search">
+        ⌕{' '}
+        <input
+          aria-label="Search organizations"
+          onChange={(event) => onQueryChange(event.target.value)}
+          placeholder="Search companies or technologies"
+          value={query}
+        />
+      </div>
+      {loading ? (
+        <div className="message-loading padded">
+          <i />
+          <i />
+          <i />
+        </div>
+      ) : organizations.length === 0 ? (
         <div className="conversation-empty centered">
           <span>◇</span>
           <h3>Directory quiet for now</h3>
@@ -1406,8 +1748,11 @@ function OrganizationsView({
           {organizations.map((organization) => (
             <article className="directory-card" key={organization.slug}>
               <p className="eyebrow">
-                {organization.openRoleCount} open role
-                {organization.openRoleCount === 1 ? '' : 's'}
+                {organization.verificationStatus === 'DOMAIN_VERIFIED'
+                  ? 'Domain verified'
+                  : organization.openRoleCount !== undefined
+                    ? `${organization.openRoleCount} open role${organization.openRoleCount === 1 ? '' : 's'}`
+                    : 'Source reviewed'}
               </p>
               <h3>{organization.name}</h3>
               <p>{organization.tagline ?? 'Source-reviewed organization on VouchNet.'}</p>
@@ -1429,37 +1774,296 @@ function OrganizationsView({
   );
 }
 
-function NativeSurface({ title, view, onOpen }: { title: string; view: View; onOpen: () => void }) {
-  const content: Record<
-    'network' | 'discover',
-    { eyebrow: string; heading: string; body: string; action: string }
-  > = {
-    network: {
-      eyebrow: 'Professional graph',
-      heading: 'Build a network with context.',
-      body: 'Discover people through shared work, clear professional details, and explanations—not noisy suggestions.',
-      action: 'Explore your network',
-    },
-    discover: {
-      eyebrow: 'Build in public',
-      heading: 'See who is shipping useful work.',
-      body: 'People building, project momentum, and open opportunities ranked from recorded activity—with reasons attached.',
-      action: 'Open Discover',
-    },
-  };
-  const item = content[view as 'network' | 'discover'];
+function NetworkView({
+  network,
+  loading,
+  onAccept,
+  onDecline,
+  onConnect,
+  onOpenProfile,
+  onOpenAll,
+}: {
+  network: NetworkPayload;
+  loading: boolean;
+  onAccept: (connectionId: string) => void;
+  onDecline: (connectionId: string) => void;
+  onConnect: (userId: string) => void;
+  onOpenProfile: (slug: string) => void;
+  onOpenAll: () => void;
+}) {
   return (
-    <section className="native-surface">
-      <div className="native-glyph">{views.find((entry) => entry.id === view)?.icon}</div>
-      <p className="eyebrow">{item.eyebrow}</p>
-      <h2>{item.heading}</h2>
-      <p>{item.body}</p>
-      <button className="button-primary" onClick={onOpen} type="button">
-        {item.action} <span>↗</span>
-      </button>
-      <small>
-        {title} opens in the full VouchNet workspace so desktop and web stay on one account.
-      </small>
+    <section className="directory-surface">
+      <div className="surface-toolbar">
+        <div>
+          <p className="eyebrow">Professional graph</p>
+          <h2>Build a network with context.</h2>
+        </div>
+        <button className="button-primary" onClick={onOpenAll} type="button">
+          Open full network ↗
+        </button>
+      </div>
+      <div className="network-stats">
+        <article>
+          <strong>{network.overview.contactCount}</strong>
+          <span>Contacts</span>
+        </article>
+        <article>
+          <strong>{network.overview.followingCount}</strong>
+          <span>Following</span>
+        </article>
+        <article>
+          <strong>{network.overview.pendingReceivedCount}</strong>
+          <span>Invitations</span>
+        </article>
+      </div>
+      {loading ? (
+        <div className="message-loading padded">
+          <i />
+          <i />
+          <i />
+        </div>
+      ) : (
+        <>
+          {network.overview.pendingReceived.length ? (
+            <div className="network-section">
+              <p className="eyebrow">Pending invitations</p>
+              <div className="directory-grid">
+                {network.overview.pendingReceived.map((invitation) => (
+                  <article className="directory-card" key={invitation.connectionId}>
+                    <p className="eyebrow">Wants to connect</p>
+                    <h3>
+                      {invitation.firstName} {invitation.lastName}
+                    </h3>
+                    <p>{invitation.headline ?? 'VouchNet member'}</p>
+                    <div className="network-actions">
+                      <button onClick={() => onAccept(invitation.connectionId)} type="button">
+                        Accept
+                      </button>
+                      <button
+                        className="button-quiet"
+                        onClick={() => onDecline(invitation.connectionId)}
+                        type="button"
+                      >
+                        Decline
+                      </button>
+                      <button
+                        className="button-quiet"
+                        onClick={() => onOpenProfile(invitation.slug)}
+                        type="button"
+                      >
+                        Profile ↗
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </div>
+          ) : null}
+          <div className="network-section">
+            <p className="eyebrow">People you may know</p>
+            {network.recommendations.length === 0 ? (
+              <div className="conversation-empty centered">
+                <span>◎</span>
+                <h3>No recommendations right now</h3>
+                <p>As your contacts grow, mutual-context suggestions appear here.</p>
+              </div>
+            ) : (
+              <div className="directory-grid">
+                {network.recommendations.map((person) => (
+                  <article className="directory-card" key={person.userId}>
+                    <p className="eyebrow">
+                      {person.mutualContacts} mutual contact
+                      {person.mutualContacts === 1 ? '' : 's'}
+                    </p>
+                    <h3>
+                      {person.firstName} {person.lastName}
+                    </h3>
+                    <p>{person.headline ?? 'VouchNet member'}</p>
+                    <div className="network-actions">
+                      <button onClick={() => onConnect(person.userId)} type="button">
+                        Connect
+                      </button>
+                      <button
+                        className="button-quiet"
+                        onClick={() => onOpenProfile(person.slug)}
+                        type="button"
+                      >
+                        Profile ↗
+                      </button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
+
+function OpportunitiesView({
+  opportunities,
+  loading,
+  query,
+  remoteOnly,
+  onBrowse,
+  onOpenOpportunity,
+  onQueryChange,
+  onRemoteOnlyChange,
+}: {
+  opportunities: OpportunityCard[];
+  loading: boolean;
+  query: string;
+  remoteOnly: boolean;
+  onBrowse: () => void;
+  onOpenOpportunity: (slug: string) => void;
+  onQueryChange: (value: string) => void;
+  onRemoteOnlyChange: (value: boolean) => void;
+}) {
+  return (
+    <section className="directory-surface">
+      <div className="surface-toolbar">
+        <div>
+          <p className="eyebrow">Build in public</p>
+          <h2>Open work worth proposing on.</h2>
+        </div>
+        <button className="button-primary" onClick={onBrowse} type="button">
+          Browse opportunities ↗
+        </button>
+      </div>
+      <div className="opportunity-filters">
+        <div className="thread-search directory-search">
+          ⌕{' '}
+          <input
+            aria-label="Search opportunities"
+            onChange={(event) => onQueryChange(event.target.value)}
+            placeholder="Search briefs, skills, or posters"
+            value={query}
+          />
+        </div>
+        <label className="remote-toggle">
+          <input
+            checked={remoteOnly}
+            onChange={(event) => onRemoteOnlyChange(event.target.checked)}
+            type="checkbox"
+          />
+          Remote only
+        </label>
+      </div>
+      {loading ? (
+        <div className="message-loading padded">
+          <i />
+          <i />
+          <i />
+        </div>
+      ) : opportunities.length === 0 ? (
+        <div className="conversation-empty centered">
+          <span>◈</span>
+          <h3>No open opportunities matched</h3>
+          <p>Try clearing filters or post a brief from the web workspace.</p>
+        </div>
+      ) : (
+        <div className="directory-grid">
+          {opportunities.map((opportunity) => (
+            <article className="directory-card" key={opportunity.id}>
+              <p className="eyebrow">
+                {opportunity.type.replaceAll('_', ' ')} · {opportunity.proposalCount} proposal
+                {opportunity.proposalCount === 1 ? '' : 's'}
+              </p>
+              <h3>{opportunity.title}</h3>
+              <p>{opportunity.summary}</p>
+              <small>
+                {opportunity.poster.name}
+                {opportunity.remote
+                  ? ' · Remote'
+                  : opportunity.location
+                    ? ` · ${opportunity.location}`
+                    : ''}
+              </small>
+              {opportunity.tags.length ? (
+                <div className="topic-row">
+                  {opportunity.tags.slice(0, 4).map((tag) => (
+                    <span key={tag}>{tag}</span>
+                  ))}
+                </div>
+              ) : null}
+              <button onClick={() => onOpenOpportunity(opportunity.slug)} type="button">
+                View opportunity →
+              </button>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function SavedView({
+  posts,
+  loading,
+  onOpenPost,
+  onUnsave,
+  onOpenAll,
+}: {
+  posts: SavedPost[];
+  loading: boolean;
+  onOpenPost: (id: string) => void;
+  onUnsave: (id: string) => void;
+  onOpenAll: () => void;
+}) {
+  return (
+    <section className="directory-surface">
+      <div className="surface-toolbar">
+        <div>
+          <p className="eyebrow">Your reading list</p>
+          <h2>Posts worth returning to.</h2>
+        </div>
+        <button className="button-primary" onClick={onOpenAll} type="button">
+          Open saved on web ↗
+        </button>
+      </div>
+      {loading ? (
+        <div className="message-loading padded">
+          <i />
+          <i />
+          <i />
+        </div>
+      ) : posts.length === 0 ? (
+        <div className="conversation-empty centered">
+          <span>☆</span>
+          <h3>Nothing saved yet</h3>
+          <p>Save posts from the feed on web or desktop when you want to revisit them later.</p>
+        </div>
+      ) : (
+        <div className="desktop-feed">
+          {posts.map((post) => (
+            <article className="post-card" key={post.id}>
+              <header>
+                <span className="post-avatar">{initials(post.authorName)}</span>
+                <div>
+                  <strong>{post.authorName}</strong>
+                  <small>
+                    {post.authorHeadline ?? 'VouchNet member'} · saved {formatDate(post.savedAt)}
+                  </small>
+                </div>
+                <button onClick={() => onUnsave(post.id)} type="button">
+                  Unsave
+                </button>
+              </header>
+              <p>{post.bodyMarkdown}</p>
+              <footer>
+                <span>
+                  ⌁ {post.peerSignal} verified signal · {post.commentCount} comments
+                </span>
+                <button onClick={() => onOpenPost(post.id)} type="button">
+                  Open discussion →
+                </button>
+              </footer>
+            </article>
+          ))}
+        </div>
+      )}
     </section>
   );
 }
