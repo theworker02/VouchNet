@@ -66,6 +66,7 @@ trust semantics.
 | Find freelance / project work          | Services / Open to work fragments | `/opportunities`, Desktop Opportunities                     | Yes      |
 | Prove credibility                      | Endorsements / Premium badges     | Signed vouches, identity verification, DOMAIN_VERIFIED orgs | Stronger |
 | Keep a desktop workspace               | LinkedIn Desktop / mobile apps    | VouchNet Desktop (Tauri, PKCE device auth)                  | Yes      |
+| Integrate via a developer API          | LinkedIn partner / Profile APIs   | OAuth + directory API + GitHub Packages client              | Yes      |
 
 Deliberate non-goals: no reaction inflation, no follower leaderboards, no infinite-scroll-bait
 layout, no promoted content, no LinkedIn brand or API mimicry. Anything that exists only to raise

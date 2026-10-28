@@ -22,6 +22,7 @@ The settings UI reads the same module, so the page always shows what the server 
 | `oauth.token`       | `POST /api/oauth/token`, `POST /api/v1/oauth/token`                         | 1       |
 | `oauth.userinfo`    | `GET /api/oauth/userinfo`                                                   | 1       |
 | `v1.applicant_data` | `GET /api/v1/oauth/applicant-data`, `GET /api/v1/oauth/candidate-profile`   | 2       |
+| `v1.directory_read` | `GET /api/v1/people/{slug}`, `/api/v1/organizations/{slug}`, `/api/v1/jobs` | 1       |
 | `mcp.tool_call`     | Each MCP tool call (reserved; the MCP transport is not live yet, see below) | 1       |
 
 To change a price, edit `apiCallCosts` or `creditTopUpPackages` in that file. Costs must be

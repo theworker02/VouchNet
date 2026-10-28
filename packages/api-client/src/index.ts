@@ -7,6 +7,7 @@ export const vouchNetScopes = [
   'profile:email',
   'resume:read',
   'skills:verify',
+  'directory:read',
 ] as const;
 
 export type VouchNetScope = (typeof vouchNetScopes)[number];
@@ -34,6 +35,55 @@ export type VouchNetApplicantData = {
   work_experience: unknown[];
   verified_skills: unknown[];
   resume: null;
+};
+
+export type VouchNetPerson = {
+  id: string;
+  slug: string;
+  first_name: string;
+  last_name: string;
+  name: string;
+  headline: string | null;
+  location: string | null;
+  about: string | null;
+  languages: string[];
+  early_member: boolean;
+  is_plus: boolean;
+  profile_url: string;
+  visibility: string;
+};
+
+export type VouchNetOrganization = {
+  slug: string;
+  name: string;
+  tagline: string | null;
+  description: string;
+  website_url: string;
+  careers_url: string | null;
+  engineering_url: string | null;
+  repository_url: string | null;
+  headquarters: string | null;
+  verification_status: string;
+  technologies: Array<{ name: string; category: string; sourceUrl: string }>;
+  organization_url: string;
+};
+
+export type VouchNetJob = {
+  slug: string;
+  title: string;
+  summary: string;
+  location: string;
+  workplace_type: string;
+  employment_type: string;
+  salary_min: number | null;
+  salary_max: number | null;
+  salary_currency: string;
+  skill_tags: string[];
+  source_url: string;
+  source_status: string;
+  organization_name: string;
+  organization_slug: string;
+  job_url: string;
 };
 
 export type VouchNetApiErrorCode =
@@ -260,6 +310,62 @@ export function createVouchNetClient(options: VouchNetClientOptions = {}) {
         work_experience: payload.work_experience,
         verified_skills: payload.verified_skills,
         resume: null,
+      };
+    },
+
+    /** Public person directory lookup. Requires the `directory:read` scope. */
+    async getPerson(accessToken: string, slug: string): Promise<VouchNetPerson> {
+      assertNonBlank(accessToken, 'accessToken');
+      assertNonBlank(slug, 'slug');
+      const payload = await request(`/api/v1/people/${encodeURIComponent(slug)}`, {
+        headers: { authorization: `Bearer ${accessToken}` },
+        cache: 'no-store',
+      });
+      if (
+        !isRecord(payload) ||
+        typeof payload.id !== 'string' ||
+        typeof payload.slug !== 'string' ||
+        typeof payload.name !== 'string'
+      )
+        throw new VouchNetApiError('INVALID_RESPONSE', 502, undefined, payload);
+      return payload as VouchNetPerson;
+    },
+
+    /** Public organization directory lookup. Requires the `directory:read` scope. */
+    async getOrganization(accessToken: string, slug: string): Promise<VouchNetOrganization> {
+      assertNonBlank(accessToken, 'accessToken');
+      assertNonBlank(slug, 'slug');
+      const payload = await request(`/api/v1/organizations/${encodeURIComponent(slug)}`, {
+        headers: { authorization: `Bearer ${accessToken}` },
+        cache: 'no-store',
+      });
+      if (
+        !isRecord(payload) ||
+        typeof payload.slug !== 'string' ||
+        typeof payload.name !== 'string'
+      )
+        throw new VouchNetApiError('INVALID_RESPONSE', 502, undefined, payload);
+      return payload as VouchNetOrganization;
+    },
+
+    /** Salary-forward public jobs directory. Requires the `directory:read` scope. */
+    async listJobs(
+      accessToken: string,
+      input: { query?: string; limit?: number } = {},
+    ): Promise<{ query: string | null; jobs: VouchNetJob[] }> {
+      assertNonBlank(accessToken, 'accessToken');
+      const url = new URL('/api/v1/jobs', origin);
+      if (input.query) url.searchParams.set('q', input.query);
+      if (input.limit !== undefined) url.searchParams.set('limit', String(input.limit));
+      const payload = await request(`${url.pathname}${url.search}`, {
+        headers: { authorization: `Bearer ${accessToken}` },
+        cache: 'no-store',
+      });
+      if (!isRecord(payload) || !Array.isArray(payload.jobs))
+        throw new VouchNetApiError('INVALID_RESPONSE', 502, undefined, payload);
+      return {
+        query: typeof payload.query === 'string' ? payload.query : null,
+        jobs: payload.jobs as VouchNetJob[],
       };
     },
   };

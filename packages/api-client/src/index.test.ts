@@ -48,4 +48,34 @@ describe('VouchNet API client', () => {
       status: 502,
     } satisfies Partial<VouchNetApiError>);
   });
+
+  it('calls the public people directory with a bearer token', async () => {
+    const client = createVouchNetClient({
+      fetch: async (input) => {
+        expect(String(input)).toContain('/api/v1/people/ada');
+        return new Response(
+          JSON.stringify({
+            id: '11111111-1111-1111-1111-111111111111',
+            slug: 'ada',
+            first_name: 'Ada',
+            last_name: 'Lovelace',
+            name: 'Ada Lovelace',
+            headline: 'Analyst',
+            location: 'London',
+            about: null,
+            languages: [],
+            early_member: false,
+            is_plus: false,
+            profile_url: 'https://vouchnet.dev/vouch/ada',
+            visibility: 'PUBLIC',
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } },
+        );
+      },
+    });
+    await expect(client.getPerson('vnat_example', 'ada')).resolves.toMatchObject({
+      slug: 'ada',
+      name: 'Ada Lovelace',
+    });
+  });
 });

@@ -42,6 +42,7 @@ export function DeveloperClients() {
             ...(data.get('profileEmail') === 'on' ? ['profile:email'] : []),
             ...(data.get('skills') === 'on' ? ['skills:verify'] : []),
             ...(data.get('resume') === 'on' ? ['resume:read'] : []),
+            ...(data.get('directory') === 'on' ? ['directory:read'] : []),
           ],
         }),
       });
@@ -104,6 +105,10 @@ export function DeveloperClients() {
         </label>
         <label className="setting-toggle">
           <input name="resume" type="checkbox" /> Request a PDF résumé when available
+        </label>
+        <label className="setting-toggle">
+          <input name="directory" type="checkbox" /> Read the public people, company, and jobs
+          directory
         </label>
         <button className="primary" disabled={status === 'saving'} type="submit">
           {status === 'saving' ? 'Creating…' : 'Create integration client'}

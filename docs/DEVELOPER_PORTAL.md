@@ -21,6 +21,10 @@ The discovery endpoint intentionally reports MCP client registration as unavaila
 updated only when MCP credential issuance, scope enforcement, audit events, revocation, and human
 approval flows are truly live.
 
-Third-party calls made with an integration client's credentials (token exchange, `userinfo`, and
-applicant data) spend the client owner's prepaid credits. The Developer center shows the balance,
-recent usage, and add-credit buttons; see [Prepaid API and MCP credits](API_CREDITS.md).
+Third-party calls made with an integration client's credentials (token exchange, `userinfo`,
+applicant data, and `directory:read` people/company/jobs lookups) spend the client owner's prepaid
+credits. The Developer center shows the balance, recent usage, and add-credit buttons; see
+[Prepaid API and MCP credits](API_CREDITS.md).
+
+The typed client ships on GitHub Packages as `@theworker02/vouchnet-api-client`. Full surface and
+LinkedIn-comparable notes live in [API.md](API.md) and [API_CLIENT.md](API_CLIENT.md).

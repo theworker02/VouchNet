@@ -16,7 +16,9 @@ const clientSchema = z
     name: z.string().trim().min(2).max(120),
     redirectUris: z.array(z.string().max(2048)).min(1).max(10),
     scopes: z
-      .array(z.enum(['profile:read', 'profile:email', 'resume:read', 'skills:verify']))
+      .array(
+        z.enum(['profile:read', 'profile:email', 'resume:read', 'skills:verify', 'directory:read']),
+      )
       .min(1)
       .max(4),
   })

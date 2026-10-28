@@ -3,8 +3,15 @@ import { createHash, createHmac, randomBytes, randomUUID, timingSafeEqual } from
 import { createSqlClient } from '@nexus/db';
 import { spendCredits } from './api-credits-ledger';
 
-const availableScopes = ['profile:read', 'profile:email', 'resume:read', 'skills:verify'] as const;
+const availableScopes = [
+  'profile:read',
+  'profile:email',
+  'resume:read',
+  'skills:verify',
+  'directory:read',
+] as const;
 export type ApplyScope = (typeof availableScopes)[number];
+export const applyScopes = availableScopes;
 const authorizationCodeLifetimeMs = 5 * 60 * 1000;
 const accessTokenLifetimeMs = 60 * 60 * 1000;
 
@@ -327,6 +334,59 @@ export async function exchangeAuthorizationCode(input: {
  * owner's prepaid credits for the call. The charge commits in the same transaction as the read, so
  * invalid tokens, missing scopes, and server errors are never charged.
  */
+export type AccessTokenActor = {
+  tokenId: string;
+  userId: string;
+  ownerId: string;
+  developerClientId: string;
+  scopes: ApplyScope[];
+};
+
+/**
+ * Resolves a third-party bearer token without charging credits. Callers charge only after the
+ * requested work succeeds so invalid tokens, missing scopes, and not-found reads stay free.
+ */
+export async function resolveAccessToken(
+  token: string,
+  requiredScope: ApplyScope,
+): Promise<AccessTokenActor> {
+  const sql = database();
+  try {
+    const rows = await sql<
+      {
+        token_id: string;
+        scopes: unknown;
+        user_id: string;
+        developer_client_id: string;
+        owner_id: string;
+      }[]
+    >`
+      SELECT token.id AS token_id,token.scopes,token.user_id,client.id AS developer_client_id,client.owner_id
+      FROM oauth_access_tokens token
+      JOIN developer_clients client ON client.id=token.client_id AND client.revoked_at IS NULL
+      WHERE token.token_hash=${opaqueHash(token)} AND token.revoked_at IS NULL AND token.expires_at>now()
+    `;
+    const record = rows[0];
+    if (record === undefined) throw new ApplyOAuthError('INVALID_TOKEN');
+    const scopes = Array.isArray(record.scopes)
+      ? record.scopes.filter((scope): scope is ApplyScope =>
+          availableScopes.includes(scope as ApplyScope),
+        )
+      : [];
+    if (!scopes.includes(requiredScope)) throw new ApplyOAuthError('INVALID_TOKEN');
+    await sql`UPDATE oauth_access_tokens SET last_used_at=now() WHERE id=${record.token_id}`;
+    return {
+      tokenId: record.token_id,
+      userId: record.user_id,
+      ownerId: record.owner_id,
+      developerClientId: record.developer_client_id,
+      scopes,
+    };
+  } finally {
+    await sql.end({ timeout: 1 });
+  }
+}
+
 export async function profileForAccessToken(
   token: string,
   operation: 'oauth.userinfo' | 'v1.applicant_data',
