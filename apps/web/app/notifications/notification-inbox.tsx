@@ -7,7 +7,11 @@ import type { MemberNotification } from '../lib/daily-strategy';
 
 export function NotificationInbox({ notifications }: { notifications: MemberNotification[] }) {
   const [items, setItems] = useState(notifications);
+  const [busy, setBusy] = useState(false);
+  const [status, setStatus] = useState<string | null>(null);
   const router = useRouter();
+  const unreadCount = items.filter((notification) => notification.readAt === null).length;
+
   async function markRead(id: string): Promise<boolean> {
     const original = items.find((notification) => notification.id === id);
     if (original === undefined || original.readAt !== null) return true;
@@ -29,12 +33,56 @@ export function NotificationInbox({ notifications }: { notifications: MemberNoti
       return false;
     }
   }
+
+  async function markAllRead() {
+    if (unreadCount === 0 || busy) return;
+    const previous = items;
+    setBusy(true);
+    setItems((current) =>
+      current.map((notification) =>
+        notification.readAt === null ? { ...notification, readAt: new Date() } : notification,
+      ),
+    );
+    try {
+      const response = await fetch('/api/notifications/read-all', { method: 'POST' });
+      if (!response.ok) throw new Error('NOTIFICATION_READ_FAILED');
+      setStatus(null);
+      router.refresh();
+    } catch {
+      setItems(previous);
+      setStatus('Notifications could not be marked as read.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function openNotification(notification: MemberNotification) {
     await markRead(notification.id);
     router.push(notification.href);
   }
+
   return (
     <section className="notification-inbox" aria-label="Your notifications">
+      <div className="notification-inbox-toolbar">
+        <p>
+          {unreadCount === 0
+            ? 'All caught up'
+            : `${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}`}
+        </p>
+        <button
+          className="secondary"
+          disabled={busy || unreadCount === 0}
+          onClick={() => void markAllRead()}
+          type="button"
+        >
+          {busy ? 'Updating…' : 'Mark all as read'}
+        </button>
+      </div>
+      {status ? (
+        <p className="form-error" role="status">
+          {status}
+        </p>
+      ) : null}
       {items.map((notification) => (
         <article
           className={

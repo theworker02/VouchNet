@@ -88,9 +88,11 @@ function MarkdownBody({ body }: { body: string }) {
 function PostCard({
   post,
   onReaction,
+  onToggleSave,
 }: {
   post: FeedPost;
   onReaction: (postId: string, reaction: ReactionType) => void;
+  onToggleSave: (postId: string, currentlySaved: boolean) => void;
 }) {
   return (
     <InteractiveCard className="post-card">
@@ -116,6 +118,14 @@ function PostCard({
             {new Date(post.createdAt).toLocaleString()}
           </time>
         </div>
+        <button
+          aria-pressed={post.viewerSaved}
+          className={post.viewerSaved ? 'post-save-control is-saved' : 'post-save-control'}
+          onClick={() => onToggleSave(post.id, post.viewerSaved)}
+          type="button"
+        >
+          {post.viewerSaved ? 'Saved' : 'Save'}
+        </button>
       </header>
       <MarkdownBody body={post.bodyMarkdown} />
       {post.postType === 'INTERACTIVE' &&
@@ -371,6 +381,41 @@ export function FeedClient() {
     } catch {
       setPosts(previousPosts);
       setStatus('That reaction could not be saved.');
+    }
+  }
+  async function toggleSave(postId: string, currentlySaved: boolean) {
+    const previousPosts = posts;
+    setPosts(
+      (current) =>
+        current?.map((post) =>
+          post.id === postId ? { ...post, viewerSaved: !currentlySaved } : post,
+        ) ?? null,
+    );
+    try {
+      const response = currentlySaved
+        ? await fetch(`/api/saved/${postId}`, { method: 'DELETE' })
+        : await fetch('/api/saved', {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ postId }),
+          });
+      if (!response.ok) {
+        setPosts(previousPosts);
+        setStatus(
+          currentlySaved
+            ? 'That post could not be removed from Saved.'
+            : 'That post could not be saved.',
+        );
+        return;
+      }
+      setStatus(null);
+    } catch {
+      setPosts(previousPosts);
+      setStatus(
+        currentlySaved
+          ? 'That post could not be removed from Saved.'
+          : 'That post could not be saved.',
+      );
     }
   }
   function toggleCategory(category: PostCategory) {
@@ -734,6 +779,7 @@ export function FeedClient() {
               key={post.id}
               post={post}
               onReaction={(postId, reactionType) => void react(postId, reactionType)}
+              onToggleSave={(postId, currentlySaved) => void toggleSave(postId, currentlySaved)}
             />
           ))}
         </div>

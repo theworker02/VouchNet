@@ -5,6 +5,14 @@ All notable changes to VouchNet are documented here. This project follows
 
 ## Unreleased
 
+### Saved posts and notification inbox
+
+- Added saved posts as a real vertical slice: migration `0040_saved_posts`, `/api/saved`, feed Save
+  controls, and a private `/saved` page that re-checks visibility and block rules on every read.
+- Added mark-all-as-read for member notifications at `/api/notifications/read-all`.
+- Updated the implementation matrix and authenticated-app docs so messaging and saved content are
+  no longer described as missing stubs.
+
 ## 1.5.0 - 2026-10-28
 
 ### Desktop signal desk

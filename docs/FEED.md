@@ -14,7 +14,11 @@ create aggregated peer-endorsement events. The reaction picker is keyboard-acces
 a selection, and reverts optimistic UI state if persistence fails. Quote posts require at least 80
 characters server-side.
 
+Members can save a visible post from the feed; Saved items live at `/saved` and remain private to
+that account. Visibility and block checks are reapplied whenever Saved is listed, so a save cannot
+bypass an audience change or a later block.
+
 Comments, project/organization mentions, cursor pagination, safe rich Markdown/LaTeX rendering,
-media ingestion, post editing/deletion, feed tests, and PostgreSQL integration verification remain
-incomplete. A failed feed refresh presents an actionable status and successful refreshes clear that
-status rather than leaving stale failure messaging on screen.
+media ingestion, post editing/deletion, broader feed tests, and PostgreSQL integration verification
+remain incomplete. A failed feed refresh presents an actionable status and successful refreshes
+clear that status rather than leaving stale failure messaging on screen.

@@ -2092,6 +2092,109 @@ button:not([class]):hover {
   gap: 10px;
   align-items: center;
 }
+.post-header > div:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+.post-save-control {
+  flex: 0 0 auto;
+  min-height: 34px;
+  margin-left: auto;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  color: var(--ink);
+  background: var(--surface);
+  font-size: 0.74rem;
+  font-weight: 760;
+}
+.post-save-control:hover,
+.post-save-control:focus-visible {
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--line));
+  outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  outline-offset: 1px;
+}
+.post-save-control.is-saved {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--line));
+  color: var(--accent-strong, var(--accent));
+  background: var(--accent-soft, #e8efff);
+}
+.saved-page {
+  display: grid;
+  gap: 18px;
+  max-width: 760px;
+}
+.saved-heading h1 {
+  margin: 8px 0 8px;
+  letter-spacing: -0.04em;
+}
+.saved-heading p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.55;
+}
+.saved-empty,
+.saved-loading {
+  padding: 28px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.saved-empty h2 {
+  margin: 0 0 8px;
+}
+.saved-empty p {
+  margin: 0 0 16px;
+  color: var(--muted);
+}
+.saved-list {
+  display: grid;
+  gap: 12px;
+}
+.saved-card {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.saved-card header {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+.saved-card header a {
+  color: var(--ink);
+  font-weight: 800;
+  text-decoration: none;
+}
+.saved-card header p,
+.saved-card header time {
+  display: block;
+  margin: 3px 0 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+.saved-card > p {
+  margin: 14px 0;
+  white-space: pre-wrap;
+  line-height: 1.55;
+}
+.saved-card footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+.saved-card footer a {
+  color: var(--accent-strong, var(--accent));
+  font-weight: 760;
+  text-decoration: none;
+}
 .post-avatar {
   display: grid;
   width: 40px;
@@ -3756,6 +3859,19 @@ button.signal-cell:focus-visible {
   color: #66758c;
 }
 
+.notification-inbox-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.notification-inbox-toolbar p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
 .notification-inbox {
   overflow: hidden;
 }
