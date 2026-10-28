@@ -29,11 +29,17 @@ jobs:
   dependency-review:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-    # Soft-fail until Dependency graph is enabled in repository security settings.
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/dependency-review-action@v4
+      # Soft-fail until Dependency graph is enabled under repository security settings.
+      - id: review
+        continue-on-error: true
+        uses: actions/dependency-review-action@v4
+      - name: Acknowledge unavailable Dependency graph
+        if: steps.review.outcome == 'failure'
+        run: |
+          echo "Dependency Review is unavailable until Dependency graph is enabled."
+          echo "Enable it at https://github.com/${{ github.repository }}/settings/security_analysis"
 
   codeql:
     name: CodeQL
